@@ -1,0 +1,8 @@
+lightning
+flask
+flask-cors
+sqlmodel
+pydantic
+uvicorn
+fastapi
+git+https://github.com/openai/whisper.git

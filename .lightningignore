@@ -484,9 +484,14 @@ data/
 lightning_logs/
 wandb/
 .idea/
-flagged/
+.vscode/
 .python-version
 github/
+.shared/
+.storage/
+fileserver/
+echo/ui/node_modules/
+database.db
+tests/data
 
-node*modules/
-\_node_modules/*
+.git

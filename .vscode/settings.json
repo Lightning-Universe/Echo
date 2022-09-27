@@ -1,0 +1,19 @@
+{
+  "makefile.extensionOutputFolder": "./.vscode",
+  "python.formatting.provider": "black",
+  "[python]": {
+    "editor.tabSize": 4
+  },
+  "python.formatting.blackArgs": ["--line-length", "120"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "name": "echo-database",
+      "database": "${workspaceFolder:LAI-Echo-App}/database.db"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
+}
