@@ -7,6 +7,7 @@ class Echo(SQLModel, table=True):
 
     id: str = Field(primary_key=True)
     source_file_path: str
+    media_type: str
     text: str
     # TODO(alecmerdler): Add more interesting metadata...
 

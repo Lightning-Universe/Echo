@@ -1,4 +1,5 @@
 import json
+import mimetypes
 import os
 from argparse import ArgumentParser
 from typing import List
@@ -9,6 +10,9 @@ from lightning.app.core.constants import APP_SERVER_HOST, APP_SERVER_PORT
 from lightning.app.utilities.commands import ClientCommand
 
 from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig
+
+SUPPORTED_AUDIO_MEDIA_TYPES = ["audio/wav", "audio/mp3", "audio/m4a", "audio/ogg", "audio/flac"]
+SUPPORTED_VIDEO_MEDIA_TYPES = ["video/mp4"]
 
 
 class CreateEcho(ClientCommand):
@@ -30,6 +34,10 @@ class CreateEcho(ClientCommand):
             data = f.read()
             echo_id = str(uuid4())
 
+            media_type = mimetypes.guess_type(args.file)[0]
+            if media_type not in SUPPORTED_AUDIO_MEDIA_TYPES and media_type not in SUPPORTED_VIDEO_MEDIA_TYPES:
+                raise ValueError(f"Unsupported media type: {media_type}")
+
             print(f"Uploading audio file to fileserver: {base_url}/upload/{echo_id}")
 
             response = requests.put(url=f"{base_url}/upload/{echo_id}", files={"file": data})
@@ -37,7 +45,9 @@ class CreateEcho(ClientCommand):
 
             print(f"Completed upload of audio file to fileserver: {base_url}/upload/{echo_id}")
 
-        response = self.invoke_handler(config=Echo(id=echo_id, source_file_path=f"fileserver/{echo_id}", text=""))
+        response = self.invoke_handler(
+            config=Echo(id=echo_id, source_file_path=f"fileserver/{echo_id}", media_type=media_type, text="")
+        )
         print(response)
 
 

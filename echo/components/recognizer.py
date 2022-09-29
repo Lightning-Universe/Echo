@@ -1,4 +1,5 @@
 import os
+import subprocess
 import time
 from dataclasses import dataclass
 
@@ -8,6 +9,7 @@ from lightning import BuildConfig, CloudCompute, LightningWork
 from lightning_app.storage import Drive
 
 from echo.components.database.client import DatabaseClient
+from echo.media.video import contains_audio
 from echo.models.echo import Echo
 
 
@@ -67,6 +69,17 @@ class SpeechRecognizer(LightningWork):
         # Decode the audio
         return whisper.decode(self._model, mel, options)
 
+    def convert_to_audio(self, echo_id: str, video_file_path: str):
+        if not contains_audio(video_file_path):
+            raise ValueError(f"Video does not contain an audio stream: {video_file_path}")
+
+        extracted_audio_file_path = f"{echo_id}-extracted.mp3"
+        # TODO(alecmerdler): Figure out how to use `ffmpeg-python` rather than shelling out...
+        # TODO(alecmerdler): Handle exceptions from `ffmpeg` (no audio stream, etc)...
+        subprocess.call(f"ffmpeg -i {video_file_path} -vn -acodec libmp3lame {extracted_audio_file_path}", shell=True)
+
+        return extracted_audio_file_path
+
     # TODO(alecmerdler): Do load testing to see how many Echos can be processed at once...
     def run(self, echo: Echo, db_url: str):
         self.idle = False
@@ -82,12 +95,17 @@ class SpeechRecognizer(LightningWork):
 
         print(f"Recognizing speech from: {echo.id}")
 
+        audio_file_path = echo.source_file_path
         self._drive.get(echo.source_file_path)
 
-        result = self.recognize(echo.source_file_path)
+        if echo.media_type.split("/")[0] == "video":
+            audio_file_path = self.convert_to_audio(echo.id, echo.source_file_path)
+
+        result = self.recognize(audio_file_path)
         echo.text = result.text
         self._db_client.put(echo)
 
         print(f"Finished recognizing speech from: {echo.id}")
 
+        os.remove(audio_file_path)
         self.idle = True
