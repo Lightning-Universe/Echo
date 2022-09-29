@@ -1,0 +1,5 @@
+resources
+build
+generated
+node_modules
+tsconfig.json

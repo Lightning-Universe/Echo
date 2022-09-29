@@ -1,15 +1,56 @@
+import { mount } from "@cypress/react";
 import { CssBaseline, ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { LightningStateContextProvider } from "hooks/useLightningState";
 import { theme } from "lightning-ui/src/design-system/theme";
-import Dashboard from "routes/dashboard/Dashboard";
+import { LightningState } from "types/lightning";
 
-const queryClient = new QueryClient();
+/**
+ * Custom mount function to use in place of `cy.mount()` in component tests to render
+ * identical to how components would be rendered in the real app.
+ *
+ * Usage:
+ * ```
+ * import mount from "tests/testMount";
+ * ```
+ */
+export default function testMount(element: JSX.Element) {
+  // Create a `queryClient` per test for it not to cache anything between tests
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Retries cause weird behavior in tests
+        retry: false,
+      },
+    },
+  });
 
-function App() {
-  return (
+  cy.fixture("lightning-state.json").then((fixture: LightningState) => {
+    cy.window().then(win => {
+      const subscribe = cy
+        .stub()
+        .as("LightningState.subscribe")
+        .callsFake((callback: (newState: LightningState) => void) => {
+          callback(fixture);
+
+          return () => null;
+        });
+
+      const next = cy
+        .stub()
+        .as("LightningState.next")
+        .callsFake((newState: LightningState) => null);
+
+      win.LightningState = {
+        subscribe,
+        next,
+      };
+    });
+  });
+
+  return mount(
     <MuiThemeProvider
       theme={createTheme({
         ...theme,
@@ -64,14 +105,11 @@ function App() {
         <LightningStateContextProvider>
           <BrowserRouter>
             <Routes>
-              {/* FIXME(alecmerdler): Make `react-router` work when running under the relative subpath (`/view/home`)... */}
-              <Route path={"*"} element={<Dashboard />} />
+              <Route path="*" element={element} />
             </Routes>
           </BrowserRouter>
         </LightningStateContextProvider>
       </QueryClientProvider>
-    </MuiThemeProvider>
+    </MuiThemeProvider>,
   );
 }
-
-export default App;

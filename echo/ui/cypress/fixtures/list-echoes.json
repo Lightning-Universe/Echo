@@ -1,0 +1,14 @@
+[
+  {
+    "id": "7a722581-4325-483b-a880-a57f1e587282",
+    "source_file_path": "fileserver/7a722581-4325-483b-a880-a57f1e587282",
+    "media_type": "audio/wav",
+    "text": " Somewhere over the rainbow."
+  },
+  {
+    "id": "8fd3abec-3fc7-43e9-8cb7-2deac62125df",
+    "source_file_path": "fileserver/8fd3abec-3fc7-43e9-8cb7-2deac62125df",
+    "media_type": "audio/wav",
+    "text": " The quick brown fox jumped over the lazy dog."
+  }
+]

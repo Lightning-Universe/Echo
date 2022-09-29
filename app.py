@@ -29,6 +29,11 @@ RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
 DUMMY_ECHO_ID = "dummy"
 
 
+class WebFrontend(LightningFlow):
+    def configure_layout(self):
+        return StaticWebFrontend(os.path.join(os.path.dirname(__file__), "echo", "ui", "build"))
+
+
 class EchoApp(LightningFlow):
     def __init__(self):
         super().__init__()
@@ -55,6 +60,7 @@ class EchoApp(LightningFlow):
         self.drive = Drive(id=SHARED_STORAGE_DRIVE_ID, allow_duplicates=True)
 
         # Initialize child components
+        self.web_frontend = WebFrontend()
         self.fileserver = FileServer(drive=self.drive, base_dir=os.path.join(os.path.dirname(__file__), "fileserver"))
         self.database = Database(models=[Echo])
         self.recognizer = LoadBalancer(
@@ -81,9 +87,6 @@ class EchoApp(LightningFlow):
 
         if self.schedule(self.recognizer_autoscaler_cron_schedule):
             self.recognizer.ensure_min_replicas()
-
-    def configure_layout(self):
-        return StaticWebFrontend(os.path.join(os.path.dirname(__file__), "echo", "ui", "build"))
 
     def create_echo(self, echo: Echo) -> Echo:
         if self._db_client is None:
@@ -128,6 +131,13 @@ class EchoApp(LightningFlow):
             {"get echo": GetEcho(method=self.get_echo)},
             {"delete echo": DeleteEcho(method=self.delete_echo)},
         ]
+
+    def configure_layout(self):
+        mode = os.environ.get("ECHO_MODE", "production")
+        dev_frontend_server = os.environ.get("ECHO_FRONTEND_SERVER", "http://localhost:3000")
+        content = self.web_frontend if mode == "production" else dev_frontend_server
+
+        return [{"name": "home", "content": content}]
 
 
 app = LightningApp(EchoApp())

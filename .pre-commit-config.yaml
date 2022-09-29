@@ -79,10 +79,10 @@ repos:
       - id: prettier
         exclude: |
           (?x)(
-              ^muse/ui/build|
+              ^echo/ui/build|
               ^README.md
           )
         additional_dependencies:
           - prettier@2.7.1
           - typescript@4.4.2
-          - prettier-plugin-organize-imports@3.1.0
+          - "@trivago/prettier-plugin-sort-imports@3.1.0"

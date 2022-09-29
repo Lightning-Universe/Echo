@@ -4,12 +4,21 @@
   "tabWidth": 2,
   "useTabs": false,
   "printWidth": 119,
-  "singleQuote": true,
+  "singleQuote": false,
   "semi": true,
   "endOfLine": "lf",
   "proseWrap": "always",
   "bracketSameLine": true,
   "quoteProps": "consistent",
   "trailingComma": "all",
-  "bracketSpacing": true
+  "bracketSpacing": true,
+  "importOrder": [
+    "^react$",
+    "<THIRD_PARTY_MODULES>",
+    "^(components|hooks|routes|utils|types|generated|resources|lightning-.*)",
+    "^tests",
+    "^[./]"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
 }
