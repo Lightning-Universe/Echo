@@ -1,18 +1,16 @@
 import os
-import time
-import uuid
 from typing import List
 
 from lightning import LightningApp, LightningFlow
 from lightning_app.frontend import StaticWebFrontend
 from lightning_app.storage import Drive
 from lightning_app.utilities.app_helpers import Logger
-from lightning_app.utilities.enum import WorkStageStatus
 
 from echo.commands.echo import CreateEcho, DeleteEcho, GetEcho, ListEchoes
 from echo.components.database.client import DatabaseClient
 from echo.components.database.server import Database
 from echo.components.fileserver import FileServer
+from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.components.recognizer import SpeechRecognizer
 from echo.constants import SHARED_STORAGE_DRIVE_ID
 from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig
@@ -22,6 +20,11 @@ logger = Logger(__name__)
 
 RECOGNIZER_ATTRIBUTE_PREFIX = "recognizer_"
 
+RECOGNIZER_MIN_REPLICAS_DEFAULT = 1
+RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
+RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
+RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
+
 
 class EchoApp(LightningFlow):
     def __init__(self):
@@ -29,10 +32,17 @@ class EchoApp(LightningFlow):
 
         # Read config from environment variables
         self.model_size = os.environ.get("ECHO_MODEL_SIZE", "base")
-        self.recognizer_pool_size = int(os.environ.get("ECHO_RECOGNIZER_POOL_SIZE", 3))
-        self.recognizer_min_replicas = int(os.environ.get("ECHO_RECOGNIZER_MIN_REPLICAS", 1))
-        self.recognizer_idle_seconds_before_scale_down = int(
-            os.environ.get("ECHO_RECOGNIZER_IDLE_SECONDS_BEFORE_SCALE_DOWN", 120)
+        self.recognizer_min_replicas = int(
+            os.environ.get("ECHO_RECOGNIZER_MIN_REPLICAS", RECOGNIZER_MIN_REPLICAS_DEFAULT)
+        )
+        self.recognizer_max_idle_seconds_per_work = int(
+            os.environ.get("ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK", RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT)
+        )
+        self.recognizer_max_pending_calls_per_work = int(
+            os.environ.get("ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK", RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT)
+        )
+        self.recognizer_autoscaler_cron_schedule = os.environ.get(
+            "ECHO_RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
         )
 
         # Need to wait for database to be ready before initializing client
@@ -44,12 +54,13 @@ class EchoApp(LightningFlow):
         # Initialize child components
         self.fileserver = FileServer(drive=self.drive, base_dir=os.path.join(os.path.dirname(__file__), "fileserver"))
         self.database = Database(models=[Echo])
-
-        self._running_recognizers = 0
-        self._recognizers: List[str] = []
-        for _ in range(self.recognizer_pool_size):
-            # NOTE: Using `setattr` to dynamically add Works to the Flow because `structures.List` isn't working
-            self.add_recognizer(SpeechRecognizer(model_size=self.model_size, drive=self.drive))
+        self.recognizer = LoadBalancer(
+            name="recognizer",
+            min_replicas=self.recognizer_min_replicas,
+            max_idle_seconds_per_work=self.recognizer_max_idle_seconds_per_work,
+            max_pending_calls_per_work=self.recognizer_max_pending_calls_per_work,
+            create_work=lambda: SpeechRecognizer(drive=self.drive, model_size=self.model_size),
+        )
 
     def run(self):
         # Run child components
@@ -60,35 +71,8 @@ class EchoApp(LightningFlow):
         if self.database.alive() and self._db_client is None:
             self._db_client = DatabaseClient(model=Echo, db_url=self.database.db_url)
 
-        # Watch recognizer pool and scale down if idle for too long to save on cloud compute costs
-        self.ensure_min_replicas()
-
-    def ensure_min_replicas(self):
-        # Only check to scale down if there are more than the minimum number of replicas
-        while self._running_recognizers > self.recognizer_min_replicas:
-            for recognizer in self.recognizer_pool:
-                status = recognizer.status
-                surpassed_idle_timeout = (
-                    status.timestamp + self.recognizer_idle_seconds_before_scale_down
-                ) < time.time()
-
-                if recognizer.idle and surpassed_idle_timeout:
-                    logger.info("Scaling down idle recognizer...")
-                    recognizer.stop()
-                    self._running_recognizers -= 1
-
-    def add_recognizer(self, recognizer: SpeechRecognizer):
-        """Adds a new recognizer Work to the Flow using `setattr` and a unique attribute name."""
-        work_attribute = f"{RECOGNIZER_ATTRIBUTE_PREFIX}{uuid.uuid4().hex}"
-        self._recognizers.append(work_attribute)
-        setattr(self, work_attribute, recognizer)
-
-        return work_attribute
-
-    @property
-    def recognizer_pool(self) -> List[SpeechRecognizer]:
-        """Returns the list of recognizer Works."""
-        return [getattr(self, attr) for attr in self._recognizers]
+        if self.schedule(self.recognizer_autoscaler_cron_schedule):
+            self.recognizer._ensure_min_replicas()
 
     def configure_layout(self):
         return StaticWebFrontend(os.path.join(os.path.dirname(__file__), "echo", "ui", "build"))
@@ -100,37 +84,8 @@ class EchoApp(LightningFlow):
         # Create Echo in the database
         self._db_client.post(echo)
 
-        # Lazily run the first recognizer only after the first Echo is created.
-        # This reduces the cost of running the app on cloud machines.
-        while True:
-            # Try to use an already running idle machine first
-            for recognizer in self.recognizer_pool:
-                if recognizer.idle:
-                    logger.info(f"Found idle recognizer, running on {recognizer.name}...")
-                    recognizer.run(echo, db_url=self.database.db_url)
-
-                    return echo
-
-            # Next, try running a new machine
-            for recognizer in self.recognizer_pool:
-                if recognizer.status.stage in [WorkStageStatus.STOPPED, WorkStageStatus.NOT_STARTED]:
-                    logger.info(f"No idle recognizers found, running on {recognizer.name}...")
-                    recognizer.run(echo, db_url=self.database.db_url)
-                    self._running_recognizers += 1
-
-                    return echo
-
-            # If all machines are busy, add to the last called Work's queue
-            recognizers_by_last_called: List[SpeechRecognizer] = sorted(
-                self.recognizer_pool, key=lambda r: r.last_called_timestamp
-            )
-
-            for recognizer in recognizers_by_last_called:
-                if recognizer.status.stage == WorkStageStatus.RUNNING:
-                    logger.info(f"No idle recognizers found, running on {recognizer.name}...")
-                    recognizer.run(echo, db_url=self.database.db_url)
-
-                    return echo
+        # Run speech recognition for the Echo
+        self.recognizer.run(echo, db_url=self.database.url)
 
     def list_echoes(self) -> List[Echo]:
         if self._db_client is None:
