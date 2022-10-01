@@ -11,7 +11,15 @@ from lightning.app.utilities.commands import ClientCommand
 
 from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig
 
-SUPPORTED_AUDIO_MEDIA_TYPES = ["audio/wav", "audio/mp3", "audio/m4a", "audio/ogg", "audio/flac"]
+SUPPORTED_AUDIO_MEDIA_TYPES = [
+    "audio/wav",
+    "audio/x-wav",
+    "audio/mp3",
+    "audio/m4a",
+    "audio/ogg",
+    "audio/flac",
+    "audio/mpeg",
+]
 SUPPORTED_VIDEO_MEDIA_TYPES = ["video/mp4"]
 
 
