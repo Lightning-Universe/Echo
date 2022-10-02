@@ -42,7 +42,7 @@ class EchoApp(LightningFlow):
         self.drive = Drive(id=SHARED_STORAGE_DRIVE_ID, allow_duplicates=True)
 
         # Initialize child components
-        self.fileserver = FileServer(drive=self.drive)
+        self.fileserver = FileServer(drive=self.drive, base_dir=os.path.join(os.path.dirname(__file__), "fileserver"))
         self.database = Database(models=[Echo])
 
         self._running_recognizers = 0
