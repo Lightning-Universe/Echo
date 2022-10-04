@@ -1,16 +1,18 @@
 import os
 import subprocess
-import time
 from dataclasses import dataclass
 
 import torch
 import whisper
 from lightning import BuildConfig, CloudCompute, LightningWork
 from lightning_app.storage import Drive
+from lightning_app.utilities.app_helpers import Logger
 
 from echo.components.database.client import DatabaseClient
 from echo.media.video import contains_audio
 from echo.models.echo import Echo
+
+logger = Logger(__name__)
 
 
 @dataclass
@@ -39,12 +41,10 @@ class SpeechRecognizer(LightningWork):
         # NOTE: Private attributes don't need to be serializable, so we use them to store complex objects
         self._drive = drive
         self._model = None
-        # FIXME(alecmerdler): Getting `unexpected keyword argument db_client` when trying to pass this as an argument...
-        self._db_client: DatabaseClient = None
+        # FIXME(alecmerdler): Getting error trying to pass a `DatabaseClient` in the `__init__()`...
+        self._db_client = None
 
         self.model_size = model_size
-        self.last_called_timestamp = 0
-        self.idle = False
 
     def recognize(self, audio_file_path: str):
         assert os.path.exists(audio_file_path), f"File does not exist: {audio_file_path}"
@@ -80,11 +80,8 @@ class SpeechRecognizer(LightningWork):
 
         return extracted_audio_file_path
 
-    # TODO(alecmerdler): Do load testing to see how many Echos can be processed at once...
     def run(self, echo: Echo, db_url: str):
-        self.idle = False
-        self.last_called_timestamp = time.time()
-
+        """Runs speech recognition and returns the text for a given Echo."""
         # Load model lazily at runtime, rather than in `__init__()`
         if self._model is None:
             self._model = whisper.load_model(self.model_size)
@@ -101,11 +98,13 @@ class SpeechRecognizer(LightningWork):
         if echo.media_type.split("/")[0] == "video":
             audio_file_path = self.convert_to_audio(echo.id, echo.source_file_path)
 
+        # Run the speech recognition model and save the result
         result = self.recognize(audio_file_path)
+
+        # FIXME(alecmerdler): It would be better separation of concerns to not use the DB client in this component...
         echo.text = result.text
         self._db_client.put(echo)
 
         print(f"Finished recognizing speech from: {echo.id}")
 
         os.remove(audio_file_path)
-        self.idle = True
