@@ -31,7 +31,12 @@ def _configure_session() -> Session:
 
 
 class DatabaseClient:
-    def __init__(self, model: Type[SQLModel], db_url: str):
+    def __init__(self, model: Type[SQLModel] = None, db_url: str = None):
+        if model is None:
+            raise ValueError("model must be provided")
+        if db_url is None:
+            raise ValueError("db_url must be provided")
+
         self.model = model
         self.db_url = db_url + "/general/"
         self.session = _configure_session()

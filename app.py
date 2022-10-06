@@ -25,6 +25,9 @@ RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
 
+# FIXME: Duplicating this from `recognizer.py` because `lightning run app` gives import error...
+DUMMY_ECHO_ID = "dummy"
+
 
 class EchoApp(LightningFlow):
     def __init__(self):
@@ -71,8 +74,13 @@ class EchoApp(LightningFlow):
         if self.database.alive() and self._db_client is None:
             self._db_client = DatabaseClient(model=Echo, db_url=self.database.db_url)
 
+            # NOTE: Calling `self.recognizer.run()` with a dummy Echo so that the cloud machine is created
+            self.recognizer.run(
+                Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text=""), db_url=self.database.url
+            )
+
         if self.schedule(self.recognizer_autoscaler_cron_schedule):
-            self.recognizer._ensure_min_replicas()
+            self.recognizer.ensure_min_replicas()
 
     def configure_layout(self):
         return StaticWebFrontend(os.path.join(os.path.dirname(__file__), "echo", "ui", "build"))
