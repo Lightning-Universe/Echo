@@ -68,11 +68,15 @@ class LoadBalancer(LightningFlow):
 
         return (work.status.timestamp + self.max_idle_seconds_per_work) < time.time()
 
-    def _ensure_min_replicas(self):
+    def ensure_min_replicas(self):
         """Checks for idle Works and stops them to save on cloud costs."""
         with self._work_pool_rw_lock:
             # Check for idle Works and stop them to save on cloud costs
             for work_name, work in self._work_pool.copy().items():
+                # FIXME(alecmerdler)
+                if len(self._work_pool.items()) <= self.min_replicas:
+                    return
+
                 if self._is_idle(work):
                     logger.info(f"Found idle Work ({work.name}), stopping it")
                     self._remove_work(work_name)

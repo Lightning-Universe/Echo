@@ -12,6 +12,10 @@ from echo.components.database.client import DatabaseClient
 from echo.media.video import contains_audio
 from echo.models.echo import Echo
 
+DEFAULT_MODEL_SIZE = "base"
+
+DUMMY_ECHO_ID = "dummy"
+
 logger = Logger(__name__)
 
 
@@ -24,7 +28,7 @@ class CustomBuildConfig(BuildConfig):
 class SpeechRecognizer(LightningWork):
     def __init__(
         self,
-        model_size="base",
+        model_size=DEFAULT_MODEL_SIZE,
         drive: Drive = None,
     ):
         super().__init__(
@@ -41,33 +45,13 @@ class SpeechRecognizer(LightningWork):
         # NOTE: Private attributes don't need to be serializable, so we use them to store complex objects
         self._drive = drive
         self._model = None
-        # FIXME(alecmerdler): Getting error trying to pass a `DatabaseClient` in the `__init__()`...
-        self._db_client = None
 
         self.model_size = model_size
 
     def recognize(self, audio_file_path: str):
         assert os.path.exists(audio_file_path), f"File does not exist: {audio_file_path}"
 
-        # Load audio and pad/trim it to fit 30 seconds
-        audio = whisper.load_audio(audio_file_path)
-        audio = whisper.pad_or_trim(audio)
-
-        # Make log-Mel spectrogram and move to the same device as the model
-        mel = whisper.log_mel_spectrogram(audio).to(self._model.device)
-
-        # Detect the spoken language
-        _, probs = self._model.detect_language(mel)
-        print(f"Detected language: {max(probs, key=probs.get)}")
-
-        # Define options for the recognizer
-        if torch.cuda.is_available():
-            options = whisper.DecodingOptions(task="translate")
-        else:
-            options = whisper.DecodingOptions(task="translate", fp16=False)
-
-        # Decode the audio
-        return whisper.decode(self._model, mel, options)
+        return self._model.transcribe(audio_file_path, fp16=torch.cuda.is_available())
 
     def convert_to_audio(self, echo_id: str, video_file_path: str):
         if not contains_audio(video_file_path):
@@ -86,11 +70,15 @@ class SpeechRecognizer(LightningWork):
         if self._model is None:
             self._model = whisper.load_model(self.model_size)
 
-        if self._db_client is None:
-            print("Initializing database client")
-            self._db_client = DatabaseClient(model=Echo, db_url=db_url)
+        logger.info("Initializing database client")
+        db_client = DatabaseClient(model=Echo, db_url=db_url)
 
-        print(f"Recognizing speech from: {echo.id}")
+        # NOTE: Dummy Echo is used to spin up the cloud machine on app startup so subsequent requests are faster
+        if echo.id == DUMMY_ECHO_ID:
+            logger.info("Skipping dummy Echo")
+            return
+
+        logger.info(f"Recognizing speech from: {echo.id}")
 
         audio_file_path = echo.source_file_path
         self._drive.get(echo.source_file_path)
@@ -102,9 +90,9 @@ class SpeechRecognizer(LightningWork):
         result = self.recognize(audio_file_path)
 
         # FIXME(alecmerdler): It would be better separation of concerns to not use the DB client in this component...
-        echo.text = result.text
-        self._db_client.put(echo)
+        echo.text = result["text"]
+        db_client.put(echo)
 
-        print(f"Finished recognizing speech from: {echo.id}")
+        logger.info(f"Finished recognizing speech from: {echo.id}")
 
         os.remove(audio_file_path)
