@@ -314,8 +314,8 @@
             }
           }
         },
-        "cls_name": "CreateEcho",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
+        "cls_name": "CreateEcho"
       }
     },
     "/command/list_echoes": {
@@ -333,8 +333,8 @@
             }
           }
         },
-        "cls_name": "ListEchoes",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
+        "cls_name": "ListEchoes"
       }
     },
     "/command/get_echo": {
@@ -372,8 +372,8 @@
             }
           }
         },
-        "cls_name": "GetEcho",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
+        "cls_name": "GetEcho"
       }
     },
     "/command/delete_echo": {
@@ -411,8 +411,8 @@
             }
           }
         },
-        "cls_name": "DeleteEcho",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
+        "cls_name": "DeleteEcho"
       }
     },
     "/api{full_path}": {
@@ -508,11 +508,11 @@
       },
       "DeleteEchoConfig": {
         "title": "DeleteEchoConfig",
-        "required": ["echo_id"],
+        "required": ["echoId"],
         "type": "object",
         "properties": {
-          "echo_id": {
-            "title": "Echo Id",
+          "echoId": {
+            "title": "Echoid",
             "type": "string"
           }
         },
@@ -520,35 +520,49 @@
       },
       "Echo": {
         "title": "Echo",
-        "required": ["id", "source_file_path", "media_type", "text"],
+        "required": ["id", "sourceFilePath", "mediaType"],
         "type": "object",
         "properties": {
           "id": {
             "title": "Id",
             "type": "string"
           },
-          "source_file_path": {
-            "title": "Source File Path",
+          "displayName": {
+            "title": "Displayname",
             "type": "string"
           },
-          "media_type": {
-            "title": "Media Type",
+          "sourceFilePath": {
+            "title": "Sourcefilepath",
+            "type": "string"
+          },
+          "mediaType": {
+            "title": "Mediatype",
             "type": "string"
           },
           "text": {
             "title": "Text",
             "type": "string"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedTranscriptionAt": {
+            "title": "Completedtranscriptionat",
+            "type": "string",
+            "format": "date-time"
           }
         },
         "description": "Represents an audio file that can be transcribed."
       },
       "GetEchoConfig": {
         "title": "GetEchoConfig",
-        "required": ["echo_id"],
+        "required": ["echoId"],
         "type": "object",
         "properties": {
-          "echo_id": {
-            "title": "Echo Id",
+          "echoId": {
+            "title": "Echoid",
             "type": "string"
           }
         },
