@@ -27,6 +27,7 @@ class CreateEcho(ClientCommand):
     def run(self):
         parser = ArgumentParser(description="Create an Echo")
         parser.add_argument("--file", type=str, default=None, required=True)
+        parser.add_argument("--display-name", type=str, default=None, required=True)
 
         args = parser.parse_args()
 
@@ -54,7 +55,12 @@ class CreateEcho(ClientCommand):
             print(f"Completed upload of audio file to fileserver: {base_url}/upload/{echo_id}")
 
         response = self.invoke_handler(
-            config=Echo(id=echo_id, source_file_path=f"fileserver/{echo_id}", media_type=media_type, text="")
+            config=Echo(
+                id=echo_id,
+                display_name=args.display_name,
+                source_file_path=f"fileserver/{echo_id}",
+                media_type=media_type,
+            )
         )
         print(response)
 

@@ -1,6 +1,7 @@
 import os
 import subprocess
 from dataclasses import dataclass
+from datetime import datetime
 
 import torch
 import whisper
@@ -90,6 +91,7 @@ class SpeechRecognizer(LightningWork):
         result = self.recognize(audio_file_path)
 
         # FIXME(alecmerdler): It would be better separation of concerns to not use the DB client in this component...
+        echo.completed_transcription_at = datetime.now()
         echo.text = result["text"]
         db_client.put(echo)
 

@@ -41,8 +41,9 @@ export default function useCreateEcho() {
 
       return echoClient.appClientCommand.createEchoCommandCreateEchoPost({
         id: echoID,
-        source_file_path: `fileserver/${echoID}`,
-        media_type: mediaType,
+        displayName: "My Echo",
+        sourceFilePath: `fileserver/${echoID}`,
+        mediaType: mediaType,
         text: "",
       });
     },

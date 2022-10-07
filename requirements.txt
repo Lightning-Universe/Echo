@@ -5,4 +5,5 @@ sqlmodel
 pydantic
 uvicorn
 fastapi
+humps
 git+https://github.com/openai/whisper.git

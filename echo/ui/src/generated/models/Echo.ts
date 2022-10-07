@@ -7,7 +7,10 @@
  */
 export type Echo = {
   id: string;
-  source_file_path: string;
-  media_type: string;
-  text: string;
+  displayName?: string;
+  sourceFilePath: string;
+  mediaType: string;
+  text?: string;
+  createdAt?: string;
+  completedTranscriptionAt?: string;
 };
