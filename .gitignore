@@ -492,5 +492,7 @@ github/
 fileserver/
 echo/ui/build/
 echo/ui/node_modules/
+echo/ui/.eslintcache
+echo/ui/yarn-error.log
 database.db
 tests/data

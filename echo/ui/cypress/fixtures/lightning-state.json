@@ -1,0 +1,9 @@
+{
+  "works": {
+    "fileserver": {
+      "vars": {
+        "_url": "http://localhost:1234"
+      }
+    }
+  }
+}

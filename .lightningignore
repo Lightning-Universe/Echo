@@ -490,8 +490,20 @@ github/
 .shared/
 .storage/
 fileserver/
-echo/ui/node_modules/
 database.db
 tests/data
+echo/ui/cypress/
+echo/ui/public/
+echo/ui/src/
+echo/ui/.prettierignore
+echo/ui/craco.config.js
+echo/ui/cypress.config.ts
+echo/ui/openapi.json
+echo/ui/package.json
+echo/ui/tsconfig.json
+echo/ui/yarn.lock
+echo/ui/node_modules/
+echo/ui/.eslintcache
+echo/ui/yarn-error.log
 
 .git
