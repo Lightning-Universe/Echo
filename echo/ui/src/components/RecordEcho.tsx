@@ -13,7 +13,8 @@ import SpeedDialIcon from "@mui/material/SpeedDialIcon";
 import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
 
-import useCreateEcho, { SupportedMediaType } from "hooks/useCreateEcho";
+import useCreateEcho from "hooks/useCreateEcho";
+import { SupportedMediaType } from "utils";
 
 enum EchoSourceType {
   recording = "recording",

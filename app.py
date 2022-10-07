@@ -13,7 +13,8 @@ from echo.components.fileserver import FileServer
 from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.components.recognizer import SpeechRecognizer
 from echo.constants import SHARED_STORAGE_DRIVE_ID
-from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig
+from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig, GetEchoResponse
+from echo.models.segment import Segment
 
 logger = Logger(__name__)
 
@@ -53,8 +54,9 @@ class EchoApp(LightningFlow):
             "ECHO_RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
         )
 
-        # Need to wait for database to be ready before initializing client
-        self._db_client = None
+        # Need to wait for database to be ready before initializing clients
+        self._echo_db_client = None
+        self._segment_db_client = None
 
         # Initialize shared storage for transferring audio files to recognizers
         self.drive = Drive(id=SHARED_STORAGE_DRIVE_ID, allow_duplicates=True)
@@ -77,8 +79,9 @@ class EchoApp(LightningFlow):
         self.database.run()
         self.fileserver.run()
 
-        if self.database.alive() and self._db_client is None:
-            self._db_client = DatabaseClient(model=Echo, db_url=self.database.db_url)
+        if self.database.alive() and self._echo_db_client is None:
+            self._echo_db_client = DatabaseClient(model=Echo, db_url=self.database.db_url)
+            self._segment_db_client = DatabaseClient(model=Segment, db_url=self.database.db_url)
 
             # NOTE: Calling `self.recognizer.run()` with a dummy Echo so that the cloud machine is created
             self.recognizer.run(
@@ -89,37 +92,41 @@ class EchoApp(LightningFlow):
             self.recognizer.ensure_min_replicas()
 
     def create_echo(self, echo: Echo) -> Echo:
-        if self._db_client is None:
+        if self._echo_db_client is None:
             raise RuntimeError("Database client not initialized!")
 
         # Create Echo in the database
-        self._db_client.post(echo)
+        self._echo_db_client.post(echo)
 
         # Run speech recognition for the Echo
         self.recognizer.run(echo, db_url=self.database.url)
 
     def list_echoes(self) -> List[Echo]:
-        if self._db_client is None:
+        if self._echo_db_client is None:
             raise RuntimeError("Database client not initialized!")
 
-        return self._db_client.get()
+        return self._echo_db_client.get()
 
-    def get_echo(self, config: GetEchoConfig) -> Echo:
-        if self._db_client is None:
+    def get_echo(self, config: GetEchoConfig) -> GetEchoResponse:
+        if self._echo_db_client is None:
             raise RuntimeError("Database client not initialized!")
 
-        echoes: List[Echo] = self._db_client.get()
+        echoes: List[Echo] = self._echo_db_client.get()
         for echo in echoes:
             if echo.id == config.echo_id:
-                return echo
+                segments = None
+                if config.include_segments:
+                    segments = self._segment_db_client.get()
+
+                return GetEchoResponse(echo=echo, segments=segments)
 
         raise ValueError(f"Echo with ID '{config.id}' not found!")
 
     def delete_echo(self, config: DeleteEchoConfig) -> None:
-        if self._db_client is None:
+        if self._echo_db_client is None:
             raise RuntimeError("Database client not initialized!")
 
-        return self._db_client.delete(config=Echo(id=config.echo_id))
+        return self._echo_db_client.delete(config=Echo(id=config.echo_id))
 
     def configure_api(self):
         return []

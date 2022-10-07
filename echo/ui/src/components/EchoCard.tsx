@@ -20,6 +20,7 @@ export default function EchoCard(props: Props) {
   return (
     <Card variant="outlined">
       <CardContent>
+        <Typography variant={"body1"}>{props.echo.displayName}</Typography>
         <Stack direction={"column"} spacing={1}>
           <Stack direction={"row"} alignItems={"center"} spacing={2}>
             {props.echo.text === "" && <CircularProgress variant="indeterminate" />}

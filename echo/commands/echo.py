@@ -75,10 +75,11 @@ class GetEcho(ClientCommand):
     def run(self):
         parser = ArgumentParser(description="Get an Echo")
         parser.add_argument("--id", type=str, default=None, required=True)
+        parser.add_argument("--include-segments", type=bool, default=False, required=False)
 
         args = parser.parse_args()
 
-        response = self.invoke_handler(config=GetEchoConfig(echo_id=args.id))
+        response = self.invoke_handler(config=GetEchoConfig(echo_id=args.id, include_segments=args.include_segments))
         print(json.dumps(response, indent=4))
 
 

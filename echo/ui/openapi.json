@@ -314,8 +314,8 @@
             }
           }
         },
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
-        "cls_name": "CreateEcho"
+        "cls_name": "CreateEcho",
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
       }
     },
     "/command/list_echoes": {
@@ -333,8 +333,8 @@
             }
           }
         },
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
-        "cls_name": "ListEchoes"
+        "cls_name": "ListEchoes",
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
       }
     },
     "/command/get_echo": {
@@ -372,8 +372,8 @@
             }
           }
         },
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
-        "cls_name": "GetEcho"
+        "cls_name": "GetEcho",
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
       }
     },
     "/command/delete_echo": {
@@ -411,8 +411,8 @@
             }
           }
         },
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
-        "cls_name": "DeleteEcho"
+        "cls_name": "DeleteEcho",
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
       }
     },
     "/api{full_path}": {
@@ -564,6 +564,11 @@
           "echoId": {
             "title": "Echoid",
             "type": "string"
+          },
+          "includeSegments": {
+            "title": "Includesegments",
+            "type": "boolean",
+            "default": false
           }
         },
         "description": "Used for the `get echo` command."
