@@ -1,14 +1,17 @@
-import { CssBaseline, ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material";
+import { CssBaseline, ThemeProvider as MuiThemeProvider, createTheme, useMediaQuery } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { LightningStateContextProvider } from "hooks/useLightningState";
 import { theme } from "lightning-ui/src/design-system/theme";
-import Dashboard from "routes/dashboard/Dashboard";
+import Dashboard from "routes/dashboard/Dasboard";
+import MobileDemo from "routes/mobile-demo/MobileDemo";
 
 const queryClient = new QueryClient();
 
 function App() {
+  const onMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   return (
     <MuiThemeProvider
       theme={createTheme({
@@ -64,8 +67,7 @@ function App() {
         <LightningStateContextProvider>
           <BrowserRouter>
             <Routes>
-              {/* FIXME(alecmerdler): Make `react-router` work when running under the relative subpath (`/view/home`)... */}
-              <Route path={"*"} element={<Dashboard />} />
+              <Route path={"*"} element={onMobile ? <MobileDemo /> : <Dashboard />} />
             </Routes>
           </BrowserRouter>
         </LightningStateContextProvider>

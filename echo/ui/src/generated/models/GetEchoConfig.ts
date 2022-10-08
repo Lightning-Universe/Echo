@@ -7,4 +7,5 @@
  */
 export type GetEchoConfig = {
   echoId: string;
+  includeSegments?: boolean;
 };

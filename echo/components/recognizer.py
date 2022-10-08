@@ -11,7 +11,7 @@ from lightning_app.utilities.app_helpers import Logger
 
 from echo.components.database.client import DatabaseClient
 from echo.media.video import contains_audio
-from echo.models.echo import Echo
+from echo.models.echo import Echo, Segment
 
 DEFAULT_MODEL_SIZE = "base"
 
@@ -72,7 +72,8 @@ class SpeechRecognizer(LightningWork):
             self._model = whisper.load_model(self.model_size)
 
         logger.info("Initializing database client")
-        db_client = DatabaseClient(model=Echo, db_url=db_url)
+        echo_db_client = DatabaseClient(model=Echo, db_url=db_url)
+        segment_db_client = DatabaseClient(model=Segment, db_url=db_url)
 
         # NOTE: Dummy Echo is used to spin up the cloud machine on app startup so subsequent requests are faster
         if echo.id == DUMMY_ECHO_ID:
@@ -93,7 +94,20 @@ class SpeechRecognizer(LightningWork):
         # FIXME(alecmerdler): It would be better separation of concerns to not use the DB client in this component...
         echo.completed_transcription_at = datetime.now()
         echo.text = result["text"]
-        db_client.put(echo)
+        echo_db_client.put(echo)
+
+        # FIXME(alecmerdler): Hopefully this doesn't make SQLite fall over...
+        for segment in result["segments"]:
+            segment_db_client.post(
+                Segment(
+                    id=f"{echo.id}-{segment['id']}",
+                    echo_id=echo.id,
+                    text=segment["text"],
+                    seek=segment["seek"],
+                    start=segment["start"],
+                    end=segment["end"],
+                )
+            )
 
         logger.info(f"Finished recognizing speech from: {echo.id}")
 

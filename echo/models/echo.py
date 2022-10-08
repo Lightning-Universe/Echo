@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
-from humps.camel import case
 from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 
-
-def to_camelcase(string):
-    return case(string)
+from echo.models.segment import Segment
+from echo.models.utils import to_camelcase
 
 
 class Echo(SQLModel, table=True):
@@ -30,6 +28,18 @@ class GetEchoConfig(BaseModel):
     """Used for the `get echo` command."""
 
     echo_id: str
+    include_segments = False
+
+    class Config:
+        alias_generator = to_camelcase
+        allow_population_by_field_name = True
+
+
+class GetEchoResponse(BaseModel):
+    """Used for the `get echo` command."""
+
+    echo: Echo
+    segments: Optional[List[Segment]] = None
 
     class Config:
         alias_generator = to_camelcase

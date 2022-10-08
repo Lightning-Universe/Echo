@@ -1,6 +1,7 @@
 import functools
 from typing import Type
 
+from humps.camel import case
 from sqlmodel import SQLModel, inspect
 
 
@@ -12,3 +13,7 @@ def get_primary_key(model_type: Type[SQLModel]) -> str:
         raise ValueError(f"The model {model_type.__name__} should have a single primary key field.")
 
     return primary_keys[0].name
+
+
+def to_camelcase(string):
+    return case(string)

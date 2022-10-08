@@ -1,22 +1,9 @@
 import { useMutation, useQueryClient } from "react-query";
 import { echoClient } from "services/echoClient";
 
+import { SupportedMediaType } from "utils";
+
 import { useLightningState } from "./useLightningState";
-
-/**
- * NOTE: Keep in sync with `echo/commands/echo.py`
- */
-export enum SupportedMediaType {
-  audioWAV = "audio/wav",
-  audioXWAV = "audio/x-wav",
-  audioMP3 = "audio/mp3",
-  audioMPEG = "audio/mpeg",
-  audioM4A = "audio/m4a",
-  audioOGG = "audio/ogg",
-  audioFLAC = "audio/flac",
-
-  videoMP4 = "video/mp4",
-}
 
 type CreateEchoArgs = {
   echoID: string;

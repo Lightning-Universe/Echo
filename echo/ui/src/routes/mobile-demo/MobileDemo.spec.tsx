@@ -4,15 +4,13 @@ import { Echo } from "generated";
 
 import mount from "tests/testMount";
 
-import Dashboard from "./Dashboard";
+import MobileDemo from "./MobileDemo";
 
-describe("Dashboard", () => {
+describe("MobileDemo", () => {
   let echoesList: Echo[];
 
   const createEchoMenu = `[data-cy="create-echo-speed-dial"]`;
   const createEchoMicrophone = `[data-cy="create-echo-microphone"]`;
-  const createEchoAudioUpload = `[data-cy="create-echo-audio-upload"]`;
-  const createEchoVideoUpload = `[data-cy="create-echo-video-upload"]`;
   const stopRecording = `[data-cy="stop-recording"]`;
   const discardSource = `[data-cy="discard-source"]`;
   const echoSourcePreview = `[data-cy="echo-source-preview"]`;
@@ -39,27 +37,27 @@ describe("Dashboard", () => {
   });
 
   it("subscribes to Lightning App state on mount", () => {
-    mount(<Dashboard />);
+    mount(<MobileDemo />);
 
     cy.get("@LightningState.subscribe").should("have.been.calledOnce");
   });
 
   it("fetches list of Echoes from API on mount", () => {
-    mount(<Dashboard />);
+    mount(<MobileDemo />);
 
     cy.get("@listEchoesCommandListEchoesPost").should("have.been.called");
   });
 
   describe("creating an Echo from device microphone", () => {
     it("displays option to create an Echo", () => {
-      mount(<Dashboard />);
+      mount(<MobileDemo />);
 
       cy.get(createEchoMenu).trigger("mouseover", { force: true });
       cy.get(createEchoMicrophone).should("be.visible");
     });
 
     it("displays button to stop the recording", () => {
-      mount(<Dashboard />);
+      mount(<MobileDemo />);
 
       cy.get(createEchoMenu).trigger("mouseover", { force: true });
       cy.get(createEchoMicrophone).click();
@@ -68,7 +66,7 @@ describe("Dashboard", () => {
     });
 
     it("displays controls after stopping the recording", () => {
-      mount(<Dashboard />);
+      mount(<MobileDemo />);
 
       cy.get(createEchoMenu).trigger("mouseover", { force: true });
       cy.get(createEchoMicrophone).click();
@@ -85,7 +83,7 @@ describe("Dashboard", () => {
         .as("createEchoCommandCreateEchoPost")
         .resolves(null);
 
-      mount(<Dashboard />);
+      mount(<MobileDemo />);
 
       cy.get(createEchoMenu).trigger("mouseover", { force: true });
       cy.get(createEchoMicrophone).click();
