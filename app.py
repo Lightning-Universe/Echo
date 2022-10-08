@@ -12,6 +12,7 @@ from echo.components.database.server import Database
 from echo.components.fileserver import FileServer
 from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.components.recognizer import SpeechRecognizer
+from echo.components.youtuber import YouTuber
 from echo.constants import SHARED_STORAGE_DRIVE_ID
 from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig, GetEchoResponse
 from echo.models.segment import Segment
@@ -61,9 +62,13 @@ class EchoApp(LightningFlow):
         # Initialize shared storage for transferring audio files to recognizers
         self.drive = Drive(id=SHARED_STORAGE_DRIVE_ID, allow_duplicates=True)
 
+        base_dir = os.path.join(os.path.dirname(__file__), "fileserver")
+
         # Initialize child components
         self.web_frontend = WebFrontend()
-        self.fileserver = FileServer(drive=self.drive, base_dir=os.path.join(os.path.dirname(__file__), "fileserver"))
+        # TODO(alecmerdler): Probably need to use `LoadBalancer` for `YouTuber` as well...
+        self.youtuber = YouTuber(drive=self.drive, base_dir=base_dir)
+        self.fileserver = FileServer(drive=self.drive, base_dir=base_dir)
         self.database = Database(models=[Echo])
         self.recognizer = LoadBalancer(
             name="recognizer",
@@ -98,6 +103,10 @@ class EchoApp(LightningFlow):
         # Create Echo in the database
         self._echo_db_client.post(echo)
 
+        # If source is YouTube, trigger async download of the video to the shared Drive
+        if echo.source_youtube_url is not None:
+            self.youtuber.run(echo.source_youtube_url, echo.id)
+
         # Run speech recognition for the Echo
         self.recognizer.run(echo, db_url=self.database.url)
 
@@ -120,7 +129,7 @@ class EchoApp(LightningFlow):
 
                 return GetEchoResponse(echo=echo, segments=segments)
 
-        raise ValueError(f"Echo with ID '{config.id}' not found!")
+        raise ValueError(f"Echo with ID '{config.echo_id}' not found!")
 
     def delete_echo(self, config: DeleteEchoConfig) -> None:
         if self._echo_db_client is None:

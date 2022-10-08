@@ -14,6 +14,7 @@ class Echo(SQLModel, table=True):
     id: str = Field(primary_key=True)
     display_name: Optional[str] = None
     source_file_path: str
+    source_youtube_url: Optional[str] = None
     media_type: str
     text: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)

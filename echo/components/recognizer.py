@@ -14,7 +14,7 @@ from echo.media.video import contains_audio
 from echo.models.echo import Echo, Segment
 
 DEFAULT_MODEL_SIZE = "base"
-
+DRIVE_SOURCE_FILE_TIMEOUT_SECONDS = 18000
 DUMMY_ECHO_ID = "dummy"
 
 logger = Logger(__name__)
@@ -83,7 +83,7 @@ class SpeechRecognizer(LightningWork):
         logger.info(f"Recognizing speech from: {echo.id}")
 
         audio_file_path = echo.source_file_path
-        self._drive.get(echo.source_file_path)
+        self._drive.get(echo.source_file_path, timeout=DRIVE_SOURCE_FILE_TIMEOUT_SECONDS)
 
         if echo.media_type.split("/")[0] == "video":
             audio_file_path = self.convert_to_audio(echo.id, echo.source_file_path)
@@ -96,7 +96,6 @@ class SpeechRecognizer(LightningWork):
         echo.text = result["text"]
         echo_db_client.put(echo)
 
-        # FIXME(alecmerdler): Hopefully this doesn't make SQLite fall over...
         for segment in result["segments"]:
             segment_db_client.post(
                 Segment(

@@ -24,28 +24,17 @@ SUPPORTED_VIDEO_MEDIA_TYPES = ["video/mp4"]
 
 
 class CreateEcho(ClientCommand):
-    def run(self):
-        parser = ArgumentParser(description="Create an Echo")
-        parser.add_argument("--file", type=str, default=None, required=True)
-        parser.add_argument("--display-name", type=str, default=None, required=True)
-
-        args = parser.parse_args()
-
-        if not os.path.exists(args.file):
-            raise ValueError(f"File does not exist: {args.file}")
+    def _upload_file(self, file: str, echo_id: str):
+        if not os.path.exists(file):
+            raise ValueError(f"File does not exist: {file}")
 
         base_url = self.state._state["works"]["fileserver"]["vars"]["_url"]
         if "localhost" in base_url:
             base_url = f"{APP_SERVER_HOST}:{APP_SERVER_PORT}"
 
         # Upload audio file to fileserver
-        with open(args.file, "rb") as f:
+        with open(file, "rb") as f:
             data = f.read()
-            echo_id = str(uuid4())
-
-            media_type = mimetypes.guess_type(args.file)[0]
-            if media_type not in SUPPORTED_AUDIO_MEDIA_TYPES and media_type not in SUPPORTED_VIDEO_MEDIA_TYPES:
-                raise ValueError(f"Unsupported media type: {media_type}")
 
             print(f"Uploading audio file to fileserver: {base_url}/upload/{echo_id}")
 
@@ -54,15 +43,49 @@ class CreateEcho(ClientCommand):
 
             print(f"Completed upload of audio file to fileserver: {base_url}/upload/{echo_id}")
 
-        response = self.invoke_handler(
-            config=Echo(
-                id=echo_id,
-                display_name=args.display_name,
-                source_file_path=f"fileserver/{echo_id}",
-                media_type=media_type,
+    def run(self):
+        parser = ArgumentParser(description="Create an Echo")
+        parser.add_argument("--file", type=str, default=None, required=False)
+        parser.add_argument("--youtube-url", type=str, default=None, required=False)
+        parser.add_argument("--display-name", type=str, default=None, required=True)
+
+        args = parser.parse_args()
+
+        if args.file is None and args.youtube_url is None:
+            raise ValueError("Either --file or --youtube-url must be specified!")
+
+        echo_id = str(uuid4())
+
+        if args.file is not None:
+            media_type = mimetypes.guess_type(args.file)[0]
+            if media_type not in SUPPORTED_AUDIO_MEDIA_TYPES and media_type not in SUPPORTED_VIDEO_MEDIA_TYPES:
+                raise ValueError(f"Unsupported media type: {media_type}")
+
+            self._upload_file(args.file, echo_id)
+
+            response = self.invoke_handler(
+                config=Echo(
+                    id=echo_id,
+                    display_name=args.display_name,
+                    source_file_path=f"fileserver/{echo_id}",
+                    source_youtube_url=None,
+                    media_type=media_type,
+                )
             )
-        )
-        print(response)
+            print(response)
+
+        elif args.youtube_url is not None:
+            # FIXME(alecmerdler): Validate `args.youtube_url`...
+            response = self.invoke_handler(
+                config=Echo(
+                    id=echo_id,
+                    display_name=args.display_name,
+                    source_file_path=f"fileserver/{echo_id}",
+                    source_youtube_url=args.youtube_url,
+                    media_type="video/mp4",
+                )
+            )
+            print(response)
 
 
 class ListEchoes(ClientCommand):
