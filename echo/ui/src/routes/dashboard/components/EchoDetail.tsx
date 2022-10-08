@@ -57,8 +57,12 @@ export default function EchoDetail({ echo }: Props) {
         {sourcePreview}
       </Stack>
       {currentSegment >= 0 && (
-        <Stack>
-          <Typography variant={"body2"}>"{data?.segments[currentSegment].text}"</Typography>
+        <Stack direction={"column"} minHeight={"100px"} height={"100px"}>
+          {currentSegment > 0 && (
+            <Typography variant={"body2"}>"{data?.segments[currentSegment - 1].text.trim()}"</Typography>
+          )}
+          <Typography variant={"body1"}>"{data?.segments[currentSegment].text.trim()}"</Typography>
+          {/* <Typography variant={"body2"}>"{data?.segments[currentSegment + 1].text.trim()}"</Typography> */}
         </Stack>
       )}
     </Stack>
