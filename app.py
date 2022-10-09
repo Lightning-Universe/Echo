@@ -27,8 +27,14 @@ RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
 
+YOUTUBER_MIN_REPLICAS_DEFAULT = 1
+YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
+YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
+YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
+
 # FIXME: Duplicating this from `recognizer.py` because `lightning run app` gives import error...
 DUMMY_ECHO_ID = "dummy"
+DUMMY_YOUTUBE_URL = "dummy"
 
 
 class WebFrontend(LightningFlow):
@@ -54,6 +60,16 @@ class EchoApp(LightningFlow):
         self.recognizer_autoscaler_cron_schedule = os.environ.get(
             "ECHO_RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
         )
+        self.youtuber_min_replicas = int(os.environ.get("ECHO_YOUTUBER_MIN_REPLICAS", YOUTUBER_MIN_REPLICAS_DEFAULT))
+        self.youtuber_max_idle_seconds_per_work = int(
+            os.environ.get("ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK", YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT)
+        )
+        self.youtuber_max_pending_calls_per_work = int(
+            os.environ.get("ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK", YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT)
+        )
+        self.youtuber_autoscaler_cron_schedule = os.environ.get(
+            "ECHO_YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
+        )
 
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
@@ -66,10 +82,15 @@ class EchoApp(LightningFlow):
 
         # Initialize child components
         self.web_frontend = WebFrontend()
-        # TODO(alecmerdler): Probably need to use `LoadBalancer` for `YouTuber` as well...
-        self.youtuber = YouTuber(drive=self.drive, base_dir=base_dir)
         self.fileserver = FileServer(drive=self.drive, base_dir=base_dir)
         self.database = Database(models=[Echo])
+        self.youtuber = LoadBalancer(
+            name="youtuber",
+            min_replicas=self.youtuber_min_replicas,
+            max_idle_seconds_per_work=self.youtuber_max_idle_seconds_per_work,
+            max_pending_calls_per_work=self.youtuber_max_pending_calls_per_work,
+            create_work=lambda: YouTuber(drive=self.drive, base_dir=base_dir),
+        )
         self.recognizer = LoadBalancer(
             name="recognizer",
             min_replicas=self.recognizer_min_replicas,
@@ -92,9 +113,14 @@ class EchoApp(LightningFlow):
             self.recognizer.run(
                 Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text=""), db_url=self.database.url
             )
+            # NOTE: Calling `self.youtuber.run()` with a dummy Echo so that the cloud machine is created
+            self.youtuber.run(youtube_url=DUMMY_YOUTUBE_URL, echo_id=DUMMY_ECHO_ID)
 
         if self.schedule(self.recognizer_autoscaler_cron_schedule):
             self.recognizer.ensure_min_replicas()
+
+        if self.schedule(self.youtuber_autoscaler_cron_schedule):
+            self.youtuber.ensure_min_replicas()
 
     def create_echo(self, echo: Echo) -> Echo:
         if self._echo_db_client is None:
@@ -105,7 +131,7 @@ class EchoApp(LightningFlow):
 
         # If source is YouTube, trigger async download of the video to the shared Drive
         if echo.source_youtube_url is not None:
-            self.youtuber.run(echo.source_youtube_url, echo.id)
+            self.youtuber.run(youtube_url=echo.source_youtube_url, echo_id=echo.id)
 
         # Run speech recognition for the Echo
         self.recognizer.run(echo, db_url=self.database.url)

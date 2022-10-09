@@ -2,7 +2,14 @@ import os
 
 from lightning import BuildConfig, CloudCompute, LightningWork
 from lightning_app.storage import Drive
+from lightning_app.utilities.app_helpers import Logger
 from pytube import YouTube
+
+logger = Logger(__name__)
+
+
+DUMMY_ECHO_ID = "dummy"
+DUMMY_YOUTUBE_URL = "dummy"
 
 
 class YouTuber(LightningWork):
@@ -25,6 +32,11 @@ class YouTuber(LightningWork):
 
         if not echo_id:
             raise ValueError("No Echo ID provided.")
+
+        # NOTE: Dummy Echo is used to spin up the cloud machine on app startup so subsequent requests are faster
+        if youtube_url == DUMMY_YOUTUBE_URL and echo_id == DUMMY_ECHO_ID:
+            logger.info("Skipping dummy Echo")
+            return
 
         YouTube(youtube_url).streams.filter(progressive=True, file_extension="mp4").order_by(
             "resolution"

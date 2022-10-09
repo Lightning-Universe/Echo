@@ -46,7 +46,7 @@ export default function EchoDetail({ echoID }: Props) {
 
   if (!echo || !echo.segments || echo.segments.length === 0) {
     return (
-      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2}>
+      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2} height={"100%"}>
         <CircularProgress />
         <Typography variant={"body2"}>Echo is processing, please wait</Typography>
       </Stack>
