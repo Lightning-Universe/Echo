@@ -11,7 +11,10 @@ type Segment = {
   text: string;
 };
 
-type GetEchoResponse = Echo & { segments: Segment[] };
+type GetEchoResponse = {
+  echo: Echo;
+  segments: Segment[];
+};
 
 export default function useGetEcho(echoId?: string, includeSegments?: boolean) {
   return useQuery<GetEchoResponse>(

@@ -67,6 +67,7 @@ function App() {
         <LightningStateContextProvider>
           <BrowserRouter>
             <Routes>
+              {/* NOTE: Framework does not support client-side routing yet, app is served under `/view/home` */}
               <Route path={"*"} element={onMobile ? <MobileDemo /> : <Dashboard />} />
             </Routes>
           </BrowserRouter>

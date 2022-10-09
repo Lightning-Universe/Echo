@@ -13,6 +13,12 @@ export enum SupportedMediaType {
   videoMP4 = "video/mp4",
 }
 
+export enum EchoSourceType {
+  recording = "recording",
+  file = "file",
+  youtube = "youtube",
+}
+
 export const isAudio = (mediaType: SupportedMediaType) => mediaType.split("/")[0] === "audio";
 export const isVideo = (mediaType: SupportedMediaType) => mediaType.split("/")[0] === "video";
 

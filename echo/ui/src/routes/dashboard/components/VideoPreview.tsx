@@ -13,8 +13,6 @@ export default function VideoPreview({ sourceFileURL, onCurrentTimeChange }: Pro
   useEffect(() => {
     if (videoPlayer.current) {
       const interval = setInterval(() => {
-        console.log(videoPlayer.current?.currentTime);
-
         if (videoPlayer.current?.currentTime) {
           onCurrentTimeChange(videoPlayer.current.currentTime!);
         }

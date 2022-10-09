@@ -535,6 +535,10 @@
             "title": "Sourcefilepath",
             "type": "string"
           },
+          "sourceYoutubeUrl": {
+            "title": "Sourceyoutubeurl",
+            "type": "string"
+          },
           "mediaType": {
             "title": "Mediatype",
             "type": "string"
