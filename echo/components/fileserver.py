@@ -58,7 +58,7 @@ class FileServer(LightningWork):
         self.uploaded_files[echo_id] = {"progress": (0, None), "done": False}
 
         # Save file to shared Drive
-        with open(self.get_filepath(echo_id), "wb") as out_file:
+        with open(self._get_filepath(echo_id), "wb") as out_file:
             content = file.read(self.chunk_size)
             while content:
                 size = out_file.write(content)
@@ -68,8 +68,8 @@ class FileServer(LightningWork):
                 )
                 content = file.read(self.chunk_size)
 
-        self.drive.put(self.get_drive_filepath(echo_id))
-        os.remove(self.get_filepath(echo_id))
+        self.drive.put(self._get_drive_filepath(echo_id))
+        os.remove(self._get_filepath(echo_id))
 
         full_size = self.uploaded_files[echo_id]["progress"][0]
         self.uploaded_files[echo_id] = {
@@ -86,29 +86,29 @@ class FileServer(LightningWork):
             "size": full_size,
             "drive_path": echo_id,
         }
-        with open(self.get_filepath(meta_file), "wt") as f:
+        with open(self._get_filepath(meta_file), "wt") as f:
             json.dump(meta, f)
 
-        self.drive.put(self.get_drive_filepath(meta_file))
-        os.remove(self.get_filepath(meta_file))
+        self.drive.put(self._get_drive_filepath(meta_file))
+        os.remove(self._get_filepath(meta_file))
 
         return meta
 
     def download_file(self, echo_id: str):
-        filepath = self.get_filepath(echo_id)
+        filepath = self._get_filepath(echo_id)
 
         if not os.path.exists(filepath):
-            self.drive.get(self.get_drive_filepath(echo_id))
+            self.drive.get(self._get_drive_filepath(echo_id))
 
         return send_file(filepath)
 
-    def get_drive_filepath(self, echo_id: str):
+    def _get_drive_filepath(self, echo_id: str):
         """Returns file path stored on the shared Drive."""
         # NOTE: Drive throws `SameFileError` when using absolute path in `put()`, so we use relative path.
         directory = self.base_dir.split(os.sep)[-1]
 
         return os.path.join(directory, echo_id)
 
-    def get_filepath(self, path: str):
+    def _get_filepath(self, path: str):
         """Returns file path stored on the file server."""
         return os.path.join(self.base_dir, path)

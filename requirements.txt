@@ -6,4 +6,5 @@ pydantic
 uvicorn
 fastapi
 humps
+pytube
 git+https://github.com/openai/whisper.git
