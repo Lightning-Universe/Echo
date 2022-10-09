@@ -1,9 +1,8 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
-import { Stack, Typography } from "@mui/material";
+import { CircularProgress, Stack, Typography } from "@mui/material";
 
-import { Echo } from "generated";
 import useGetEcho from "hooks/useGetEcho";
 import { useLightningState } from "hooks/useLightningState";
 import { SupportedMediaType, isVideo } from "utils";
@@ -12,24 +11,28 @@ import AudioPreview from "./AudioPreview";
 import VideoPreview from "./VideoPreview";
 
 type Props = {
-  echo?: Echo;
+  echoID?: string;
 };
 
-export default function EchoDetail({ echo }: Props) {
+export default function EchoDetail({ echoID }: Props) {
   const lightningState = useLightningState();
 
-  const { data } = useGetEcho(echo?.id ?? "", true);
+  const { data: echo } = useGetEcho(echoID ?? "", true);
 
   const [currentSegment, setCurrentSegment] = useState(0);
 
+  useEffect(() => {
+    setCurrentSegment(0);
+  }, [echoID]);
+
   const onCurrentTimeChange = useCallback(
     (currentTime: number) => {
-      const segment = data?.segments.find(segment => segment.start <= currentTime && segment.end >= currentTime);
+      const segment = echo?.segments.find(segment => segment.start <= currentTime && segment.end >= currentTime);
       if (segment) {
         setCurrentSegment(Number(segment.id.split("-")[segment.id.split("-").length - 1]));
       }
     },
-    [data?.segments],
+    [echo?.segments],
   );
 
   if (!echo) {
@@ -41,10 +44,19 @@ export default function EchoDetail({ echo }: Props) {
     );
   }
 
-  const fileserverURL = lightningState?.works["fileserver"]["vars"]["_url"];
-  const sourceFileURL = `${fileserverURL}/download/${echo.id}`;
+  if (!echo || !echo.segments || echo.segments.length === 0) {
+    return (
+      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2}>
+        <CircularProgress />
+        <Typography variant={"body2"}>Echo is processing, please wait</Typography>
+      </Stack>
+    );
+  }
 
-  const sourcePreview = isVideo(echo.mediaType as SupportedMediaType) ? (
+  const fileserverURL = lightningState?.works["fileserver"]["vars"]["_url"];
+  const sourceFileURL = `${fileserverURL}/download/${echo.echo.id}`;
+
+  const sourcePreview = isVideo(echo.echo.mediaType as SupportedMediaType) ? (
     <VideoPreview sourceFileURL={sourceFileURL} onCurrentTimeChange={onCurrentTimeChange} />
   ) : (
     <AudioPreview sourceFileURL={sourceFileURL} />
@@ -52,13 +64,13 @@ export default function EchoDetail({ echo }: Props) {
 
   return (
     <Stack direction={"column"}>
-      <Typography variant={"h6"}>{echo.displayName ?? echo.id}</Typography>
+      <Typography variant={"h6"}>{echo.echo.displayName ?? echo.echo.id}</Typography>
       <Stack direction={"row"} justifyContent={"center"}>
         {sourcePreview}
       </Stack>
-      {currentSegment >= 0 && (
+      {echo?.segments && echo.segments.length > 0 && currentSegment >= 0 && (
         <Stack>
-          <Typography variant={"body2"}>"{data?.segments[currentSegment].text}"</Typography>
+          <Typography variant={"body2"}>"{echo?.segments[currentSegment].text.trim()}"</Typography>
         </Stack>
       )}
     </Stack>

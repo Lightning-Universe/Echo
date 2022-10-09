@@ -5,27 +5,25 @@ import AudioFileIcon from "@mui/icons-material/AudioFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
-import SendIcon from "@mui/icons-material/Send";
 import StopIcon from "@mui/icons-material/Stop";
 import VideoFileIcon from "@mui/icons-material/VideoFile";
-import { CircularProgress, Fab, LinearProgress, SpeedDial, SpeedDialAction, Stack, Zoom } from "@mui/material";
+import YouTubeIcon from "@mui/icons-material/YouTube";
+import { Box, CircularProgress, Fab, SpeedDial, SpeedDialAction, Stack, Zoom } from "@mui/material";
 import SpeedDialIcon from "@mui/material/SpeedDialIcon";
 import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
 
 import useCreateEcho from "hooks/useCreateEcho";
-import { SupportedMediaType } from "utils";
-
-enum EchoSourceType {
-  recording = "recording",
-  file = "file",
-}
+import { EchoSourceType, SupportedMediaType } from "utils";
 
 type Props = {
+  echoDisplayName?: string;
+  sourceYouTubeURL?: string;
+  onSelectSourceType: (sourceType?: EchoSourceType) => void;
   onCreateEcho: (echoID: string) => void;
 };
 
-export default function RecordEcho({ onCreateEcho }: Props) {
+export default function RecordEcho({ onCreateEcho, onSelectSourceType, echoDisplayName, sourceYouTubeURL }: Props) {
   const [sourceType, setSourceType] = useState<EchoSourceType>();
   const [sourceBlob, setSourceBlob] = useState<Blob>();
   const [sourceBlobURL, setSourceBlobURL] = useState<string>();
@@ -50,14 +48,49 @@ export default function RecordEcho({ onCreateEcho }: Props) {
   });
 
   const createEcho = useCallback(async () => {
-    if (sourceBlob && sourceMediaType) {
-      const echoID = uuidv4();
+    const echoID = uuidv4();
 
-      createEchoMutation.mutate({ echoID, sourceFile: sourceBlob, mediaType: sourceMediaType });
-      clearBlobUrl();
-      onCreateEcho(echoID);
+    if (!sourceType || !sourceMediaType) {
+      return;
     }
-  }, [sourceBlob, clearBlobUrl, createEchoMutation, sourceMediaType, onCreateEcho]);
+
+    switch (sourceType) {
+      case EchoSourceType.youtube:
+        if (sourceYouTubeURL) {
+          createEchoMutation.mutate({
+            echoID,
+            displayName: echoDisplayName ?? echoID,
+            sourceYouTubeURL,
+            mediaType: sourceMediaType,
+          });
+        }
+
+        return onCreateEcho(echoID);
+      case EchoSourceType.recording:
+      case EchoSourceType.file:
+        if (sourceBlob) {
+          createEchoMutation.mutate({
+            echoID,
+            displayName: echoDisplayName ?? echoID,
+            sourceFile: sourceBlob,
+            mediaType: sourceMediaType,
+          });
+
+          clearBlobUrl();
+
+          return onCreateEcho(echoID);
+        }
+    }
+  }, [
+    sourceBlob,
+    clearBlobUrl,
+    createEchoMutation,
+    sourceMediaType,
+    onCreateEcho,
+    echoDisplayName,
+    sourceType,
+    sourceYouTubeURL,
+  ]);
 
   useEffect(() => {
     if (createEchoMutation.isSuccess) {
@@ -76,10 +109,15 @@ export default function RecordEcho({ onCreateEcho }: Props) {
 
   const selectRecording = useCallback(() => {
     setSourceType(EchoSourceType.recording);
-    // FIXME(alecmerdler): Make sure this is correct...
     setSourceMediaType(SupportedMediaType.audioWAV);
-    startRecording();
-  }, [startRecording]);
+    onSelectSourceType(EchoSourceType.recording);
+  }, [onSelectSourceType]);
+
+  const selectYouTubeURL = useCallback(() => {
+    setSourceType(EchoSourceType.youtube);
+    setSourceMediaType(SupportedMediaType.videoMP4);
+    onSelectSourceType(EchoSourceType.youtube);
+  }, [onSelectSourceType]);
 
   const selectSourceFile = useCallback(() => {
     if (sourceFileInput.current) {
@@ -87,106 +125,156 @@ export default function RecordEcho({ onCreateEcho }: Props) {
     }
   }, []);
 
-  const sourceFileSelected = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSourceType(EchoSourceType.file);
-      // FIXME(alecmerdler): More accurate media type detection...
-      setSourceMediaType(e.target.files[0].type as SupportedMediaType);
-      setSourceBlob(e.target.files[0]);
-      setSourceBlobURL(URL.createObjectURL(e.target.files[0]));
-    }
-  }, []);
+  const sourceFileSelected = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        setSourceType(EchoSourceType.file);
+        // FIXME(alecmerdler): More accurate media type detection...
+        setSourceMediaType(e.target.files[0].type as SupportedMediaType);
+        setSourceBlob(e.target.files[0]);
+        setSourceBlobURL(URL.createObjectURL(e.target.files[0]));
+
+        onSelectSourceType(EchoSourceType.file);
+      }
+    },
+    [onSelectSourceType],
+  );
 
   const discardSource = useCallback(() => {
     setSourceType(undefined);
     setSourceMediaType(undefined);
     setSourceBlob(undefined);
     setSourceBlobURL(undefined);
+    onSelectSourceType(undefined);
 
     if (mediaBlobUrl) {
       clearBlobUrl();
     }
-  }, [clearBlobUrl, mediaBlobUrl]);
+  }, [clearBlobUrl, mediaBlobUrl, onSelectSourceType]);
 
   const showSourceSelect = !createEchoMutation.isLoading && sourceType === undefined;
-  const showControls = !createEchoMutation.isLoading && sourceBlob !== undefined;
+  const showRecordingControls =
+    !createEchoMutation.isLoading && sourceType === EchoSourceType.recording && sourceBlob === undefined;
+  const showPlaybackControls =
+    !createEchoMutation.isLoading && (sourceType === EchoSourceType.youtube || sourceBlob !== undefined);
 
-  return (
-    <Stack direction={"column"}>
-      <Stack direction={"row"} justifyContent={"flex-end"}>
-        {createEchoMutation.isLoading && <CircularProgress variant={"indeterminate"} />}
-        {showSourceSelect && (
-          <SpeedDial
-            data-cy={"create-echo-speed-dial"}
-            ariaLabel="Create Echo"
-            direction={"left"}
-            hidden={recordingStatus !== "idle"}
-            icon={<SpeedDialIcon sx={{ color: "#FFFFFF" }} openIcon={<GraphicEqIcon htmlColor="#FFFFFF" />} />}>
-            <SpeedDialAction
-              data-cy={"create-echo-microphone"}
-              icon={<KeyboardVoiceIcon />}
-              onClick={selectRecording}
-              tooltipTitle={"Record Audio"}
-            />
-            <SpeedDialAction
-              data-cy={"create-echo-audio-upload"}
-              icon={<AudioFileIcon />}
-              onClick={selectSourceFile}
-              tooltipTitle={"Choose Audio File"}
-            />
-            <SpeedDialAction
-              data-cy={"create-echo-video-upload"}
-              icon={<VideoFileIcon />}
-              onClick={selectSourceFile}
-              tooltipTitle={"Choose Video File"}
-            />
-            {/* Hidden source file input */}
-            <input
-              ref={sourceFileInput}
-              hidden
-              type="file"
-              accept={Object.values(SupportedMediaType).join(",")}
-              onChange={sourceFileSelected}
-            />
-          </SpeedDial>
-        )}
-        {recordingStatus === "recording" && (
-          <Stack direction={"row"} alignItems={"center"} justifyContent={"space-between"} width={"100%"}>
-            {/* TODO(alecmerdler): Use this instead: https://mui.com/material-ui/react-progress/#interactive-integration */}
-            <LinearProgress sx={{ width: "70%" }} />
-            <Zoom
-              in={recordingStatus === "recording"}
-              style={{ transitionDelay: recordingStatus === "recording" ? "100ms" : "0ms" }}>
-              <Fab data-cy={"stop-recording"} color={"error"} onClick={stopRecording}>
-                <StopIcon htmlColor="#FFFFFF" />
-              </Fab>
-            </Zoom>
-          </Stack>
-        )}
-        {showControls && (
-          <Stack direction={"row"} alignItems={"center"} justifyContent={"space-between"} width={"100%"}>
-            <Zoom in={showControls} style={{ transitionDelay: showControls ? "100ms" : "0ms" }}>
-              <Fab data-cy={"discard-source"} color={"error"} onClick={discardSource}>
-                <DeleteIcon htmlColor="#FFFFFF" />
-              </Fab>
-            </Zoom>
-            <Zoom in={showControls} style={{ transitionDelay: showControls ? "100ms" : "0ms" }}>
-              <audio
-                data-cy={"echo-source-preview"}
-                src={sourceBlobURL}
-                controls
-                controlsList={"nodownload nofullscreen noremoteplayback noplaybackrate"}
-                style={{ width: "60%" }}
-              />
-            </Zoom>
-            <Zoom in={showControls} style={{ transitionDelay: showControls ? "100ms" : "0ms" }}>
-              <Fab data-cy={"create-echo-confirm"} color={"primary"} onClick={createEcho}>
-                <SendIcon htmlColor="#FFFFFF" />
-              </Fab>
-            </Zoom>
-          </Stack>
-        )}
+  if (showSourceSelect) {
+    return (
+      <Stack direction={"row"} justifyContent={"flex-end"} width={"100%"}>
+        <SpeedDial
+          data-cy={"create-echo-speed-dial"}
+          ariaLabel="Create Echo"
+          direction={"left"}
+          hidden={recordingStatus !== "idle"}
+          icon={<SpeedDialIcon sx={{ color: "#FFFFFF" }} openIcon={<GraphicEqIcon htmlColor="#FFFFFF" />} />}>
+          <SpeedDialAction
+            data-cy={"create-echo-microphone"}
+            icon={<KeyboardVoiceIcon />}
+            onClick={selectRecording}
+            tooltipTitle={"Record Audio"}
+          />
+          <SpeedDialAction
+            data-cy={"create-echo-youtube"}
+            icon={<YouTubeIcon />}
+            onClick={selectYouTubeURL}
+            tooltipTitle={"YouTube URL"}
+          />
+          <SpeedDialAction
+            data-cy={"create-echo-audio-upload"}
+            icon={<AudioFileIcon />}
+            onClick={selectSourceFile}
+            tooltipTitle={"Choose Audio File"}
+          />
+          <SpeedDialAction
+            data-cy={"create-echo-video-upload"}
+            icon={<VideoFileIcon />}
+            onClick={selectSourceFile}
+            tooltipTitle={"Choose Video File"}
+          />
+          {/* Hidden source file input */}
+          <input
+            ref={sourceFileInput}
+            hidden
+            type="file"
+            accept={Object.values(SupportedMediaType).join(",")}
+            onChange={sourceFileSelected}
+          />
+        </SpeedDial>
       </Stack>
-    </Stack>
-  );
+    );
+  }
+
+  if (showRecordingControls) {
+    return (
+      <Stack direction={"row"} width={"100%"} alignItems={"center"} spacing={2}>
+        <Zoom
+          in={sourceType === EchoSourceType.recording && sourceBlob === undefined}
+          style={{ transitionDelay: sourceType === EchoSourceType.recording ? "100ms" : "0ms" }}>
+          <Box sx={{ m: 1, position: "relative" }}>
+            <Fab
+              data-cy={"start-recording"}
+              disabled={sourceBlob !== undefined || recordingStatus === "recording"}
+              color={"primary"}
+              onClick={() => startRecording()}>
+              <KeyboardVoiceIcon htmlColor="#FFFFFF" />
+            </Fab>
+            {recordingStatus === "recording" && (
+              <CircularProgress size={68} sx={{ position: "absolute", top: -6, left: -6, zIndex: 1 }} />
+            )}
+          </Box>
+        </Zoom>
+        <Zoom
+          in={recordingStatus === "recording"}
+          style={{ transitionDelay: recordingStatus === "recording" ? "100ms" : "0ms" }}>
+          <Fab data-cy={"stop-recording"} color={"error"} onClick={stopRecording}>
+            <StopIcon htmlColor="#FFFFFF" />
+          </Fab>
+        </Zoom>
+      </Stack>
+    );
+  }
+
+  if (createEchoMutation.isLoading) {
+    return (
+      <Stack direction={"row"} width={"100%"}>
+        <CircularProgress variant={"indeterminate"} />
+      </Stack>
+    );
+  }
+
+  if (showPlaybackControls) {
+    return (
+      <Stack direction={"row"} alignItems={"center"} width={"100%"} spacing={2}>
+        {sourceType !== EchoSourceType.youtube && (
+          <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
+            <audio
+              data-cy={"echo-source-preview"}
+              src={sourceBlobURL}
+              controls
+              controlsList={"nodownload nofullscreen noremoteplayback noplaybackrate"}
+              style={{ width: "30%" }}
+            />
+          </Zoom>
+        )}
+        <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
+          <Fab data-cy={"discard-source"} color={"error"} onClick={discardSource}>
+            <DeleteIcon htmlColor="#FFFFFF" />
+          </Fab>
+        </Zoom>
+        <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
+          <Fab
+            data-cy={"create-echo-confirm"}
+            color={"primary"}
+            onClick={createEcho}
+            variant={"extended"}
+            sx={{ color: "#FFFFFF" }}
+            disabled={!echoDisplayName || (sourceType === EchoSourceType.youtube && sourceYouTubeURL === undefined)}>
+            Create
+          </Fab>
+        </Zoom>
+      </Stack>
+    );
+  }
+
+  return null;
 }

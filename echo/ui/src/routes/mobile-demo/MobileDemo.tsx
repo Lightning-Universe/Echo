@@ -42,7 +42,7 @@ export default function MobileDemo() {
         </Stack>
       )}
       {mostRecentEcho !== undefined && <EchoCard echo={mostRecentEcho} />}
-      <RecordEcho onCreateEcho={setMostRecentEchoID} />
+      <RecordEcho echoDisplayName={"Demo Echo"} onSelectSourceType={() => null} onCreateEcho={setMostRecentEchoID} />
     </Stack>
   );
 }

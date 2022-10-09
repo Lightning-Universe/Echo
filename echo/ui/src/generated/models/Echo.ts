@@ -9,6 +9,7 @@ export type Echo = {
   id: string;
   displayName?: string;
   sourceFilePath: string;
+  sourceYoutubeUrl?: string;
   mediaType: string;
   text?: string;
   createdAt?: string;
