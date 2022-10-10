@@ -7,6 +7,7 @@
  */
 export type Echo = {
   id: string;
+  userId?: string;
   displayName?: string;
   sourceFilePath: string;
   sourceYoutubeUrl?: string;

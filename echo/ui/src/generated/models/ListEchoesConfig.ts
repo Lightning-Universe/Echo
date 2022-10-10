@@ -3,9 +3,8 @@
 /* eslint-disable */
 
 /**
- * Used for the `delete echo` command.
+ * Used for the `list echoes` command.
  */
-export type DeleteEchoConfig = {
+export type ListEchoesConfig = {
   userId?: string;
-  echoId: string;
 };

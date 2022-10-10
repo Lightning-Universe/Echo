@@ -3,6 +3,7 @@ import { echoClient } from "services/echoClient";
 
 import { SupportedMediaType } from "utils";
 
+import useAuth from "./useAuth";
 import { useLightningState } from "./useLightningState";
 
 type CreateEchoArgs = {
@@ -16,6 +17,7 @@ type CreateEchoArgs = {
 export default function useCreateEcho() {
   const queryClient = useQueryClient();
   const lightningState = useLightningState();
+  const { userId } = useAuth();
 
   const fileserverURL = lightningState?.works["fileserver"]["vars"]["_url"];
 
@@ -32,6 +34,7 @@ export default function useCreateEcho() {
 
       return echoClient.appClientCommand.createEchoCommandCreateEchoPost({
         id: echoID,
+        userId,
         displayName,
         sourceYoutubeUrl: sourceYouTubeURL,
         sourceFilePath: `fileserver/${echoID}`,

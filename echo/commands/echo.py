@@ -9,7 +9,8 @@ import requests
 from lightning.app.core.constants import APP_SERVER_HOST, APP_SERVER_PORT
 from lightning.app.utilities.commands import ClientCommand
 
-from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig
+from echo.authn.session import CREDENTIALS_FILENAME
+from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig, ListEchoesConfig
 
 SUPPORTED_AUDIO_MEDIA_TYPES = [
     "audio/wav",
@@ -54,6 +55,7 @@ class CreateEcho(ClientCommand):
         if args.file is None and args.youtube_url is None:
             raise ValueError("Either --file or --youtube-url must be specified!")
 
+        user_id = get_user_id()
         echo_id = str(uuid4())
 
         if args.file is not None:
@@ -65,6 +67,7 @@ class CreateEcho(ClientCommand):
 
             response = self.invoke_handler(
                 config=Echo(
+                    user_id=user_id,
                     id=echo_id,
                     display_name=args.display_name,
                     source_file_path=f"fileserver/{echo_id}",
@@ -78,6 +81,7 @@ class CreateEcho(ClientCommand):
             # FIXME(alecmerdler): Validate `args.youtube_url`...
             response = self.invoke_handler(
                 config=Echo(
+                    user_id=user_id,
                     id=echo_id,
                     display_name=args.display_name,
                     source_file_path=f"fileserver/{echo_id}",
@@ -90,7 +94,9 @@ class CreateEcho(ClientCommand):
 
 class ListEchoes(ClientCommand):
     def run(self):
-        response: List[Echo] = self.invoke_handler()
+        user_id = get_user_id()
+
+        response: List[Echo] = self.invoke_handler(config=ListEchoesConfig(user_id=user_id))
         print(json.dumps(response, indent=4))
 
 
@@ -102,7 +108,11 @@ class GetEcho(ClientCommand):
 
         args = parser.parse_args()
 
-        response = self.invoke_handler(config=GetEchoConfig(echo_id=args.id, include_segments=args.include_segments))
+        user_id = get_user_id()
+
+        response = self.invoke_handler(
+            config=GetEchoConfig(user_id=user_id, echo_id=args.id, include_segments=args.include_segments)
+        )
         print(json.dumps(response, indent=4))
 
 
@@ -113,5 +123,16 @@ class DeleteEcho(ClientCommand):
 
         args = parser.parse_args()
 
-        response = self.invoke_handler(config=DeleteEchoConfig(echo_id=args.id))
+        user_id = get_user_id()
+
+        response = self.invoke_handler(config=DeleteEchoConfig(user_id=user_id, echo_id=args.id))
         print(json.dumps(response, indent=4))
+
+
+def get_user_id() -> str:
+    with open(CREDENTIALS_FILENAME) as f:
+        credentials = json.load(f)
+        if "userID" not in credentials:
+            raise ValueError("Not logged in! Run `lightning login` before running this command!")
+
+        return credentials["userID"]

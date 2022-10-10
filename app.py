@@ -1,4 +1,5 @@
 import os
+import uuid
 from typing import List
 
 from lightning import LightningApp, LightningFlow
@@ -6,6 +7,8 @@ from lightning_app.frontend import StaticWebFrontend
 from lightning_app.storage import Drive
 from lightning_app.utilities.app_helpers import Logger
 
+from echo.authn.session import DEFAULT_USER_ID
+from echo.commands.auth import Login
 from echo.commands.echo import CreateEcho, DeleteEcho, GetEcho, ListEchoes
 from echo.components.database.client import DatabaseClient
 from echo.components.database.server import Database
@@ -14,7 +17,14 @@ from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.components.recognizer import SpeechRecognizer
 from echo.components.youtuber import YouTuber
 from echo.constants import SHARED_STORAGE_DRIVE_ID
-from echo.models.echo import DeleteEchoConfig, Echo, GetEchoConfig, GetEchoResponse
+from echo.models.auth import LoginResponse
+from echo.models.echo import (
+    DeleteEchoConfig,
+    Echo,
+    GetEchoConfig,
+    GetEchoResponse,
+    ListEchoesConfig,
+)
 from echo.models.segment import Segment
 
 logger = Logger(__name__)
@@ -48,6 +58,7 @@ class EchoApp(LightningFlow):
 
         # Read config from environment variables
         self.model_size = os.environ.get("ECHO_MODEL_SIZE", "base")
+        self.enable_multi_tenancy = os.environ.get("ECHO_ENABLE_MULTI_TENANCY", "false").lower() == "true"
         self.recognizer_min_replicas = int(
             os.environ.get("ECHO_RECOGNIZER_MIN_REPLICAS", RECOGNIZER_MIN_REPLICAS_DEFAULT)
         )
@@ -136,18 +147,22 @@ class EchoApp(LightningFlow):
         # Run speech recognition for the Echo
         self.recognizer.run(echo, db_url=self.database.url)
 
-    def list_echoes(self) -> List[Echo]:
+    def list_echoes(self, config: ListEchoesConfig) -> List[Echo]:
         if self._echo_db_client is None:
             raise RuntimeError("Database client not initialized!")
 
-        return self._echo_db_client.get()
+        echoes: List[Echo] = self._echo_db_client.get()
+        echoes_for_user = filter(lambda echo: echo.user_id == config.user_id, echoes)
+
+        return list(echoes_for_user)
 
     def get_echo(self, config: GetEchoConfig) -> GetEchoResponse:
         if self._echo_db_client is None:
             raise RuntimeError("Database client not initialized!")
 
         echoes: List[Echo] = self._echo_db_client.get()
-        for echo in echoes:
+        echoes_for_user = filter(lambda echo: echo.user_id == config.user_id, echoes)
+        for echo in echoes_for_user:
             if echo.id == config.echo_id:
                 segments = None
                 if config.include_segments:
@@ -161,10 +176,16 @@ class EchoApp(LightningFlow):
         if self._echo_db_client is None:
             raise RuntimeError("Database client not initialized!")
 
-        return self._echo_db_client.delete(config=Echo(id=config.echo_id))
+        # FIXME(alecmerdler): Ensure cascade delete occurs for Echo -> Segment...
+        return self._echo_db_client.delete(config=Echo(id=config.echo_id, user_id=config.user_id))
 
-    def configure_api(self):
-        return []
+    def login(self):
+        if not self.enable_multi_tenancy:
+            return LoginResponse(user_id=DEFAULT_USER_ID)
+
+        new_user_id = str(uuid.uuid4())
+
+        return LoginResponse(user_id=new_user_id)
 
     def configure_commands(self):
         return [
@@ -172,6 +193,7 @@ class EchoApp(LightningFlow):
             {"list echoes": ListEchoes(method=self.list_echoes)},
             {"get echo": GetEcho(method=self.get_echo)},
             {"delete echo": DeleteEcho(method=self.delete_echo)},
+            {"login": Login(method=self.login)},
         ]
 
     def configure_layout(self):

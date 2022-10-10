@@ -8,6 +8,7 @@ import type { CancelablePromise } from "../core/CancelablePromise";
 import type { DeleteEchoConfig } from "../models/DeleteEchoConfig";
 import type { Echo } from "../models/Echo";
 import type { GetEchoConfig } from "../models/GetEchoConfig";
+import type { ListEchoesConfig } from "../models/ListEchoesConfig";
 
 export class AppClientCommandService {
   constructor(public readonly httpRequest: BaseHttpRequest) {}
@@ -32,13 +33,19 @@ export class AppClientCommandService {
 
   /**
    * List Echoes
+   * @param requestBody
    * @returns any Successful Response
    * @throws ApiError
    */
-  public listEchoesCommandListEchoesPost(): CancelablePromise<any> {
+  public listEchoesCommandListEchoesPost(requestBody: ListEchoesConfig): CancelablePromise<any> {
     return this.httpRequest.request({
       method: "POST",
       url: "/command/list_echoes",
+      body: requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: `Validation Error`,
+      },
     });
   }
 
@@ -75,6 +82,18 @@ export class AppClientCommandService {
       errors: {
         422: `Validation Error`,
       },
+    });
+  }
+
+  /**
+   * Login
+   * @returns any Successful Response
+   * @throws ApiError
+   */
+  public loginCommandLoginPost(): CancelablePromise<any> {
+    return this.httpRequest.request({
+      method: "POST",
+      url: "/command/login",
     });
   }
 }
