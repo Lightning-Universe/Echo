@@ -14,6 +14,7 @@ export type { DeleteEchoConfig } from "./models/DeleteEchoConfig";
 export type { Echo } from "./models/Echo";
 export type { GetEchoConfig } from "./models/GetEchoConfig";
 export type { HTTPValidationError } from "./models/HTTPValidationError";
+export type { ListEchoesConfig } from "./models/ListEchoesConfig";
 export type { ValidationError } from "./models/ValidationError";
 
 export { AppClientCommandService } from "./services/AppClientCommandService";

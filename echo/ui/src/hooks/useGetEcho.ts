@@ -3,6 +3,8 @@ import { echoClient } from "services/echoClient";
 
 import { Echo } from "generated";
 
+import useAuth from "./useAuth";
+
 type Segment = {
   id: string;
   seek: number;
@@ -17,9 +19,11 @@ type GetEchoResponse = {
 };
 
 export default function useGetEcho(echoId?: string, includeSegments?: boolean) {
+  const { userId } = useAuth();
+
   return useQuery<GetEchoResponse>(
     "getEcho",
-    () => echoClient.appClientCommand.getEchoCommandGetEchoPost({ echoId: echoId!, includeSegments }),
+    () => echoClient.appClientCommand.getEchoCommandGetEchoPost({ userId, echoId: echoId!, includeSegments }),
     { enabled: !!echoId && !!includeSegments },
   );
 }

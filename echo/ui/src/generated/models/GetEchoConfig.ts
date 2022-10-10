@@ -6,6 +6,7 @@
  * Used for the `get echo` command.
  */
 export type GetEchoConfig = {
+  userId?: string;
   echoId: string;
   includeSegments?: boolean;
 };

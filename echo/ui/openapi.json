@@ -323,12 +323,32 @@
         "tags": ["app_client_command"],
         "summary": "List Echoes",
         "operationId": "list_echoes_command_list_echoes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListEchoesConfig"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -413,6 +433,25 @@
         },
         "cls_name": "DeleteEcho",
         "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+      }
+    },
+    "/command/login": {
+      "post": {
+        "tags": ["app_client_command"],
+        "summary": "Login",
+        "operationId": "login_command_login_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "cls_name": "Login",
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/auth.py"
       }
     },
     "/api{full_path}": {
@@ -511,6 +550,10 @@
         "required": ["echoId"],
         "type": "object",
         "properties": {
+          "userId": {
+            "title": "Userid",
+            "type": "string"
+          },
           "echoId": {
             "title": "Echoid",
             "type": "string"
@@ -526,6 +569,11 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "userId": {
+            "title": "Userid",
+            "type": "string",
+            "default": "demo-user"
           },
           "displayName": {
             "title": "Displayname",
@@ -565,6 +613,10 @@
         "required": ["echoId"],
         "type": "object",
         "properties": {
+          "userId": {
+            "title": "Userid",
+            "type": "string"
+          },
           "echoId": {
             "title": "Echoid",
             "type": "string"
@@ -589,6 +641,17 @@
             }
           }
         }
+      },
+      "ListEchoesConfig": {
+        "title": "ListEchoesConfig",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "title": "Userid",
+            "type": "string"
+          }
+        },
+        "description": "Used for the `list echoes` command."
       },
       "ValidationError": {
         "title": "ValidationError",

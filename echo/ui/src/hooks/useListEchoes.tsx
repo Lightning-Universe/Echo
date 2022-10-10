@@ -3,8 +3,17 @@ import { echoClient } from "services/echoClient";
 
 import { Echo } from "generated";
 
+import useAuth from "./useAuth";
+
 export default function useListEchoes() {
-  return useQuery<Echo[]>("listEchoes", () => echoClient.appClientCommand.listEchoesCommandListEchoesPost(), {
-    refetchInterval: 1000,
-  });
+  const { userId } = useAuth();
+
+  return useQuery<Echo[]>(
+    "listEchoes",
+    () => echoClient.appClientCommand.listEchoesCommandListEchoesPost({ userId }),
+    {
+      enabled: !!userId,
+      refetchInterval: 1000,
+    },
+  );
 }
