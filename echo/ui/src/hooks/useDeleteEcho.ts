@@ -12,6 +12,7 @@ export default function useDeleteEcho() {
     {
       onSuccess: () => {
         queryClient.invalidateQueries("listEchoes");
+        queryClient.invalidateQueries(["getEcho"]);
       },
     },
   );

@@ -8,19 +8,20 @@ import NavBar from "./components/NavBar";
 
 export default function Dashboard() {
   const [selectedEchoID, setSelectedEchoID] = useState<string>();
+  const [creatingEcho, setCreatingEcho] = useState(false);
 
   return (
     <Stack height={"85vh"} direction={"column"}>
       <NavBar />
       <Stack height={"100%"} direction={"row"} padding={4}>
-        {selectedEchoID && (
-          <Paper elevation={4} sx={{ height: "100%", flexGrow: 1, marginX: 2, padding: 2, overflowY: "hidden" }}>
+        {!creatingEcho && (
+          <Paper elevation={4} sx={{ height: "100%", width: "50%", marginX: 2, overflowY: "hidden" }}>
             <EchoDetail echoID={selectedEchoID} />
           </Paper>
         )}
-        <Paper elevation={4} sx={{ height: "100%", flexGrow: 1, marginX: 2, padding: 2 }}>
+        <Paper elevation={4} sx={{ height: "100%", width: creatingEcho ? "100%" : "50%", marginX: 2, padding: 2 }}>
           <Stack direction={"column"} justifyContent={"space-between"} height={"100%"}>
-            <EchoesList onSelectEchoID={setSelectedEchoID} />
+            <EchoesList onSelectEchoID={setSelectedEchoID} onToggleCreatingEcho={setCreatingEcho} />
           </Stack>
         </Paper>
       </Stack>

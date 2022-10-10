@@ -1,14 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import DownloadIcon from "@mui/icons-material/Download";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import { Box, CircularProgress, IconButton, Radio, Stack, Typography } from "@mui/material";
 
 import RecordEcho from "components/RecordEcho";
-import { Echo } from "generated";
 import useDeleteEcho from "hooks/useDeleteEcho";
-import useDownloadEcho from "hooks/useDownloadEcho";
 import useListEchoes from "hooks/useListEchoes";
 import { Table } from "lightning-ui/src/design-system/components";
 import { EchoSourceType } from "utils";
@@ -19,23 +16,23 @@ const header = ["", "Name", "Type", "Created At", "Completed At", "Actions"];
 
 type Props = {
   onSelectEchoID: (id?: string) => void;
+  onToggleCreatingEcho: (creating: boolean) => void;
 };
 
-export default function EchoesList({ onSelectEchoID }: Props) {
+export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho }: Props) {
   const { isLoading, data: echoes } = useListEchoes();
   const deleteEchoMutation = useDeleteEcho();
-  const downloadEcho = useDownloadEcho();
 
-  const [selectedEcho, setSelectedEcho] = useState<Echo>();
+  const [selectedEchoID, setSelectedEchoID] = useState<string>();
   const [createEchoWithSourceType, setCreateEchoWithSourceType] = useState<EchoSourceType>();
   const [createEchoWithDisplayName, setCreateEchoWithDisplayName] = useState<string>();
   const [sourceYouTubeURL, setSourceYouTubeURL] = useState<string>();
 
   const selectEcho = useCallback(
-    (echo?: Echo) => {
-      if (echo) {
-        setSelectedEcho(echo);
-        onSelectEchoID(echo.id);
+    (echoID?: string) => {
+      if (echoID) {
+        onSelectEchoID(echoID);
+        setSelectedEchoID(echoID);
       }
     },
     [onSelectEchoID],
@@ -43,29 +40,32 @@ export default function EchoesList({ onSelectEchoID }: Props) {
 
   const onSelectSourceType = useCallback(
     (sourceType?: EchoSourceType) => {
+      onToggleCreatingEcho(true);
       selectEcho(undefined);
       onSelectEchoID(undefined);
+      setSelectedEchoID(undefined);
       setCreateEchoWithSourceType(sourceType);
     },
-    [selectEcho, onSelectEchoID],
+    [selectEcho, onSelectEchoID, onToggleCreatingEcho, setSelectedEchoID],
   );
 
   const onCreateEcho = useCallback(
     (echoID: string) => {
+      onToggleCreatingEcho(false);
       setCreateEchoWithSourceType(undefined);
       setSourceYouTubeURL(undefined);
-      setSelectedEcho(undefined);
+      setSelectedEchoID(undefined);
       onSelectEchoID(undefined);
     },
-    [onSelectEchoID],
+    [onSelectEchoID, onToggleCreatingEcho],
   );
 
   const rows = useMemo(
     () =>
       (echoes ?? []).map(echo => [
         <Radio
-          checked={selectedEcho?.id === echo.id}
-          onChange={() => selectEcho(echo)}
+          checked={selectedEchoID === echo.id}
+          onChange={() => selectEcho(echo.id)}
           value={echo}
           size={"small"}
           sx={{ padding: 0 }}
@@ -75,15 +75,12 @@ export default function EchoesList({ onSelectEchoID }: Props) {
         <Typography variant={"body2"}>{echo.createdAt}</Typography>,
         <Typography variant={"body2"}>{echo.completedTranscriptionAt ?? "-"}</Typography>,
         <Stack direction={"row"}>
-          <IconButton aria-label="Delete" disabled={echo.text === ""} onClick={() => downloadEcho(echo)}>
-            <DownloadIcon fontSize={"small"} />
-          </IconButton>
           <IconButton aria-label="Delete" onClick={() => deleteEchoMutation.mutate(echo.id)}>
             <DeleteIcon fontSize={"small"} />
           </IconButton>
         </Stack>,
       ]),
-    [echoes, selectedEcho, selectEcho, downloadEcho, deleteEchoMutation],
+    [echoes, selectedEchoID, selectEcho, deleteEchoMutation],
   );
 
   if (isLoading) {
@@ -129,6 +126,7 @@ export default function EchoesList({ onSelectEchoID }: Props) {
           onSelectSourceType={onSelectSourceType}
           onCreateEcho={onCreateEcho}
           sourceYouTubeURL={sourceYouTubeURL}
+          onCancel={() => onToggleCreatingEcho(false)}
         />
       </Stack>
     </Stack>
