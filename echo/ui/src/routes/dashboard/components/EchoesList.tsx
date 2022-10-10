@@ -1,11 +1,14 @@
 import { useCallback, useMemo, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
+import DownloadIcon from "@mui/icons-material/Download";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import { Box, CircularProgress, IconButton, Radio, Stack, Typography } from "@mui/material";
 
 import RecordEcho from "components/RecordEcho";
 import { Echo } from "generated";
+import useDeleteEcho from "hooks/useDeleteEcho";
+import useDownloadEcho from "hooks/useDownloadEcho";
 import useListEchoes from "hooks/useListEchoes";
 import { Table } from "lightning-ui/src/design-system/components";
 import { EchoSourceType } from "utils";
@@ -20,6 +23,8 @@ type Props = {
 
 export default function EchoesList({ onSelectEchoID }: Props) {
   const { isLoading, data: echoes } = useListEchoes();
+  const deleteEchoMutation = useDeleteEcho();
+  const downloadEcho = useDownloadEcho();
 
   const [selectedEcho, setSelectedEcho] = useState<Echo>();
   const [createEchoWithSourceType, setCreateEchoWithSourceType] = useState<EchoSourceType>();
@@ -70,13 +75,15 @@ export default function EchoesList({ onSelectEchoID }: Props) {
         <Typography variant={"body2"}>{echo.createdAt}</Typography>,
         <Typography variant={"body2"}>{echo.completedTranscriptionAt ?? "-"}</Typography>,
         <Stack direction={"row"}>
-          {/* TODO(alecmerdler): Add `useDeleteEcho()` hook... */}
-          <IconButton disabled aria-label="Delete">
+          <IconButton aria-label="Delete" disabled={echo.text === ""} onClick={() => downloadEcho(echo)}>
+            <DownloadIcon fontSize={"small"} />
+          </IconButton>
+          <IconButton aria-label="Delete" onClick={() => deleteEchoMutation.mutate(echo.id)}>
             <DeleteIcon fontSize={"small"} />
           </IconButton>
         </Stack>,
       ]),
-    [echoes, selectedEcho, selectEcho],
+    [echoes, selectedEcho, selectEcho, downloadEcho, deleteEchoMutation],
   );
 
   if (isLoading) {
