@@ -172,7 +172,6 @@ class EchoApp(LightningFlow):
                         # The ID of the Segment is in the format `{echo_id}-{index}`
                         list(segments_for_echo),
                         key=lambda segment: int(segment.id.replace(f"{echo.id}-", "")),
-                        reverse=True,
                     )
 
                 return GetEchoResponse(echo=echo, segments=segments_ordered_desc)
