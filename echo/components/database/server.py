@@ -12,6 +12,8 @@ from uvicorn import run
 from echo.models.general import GeneralModel
 from echo.models.utils import get_primary_key
 
+DEFAULT_NUM_WORKERS = 1
+
 logger = Logger(__name__)
 
 engine = None
@@ -81,25 +83,29 @@ class Database(LightningWork):
     def __init__(
         self,
         db_file_name: str = "database.db",
-        debug: bool = False,
         models: Optional[List[Type[SQLModel]]] = None,
+        debug=False,
+        num_workers=DEFAULT_NUM_WORKERS,
     ):
         super().__init__(parallel=True, cloud_build_config=BuildConfig(["sqlmodel"]))
+
         self.db_file_name = Path(db_file_name)
-        self.debug = debug
+        self.num_workers = num_workers
+
+        self._debug = debug
         self._models = models
 
     def run(self):
         app = FastAPI()
 
-        create_engine(self.db_file_name, self._models, self.debug)
+        create_engine(self.db_file_name, self._models, self._debug)
 
         app.get("/general/")(general_get)
         app.post("/general/")(general_post)
         app.put("/general/")(general_put)
         app.delete("/general/")(general_delete)
 
-        run(app, host=self.host, port=self.port, log_level="error")
+        run(app, host=self.host, port=self.port, log_level="error", workers=self.num_workers)
 
     def alive(self):
         """Hack: Returns whether the server is alive."""

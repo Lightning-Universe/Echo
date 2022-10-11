@@ -5,27 +5,20 @@ from flask import Flask, request, send_file
 from flask_cors import CORS
 from lightning import BuildConfig, LightningWork
 from lightning_app.storage import Drive
+from uvicorn import run
 from werkzeug.datastructures import FileStorage
+
+DEFAULT_NUM_WORKERS = 1
 
 
 class FileServer(LightningWork):
-    def __init__(self, drive: Drive, base_dir: str = None, chunk_size=10240, **kwargs):
-        """This component uploads, downloads files to your application.
-
-        Arguments:
-            drive: The drive can share data inside your application.
-            base_dir: The local directory where the data will be stored.
-            chunk_size: The quantity of bytes to download/upload at once.
-        """
-        super().__init__(
-            cloud_build_config=BuildConfig(["flask", "flask-cors"]),
-            parallel=True,
-            **kwargs,
-        )
+    def __init__(self, drive: Drive, base_dir: str = None, num_workers=DEFAULT_NUM_WORKERS, chunk_size=10240):
+        super().__init__(cloud_build_config=BuildConfig(["flask", "flask-cors"]), parallel=True)
 
         self.drive = drive
         self.base_dir = base_dir
         self.chunk_size = chunk_size
+        self.num_workers = num_workers
 
         os.makedirs(self.base_dir, exist_ok=True)
 
@@ -47,7 +40,7 @@ class FileServer(LightningWork):
             """Download a file for a specific Echo."""
             return self.download_file(echo_id)
 
-        flask_app.run(host=self.host, port=self.port, load_dotenv=False)
+        run(app=flask_app, host=self.host, port=self.port, log_level="info", workers=self.num_workers)
 
     def alive(self):
         """Hack: Returns whether the server is alive."""

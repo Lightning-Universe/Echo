@@ -42,6 +42,10 @@ YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
 
+FILESERVER_NUM_WORKERS_DEFAULT = 1
+
+DATABASE_NUM_WORKERS_DEFAULT = 1
+
 # FIXME: Duplicating this from `recognizer.py` because `lightning run app` gives import error...
 DUMMY_ECHO_ID = "dummy"
 DUMMY_YOUTUBE_URL = "dummy"
@@ -81,6 +85,8 @@ class EchoApp(LightningFlow):
         self.youtuber_autoscaler_cron_schedule = os.environ.get(
             "ECHO_YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
         )
+        self.fileserver_num_workers = int(os.environ.get("ECHO_FILESERVER_NUM_WORKERS", FILESERVER_NUM_WORKERS_DEFAULT))
+        self.database_num_workers = int(os.environ.get("ECHO_DATABASE_NUM_WORKERS", DATABASE_NUM_WORKERS_DEFAULT))
 
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
@@ -93,8 +99,8 @@ class EchoApp(LightningFlow):
 
         # Initialize child components
         self.web_frontend = WebFrontend()
-        self.fileserver = FileServer(drive=self.drive, base_dir=base_dir)
-        self.database = Database(models=[Echo])
+        self.fileserver = FileServer(drive=self.drive, base_dir=base_dir, num_workers=self.fileserver_num_workers)
+        self.database = Database(models=[Echo], num_workers=self.database_num_workers)
         self.youtuber = LoadBalancer(
             name="youtuber",
             min_replicas=self.youtuber_min_replicas,
