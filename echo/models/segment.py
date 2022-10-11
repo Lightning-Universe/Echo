@@ -11,7 +11,7 @@ class Segment(SQLModel, table=True):
     start: float
     end: float
     text: str
-    echo_id: int = Field(default=None, foreign_key="echo.id")
+    echo_id: str = Field(foreign_key="echo.id")
 
     class Config:
         alias_generator = to_camelcase

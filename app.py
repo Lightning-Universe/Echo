@@ -166,9 +166,16 @@ class EchoApp(LightningFlow):
             if echo.id == config.echo_id:
                 segments = None
                 if config.include_segments:
-                    segments = self._segment_db_client.get()
+                    segments: List[Segment] = self._segment_db_client.get()
+                    segments_for_echo = filter(lambda segment: segment.echo_id == echo.id, segments)
+                    segments_ordered_desc = sorted(
+                        # The ID of the Segment is in the format `{echo_id}-{index}`
+                        list(segments_for_echo),
+                        key=lambda segment: int(segment.id.replace(f"{echo.id}-", "")),
+                        reverse=True,
+                    )
 
-                return GetEchoResponse(echo=echo, segments=segments)
+                return GetEchoResponse(echo=echo, segments=segments_ordered_desc)
 
         return None
 
