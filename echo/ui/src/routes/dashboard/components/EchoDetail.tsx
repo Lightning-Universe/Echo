@@ -2,13 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 
 import DownloadIcon from "@mui/icons-material/Download";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
-import { CircularProgress, Stack, Typography } from "@mui/material";
+import { Breadcrumbs, CircularProgress, Link, Stack, Typography } from "@mui/material";
 
 import useDownloadEchoSubtitles from "hooks/useDownloadEchoSubtitles";
 import useDownloadEchoText from "hooks/useDownloadEchoText";
 import useGetEcho from "hooks/useGetEcho";
 import { useLightningState } from "hooks/useLightningState";
-import { Breadcrumbs, Button } from "lightning-ui/src/design-system/components";
+import { Button } from "lightning-ui/src/design-system/components";
 import { SupportedMediaType, isVideo } from "utils";
 
 import AudioPreview from "./AudioPreview";
@@ -17,9 +17,10 @@ import VideoPreview from "./VideoPreview";
 
 type Props = {
   echoID?: string;
+  goBack: () => void;
 };
 
-export default function EchoDetail({ echoID }: Props) {
+export default function EchoDetail({ echoID, goBack }: Props) {
   const lightningState = useLightningState();
   const downloadEcho = useDownloadEchoText();
   const downloadSubtitles = useDownloadEchoSubtitles();
@@ -81,12 +82,12 @@ export default function EchoDetail({ echoID }: Props) {
   return (
     <Stack direction={"column"}>
       <Stack padding={2}>
-        <Breadcrumbs
-          items={[
-            { title: "Echoes", href: "" },
-            { title: echo.echo.displayName ?? echo.echo.id, href: "" },
-          ]}
-        />
+        <Breadcrumbs aria-label="breadcrumb">
+          <Link color={"primary"} sx={{ ":hover": { cursor: "pointer" } }} onClick={() => goBack()}>
+            Echoes
+          </Link>
+          <Typography color="text.primary">{echo.echo.displayName ?? echo.echo.id}</Typography>
+        </Breadcrumbs>
       </Stack>
       <Stack direction={"row"} justifyContent={"center"}>
         {sourcePreview}

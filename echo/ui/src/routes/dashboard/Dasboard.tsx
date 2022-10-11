@@ -16,12 +16,16 @@ export default function Dashboard() {
       <Stack height={"100%"} direction={"row"} padding={4}>
         {!creatingEcho && (
           <Paper elevation={4} sx={{ height: "100%", width: "50%", marginX: 2, overflowY: "hidden" }}>
-            <EchoDetail echoID={selectedEchoID} />
+            <EchoDetail echoID={selectedEchoID} goBack={() => setSelectedEchoID(undefined)} />
           </Paper>
         )}
         <Paper elevation={4} sx={{ height: "100%", width: creatingEcho ? "100%" : "50%", marginX: 2, padding: 2 }}>
           <Stack direction={"column"} justifyContent={"space-between"} height={"100%"}>
-            <EchoesList onSelectEchoID={setSelectedEchoID} onToggleCreatingEcho={setCreatingEcho} />
+            <EchoesList
+              onSelectEchoID={setSelectedEchoID}
+              selectedEchoID={selectedEchoID}
+              onToggleCreatingEcho={setCreatingEcho}
+            />
           </Stack>
         </Paper>
       </Stack>

@@ -1,53 +1,59 @@
 import { useState } from "react";
 
-import GraphicEqIcon from "@mui/icons-material/GraphicEq";
-import { CircularProgress, Stack, Typography, Zoom } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
-import EchoCard from "components/EchoCard";
 import RecordEcho from "components/RecordEcho";
-import useListEchoes from "hooks/useListEchoes";
-import { ReactComponent as EchoLogo } from "resources/images/echo-logo-text.svg";
+import CreateEchoForm from "routes/dashboard/components/CreateEchoForm";
+import EchoDetail from "routes/dashboard/components/EchoDetail";
+import NavBar from "routes/dashboard/components/NavBar";
+import { EchoSourceType } from "utils";
+
+import EchoesListMobile from "./components/EchoesListMobile";
 
 export default function MobileDemo() {
-  const { data: echoes, isLoading } = useListEchoes();
+  const [selectedEchoID, setSelectedEchoID] = useState<string>();
 
-  const [mostRecentEchoID, setMostRecentEchoID] = useState<string>();
-  const mostRecentEcho = echoes?.find(echo => echo.id === mostRecentEchoID);
+  const [createEchoWithSourceType, setCreateEchoWithSourceType] = useState<EchoSourceType>();
+  const [createEchoWithDisplayName, setCreateEchoWithDisplayName] = useState<string>();
+  const [sourceYouTubeURL, setSourceYouTubeURL] = useState<string>();
 
   return (
-    <Stack paddingX={2} paddingY={4} direction={"column"} justifyContent={"space-between"} height={"95vh"}>
-      <Stack
-        direction={"column"}
-        height={"75px"}
-        marginBottom={4}
-        spacing={1}
-        justifyContent={"center"}
-        alignItems={"center"}>
-        <EchoLogo width={"100%"} height={"100%"} />
-        <Typography variant={"caption"}>Turn your voice into text in seconds!</Typography>
-      </Stack>
-      {!isLoading && mostRecentEcho === undefined && (
-        <Zoom
-          in={!isLoading && mostRecentEcho === undefined}
-          style={{ transitionDelay: !isLoading && mostRecentEcho === undefined ? "100ms" : "0ms" }}>
-          <Stack direction={"column"} alignItems={"center"} justifyContent={"center"} spacing={2}>
-            <GraphicEqIcon fontSize="large" />
-            <Typography variant={"body2"}>Create your Echo!</Typography>
+    <Stack direction={"column"} height={"95vh"}>
+      <NavBar />
+      <Stack direction={"column"} justifyContent={"space-between"} height={"100%"}>
+        {createEchoWithSourceType !== undefined ? (
+          <Stack padding={2}>
+            <CreateEchoForm
+              sourceType={createEchoWithSourceType}
+              displayNameUpdated={setCreateEchoWithDisplayName}
+              youtubeURLUpdated={setSourceYouTubeURL}
+            />
           </Stack>
-        </Zoom>
-      )}
-      {isLoading && (
-        <Stack direction={"column"} alignItems={"center"} justifyContent={"center"}>
-          <CircularProgress variant="indeterminate" />
-        </Stack>
-      )}
-      {mostRecentEcho !== undefined && <EchoCard echo={mostRecentEcho} />}
-      <RecordEcho
-        echoDisplayName={"Demo Echo"}
-        onSelectSourceType={() => null}
-        onCreateEcho={setMostRecentEchoID}
-        onCancel={() => null}
-      />
+        ) : selectedEchoID ? (
+          <EchoDetail echoID={selectedEchoID} goBack={() => setSelectedEchoID(undefined)} />
+        ) : (
+          <>
+            <Typography variant={"h6"} marginX={2} marginTop={2}>
+              Your Echoes
+            </Typography>
+            <Stack height={"75%"} sx={{ overflowY: "scroll" }}>
+              <EchoesListMobile onSelectEchoID={setSelectedEchoID} />
+            </Stack>
+          </>
+        )}
+        {!selectedEchoID && (
+          <Stack direction={"row"} marginBottom={4} paddingX={2} width={"100%"}>
+            {/* TODO(alecmerdler): Implement mobile creation... */}
+            <RecordEcho
+              echoDisplayName={createEchoWithDisplayName}
+              onSelectSourceType={setCreateEchoWithSourceType}
+              onCreateEcho={() => setCreateEchoWithSourceType(undefined)}
+              sourceYouTubeURL={sourceYouTubeURL}
+              onCancel={() => setCreateEchoWithSourceType(undefined)}
+            />
+          </Stack>
+        )}
+      </Stack>
     </Stack>
   );
 }

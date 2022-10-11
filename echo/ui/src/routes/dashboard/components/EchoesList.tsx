@@ -16,14 +16,14 @@ const header = ["", "Name", "Type", "Created At", "Completed At", "Actions"];
 
 type Props = {
   onSelectEchoID: (id?: string) => void;
+  selectedEchoID?: string;
   onToggleCreatingEcho: (creating: boolean) => void;
 };
 
-export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho }: Props) {
+export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selectedEchoID }: Props) {
   const { isLoading, data: echoes } = useListEchoes();
   const deleteEchoMutation = useDeleteEcho();
 
-  const [selectedEchoID, setSelectedEchoID] = useState<string>();
   const [createEchoWithSourceType, setCreateEchoWithSourceType] = useState<EchoSourceType>();
   const [createEchoWithDisplayName, setCreateEchoWithDisplayName] = useState<string>();
   const [sourceYouTubeURL, setSourceYouTubeURL] = useState<string>();
@@ -32,7 +32,6 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho }: Pro
     (echoID?: string) => {
       if (echoID) {
         onSelectEchoID(echoID);
-        setSelectedEchoID(echoID);
       }
     },
     [onSelectEchoID],
@@ -43,10 +42,9 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho }: Pro
       onToggleCreatingEcho(true);
       selectEcho(undefined);
       onSelectEchoID(undefined);
-      setSelectedEchoID(undefined);
       setCreateEchoWithSourceType(sourceType);
     },
-    [selectEcho, onSelectEchoID, onToggleCreatingEcho, setSelectedEchoID],
+    [selectEcho, onSelectEchoID, onToggleCreatingEcho],
   );
 
   const onCreateEcho = useCallback(
@@ -54,7 +52,6 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho }: Pro
       onToggleCreatingEcho(false);
       setCreateEchoWithSourceType(undefined);
       setSourceYouTubeURL(undefined);
-      setSelectedEchoID(undefined);
       onSelectEchoID(undefined);
     },
     [onSelectEchoID, onToggleCreatingEcho],
@@ -75,12 +72,12 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho }: Pro
         <Typography variant={"body2"}>{echo.createdAt}</Typography>,
         <Typography variant={"body2"}>{echo.completedTranscriptionAt ?? "-"}</Typography>,
         <Stack direction={"row"}>
-          <IconButton aria-label="Delete" onClick={() => deleteEchoMutation.mutate(echo.id)}>
+          <IconButton aria-label="Delete" disabled={!echo.text} onClick={() => deleteEchoMutation.mutate(echo.id)}>
             <DeleteIcon fontSize={"small"} />
           </IconButton>
         </Stack>,
       ]),
-    [echoes, selectedEchoID, selectEcho, deleteEchoMutation],
+    [echoes, selectEcho, selectedEchoID, deleteEchoMutation],
   );
 
   if (isLoading) {
@@ -108,8 +105,7 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho }: Pro
           {createEchoWithSourceType !== undefined ? "Create Echo" : "Your Echoes"}
         </Typography>
       </Stack>
-      <Box height={"75%"}>
-        {" "}
+      <Box height={"75%"} sx={{ overflowY: "scroll" }}>
         {createEchoWithSourceType !== undefined ? (
           <CreateEchoForm
             sourceType={createEchoWithSourceType}
