@@ -2,15 +2,13 @@ import { ChangeEvent, useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 
 import AudioFileIcon from "@mui/icons-material/AudioFile";
+import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
-import StopIcon from "@mui/icons-material/Stop";
 import VideoFileIcon from "@mui/icons-material/VideoFile";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import {
-  Box,
-  CircularProgress,
   Fab,
   LinearProgress,
   SpeedDial,
@@ -18,6 +16,8 @@ import {
   Stack,
   Typography,
   Zoom,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import SpeedDialIcon from "@mui/material/SpeedDialIcon";
 import { useReactMediaRecorder } from "react-media-recorder";
@@ -25,6 +25,8 @@ import { v4 as uuidv4 } from "uuid";
 
 import useCreateEcho from "hooks/useCreateEcho";
 import { EchoSourceType, SupportedMediaType } from "utils";
+
+import AudioWaveform from "./AudioWaveform";
 
 type Props = {
   echoDisplayName?: string;
@@ -47,6 +49,9 @@ export default function RecordEcho({
   const [sourceMediaType, setSourceMediaType] = useState<SupportedMediaType>();
   const sourceFileInput = useRef<HTMLInputElement>(null);
 
+  const theme = useTheme();
+  const onMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const createEchoMutation = useCreateEcho();
 
   const {
@@ -55,6 +60,7 @@ export default function RecordEcho({
     stopRecording,
     mediaBlobUrl,
     clearBlobUrl,
+    previewAudioStream,
   } = useReactMediaRecorder({
     video: false,
     audio: true,
@@ -224,37 +230,30 @@ export default function RecordEcho({
 
   if (showRecordingControls) {
     return (
-      <Stack direction={"row"} width={"100%"} alignItems={"center"} spacing={2}>
-        <Zoom
-          in={recordingStatus !== "recording" && sourceBlob === undefined}
-          style={{ transitionDelay: showRecordingControls ? "100ms" : "0ms" }}>
-          <Fab data-cy={"discard-source"} color={"error"} onClick={discardSource}>
-            <DeleteIcon htmlColor="#FFFFFF" />
-          </Fab>
-        </Zoom>
-        <Zoom
-          in={sourceType === EchoSourceType.recording && sourceBlob === undefined}
-          style={{ transitionDelay: sourceType === EchoSourceType.recording ? "100ms" : "0ms" }}>
-          <Box sx={{ m: 1, position: "relative" }}>
+      <Stack direction={"column"} width={"100%"} alignItems={"center"}>
+        {recordingStatus === "recording" && (
+          <Stack justifyContent={"center"} alignItems={"center"} padding={2} width={onMobile ? "100%" : "30%"}>
+            <AudioWaveform audioStream={previewAudioStream} />
+          </Stack>
+        )}
+        <Stack direction={"row"} width={"100%"} alignItems={"center"} justifyContent={"center"} spacing={2}>
+          {mediaBlobUrl && (
+            <Fab data-cy={"discard-source"} color={"error"} onClick={discardSource}>
+              <CloseIcon htmlColor="#FFFFFF" />
+            </Fab>
+          )}
+          <Zoom
+            in={sourceType === EchoSourceType.recording}
+            style={{ transitionDelay: sourceType === EchoSourceType.recording ? "100ms" : "0ms" }}>
             <Fab
               data-cy={"start-recording"}
-              disabled={sourceBlob !== undefined || recordingStatus === "recording"}
+              disabled={sourceBlob !== undefined}
               color={"primary"}
-              onClick={() => startRecording()}>
+              onClick={() => (recordingStatus === "recording" ? stopRecording() : startRecording())}>
               <KeyboardVoiceIcon htmlColor="#FFFFFF" />
             </Fab>
-            {recordingStatus === "recording" && (
-              <CircularProgress size={68} sx={{ position: "absolute", top: -6, left: -6, zIndex: 1 }} />
-            )}
-          </Box>
-        </Zoom>
-        <Zoom
-          in={recordingStatus === "recording"}
-          style={{ transitionDelay: recordingStatus === "recording" ? "100ms" : "0ms" }}>
-          <Fab data-cy={"stop-recording"} color={"error"} onClick={stopRecording}>
-            <StopIcon htmlColor="#FFFFFF" />
-          </Fab>
-        </Zoom>
+          </Zoom>
+        </Stack>
       </Stack>
     );
   }
@@ -268,36 +267,41 @@ export default function RecordEcho({
     );
   }
 
+  const audioPlayback = (
+    <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
+      <audio
+        data-cy={"echo-source-preview"}
+        src={sourceBlobURL}
+        controls
+        controlsList={"nodownload nofullscreen noremoteplayback noplaybackrate"}
+        style={{ width: onMobile ? "100%" : "30%" }}
+      />
+    </Zoom>
+  );
+
   if (showPlaybackControls) {
     return (
-      <Stack direction={"row"} alignItems={"center"} width={"100%"} spacing={2}>
-        {sourceType !== EchoSourceType.youtube && (
+      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} width="100%" spacing={2}>
+        {onMobile && sourceType !== EchoSourceType.youtube && audioPlayback}
+        <Stack direction={"row"} alignItems={"center"} justifyContent={"center"} width={"100%"} spacing={2}>
+          {!onMobile && sourceType !== EchoSourceType.youtube && audioPlayback}
           <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
-            <audio
-              data-cy={"echo-source-preview"}
-              src={sourceBlobURL}
-              controls
-              controlsList={"nodownload nofullscreen noremoteplayback noplaybackrate"}
-              style={{ width: "30%" }}
-            />
+            <Fab data-cy={"discard-source"} color={"error"} onClick={discardSource}>
+              <DeleteIcon htmlColor="#FFFFFF" />
+            </Fab>
           </Zoom>
-        )}
-        <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
-          <Fab data-cy={"discard-source"} color={"error"} onClick={discardSource}>
-            <DeleteIcon htmlColor="#FFFFFF" />
-          </Fab>
-        </Zoom>
-        <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
-          <Fab
-            data-cy={"create-echo-confirm"}
-            color={"primary"}
-            onClick={createEcho}
-            variant={"extended"}
-            sx={{ color: "#FFFFFF" }}
-            disabled={!echoDisplayName || (sourceType === EchoSourceType.youtube && sourceYouTubeURL === undefined)}>
-            Create
-          </Fab>
-        </Zoom>
+          <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
+            <Fab
+              data-cy={"create-echo-confirm"}
+              color={"primary"}
+              onClick={createEcho}
+              variant={"extended"}
+              sx={{ color: "#FFFFFF" }}
+              disabled={!echoDisplayName || (sourceType === EchoSourceType.youtube && sourceYouTubeURL === undefined)}>
+              Create
+            </Fab>
+          </Zoom>
+        </Stack>
       </Stack>
     );
   }
