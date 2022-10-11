@@ -8,7 +8,17 @@ import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import StopIcon from "@mui/icons-material/Stop";
 import VideoFileIcon from "@mui/icons-material/VideoFile";
 import YouTubeIcon from "@mui/icons-material/YouTube";
-import { Box, CircularProgress, Fab, SpeedDial, SpeedDialAction, Stack, Zoom } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Fab,
+  LinearProgress,
+  SpeedDial,
+  SpeedDialAction,
+  Stack,
+  Typography,
+  Zoom,
+} from "@mui/material";
 import SpeedDialIcon from "@mui/material/SpeedDialIcon";
 import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
@@ -21,9 +31,16 @@ type Props = {
   sourceYouTubeURL?: string;
   onSelectSourceType: (sourceType?: EchoSourceType) => void;
   onCreateEcho: (echoID: string) => void;
+  onCancel: () => void;
 };
 
-export default function RecordEcho({ onCreateEcho, onSelectSourceType, echoDisplayName, sourceYouTubeURL }: Props) {
+export default function RecordEcho({
+  onCreateEcho,
+  onSelectSourceType,
+  echoDisplayName,
+  sourceYouTubeURL,
+  onCancel,
+}: Props) {
   const [sourceType, setSourceType] = useState<EchoSourceType>();
   const [sourceBlob, setSourceBlob] = useState<Blob>();
   const [sourceBlobURL, setSourceBlobURL] = useState<string>();
@@ -146,11 +163,12 @@ export default function RecordEcho({ onCreateEcho, onSelectSourceType, echoDispl
     setSourceBlob(undefined);
     setSourceBlobURL(undefined);
     onSelectSourceType(undefined);
+    onCancel();
 
     if (mediaBlobUrl) {
       clearBlobUrl();
     }
-  }, [clearBlobUrl, mediaBlobUrl, onSelectSourceType]);
+  }, [clearBlobUrl, mediaBlobUrl, onSelectSourceType, onCancel]);
 
   const showSourceSelect = !createEchoMutation.isLoading && sourceType === undefined;
   const showRecordingControls =
@@ -208,6 +226,13 @@ export default function RecordEcho({ onCreateEcho, onSelectSourceType, echoDispl
     return (
       <Stack direction={"row"} width={"100%"} alignItems={"center"} spacing={2}>
         <Zoom
+          in={recordingStatus !== "recording" && sourceBlob === undefined}
+          style={{ transitionDelay: showRecordingControls ? "100ms" : "0ms" }}>
+          <Fab data-cy={"discard-source"} color={"error"} onClick={discardSource}>
+            <DeleteIcon htmlColor="#FFFFFF" />
+          </Fab>
+        </Zoom>
+        <Zoom
           in={sourceType === EchoSourceType.recording && sourceBlob === undefined}
           style={{ transitionDelay: sourceType === EchoSourceType.recording ? "100ms" : "0ms" }}>
           <Box sx={{ m: 1, position: "relative" }}>
@@ -236,8 +261,9 @@ export default function RecordEcho({ onCreateEcho, onSelectSourceType, echoDispl
 
   if (createEchoMutation.isLoading) {
     return (
-      <Stack direction={"row"} width={"100%"}>
-        <CircularProgress variant={"indeterminate"} />
+      <Stack direction={"row"} width={"100%"} alignItems={"center"} spacing={4}>
+        <LinearProgress sx={{ width: "50%" }} />
+        <Typography variant={"body1"}>Uploading Echo</Typography>
       </Stack>
     );
   }

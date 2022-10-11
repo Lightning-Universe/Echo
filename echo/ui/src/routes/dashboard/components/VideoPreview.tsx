@@ -16,14 +16,14 @@ export default function VideoPreview({ sourceFileURL, onCurrentTimeChange }: Pro
         if (videoPlayer.current?.currentTime) {
           onCurrentTimeChange(videoPlayer.current.currentTime!);
         }
-      }, 500);
+      }, 100);
 
       return () => clearInterval(interval);
     }
   }, [onCurrentTimeChange]);
 
   return (
-    <Stack height={"100%"} width={"100%"} padding={2}>
+    <Stack height={"100%"} width={"100%"} paddingY={2}>
       <video height={"100%"} ref={videoPlayer} src={sourceFileURL} controls />
     </Stack>
   );

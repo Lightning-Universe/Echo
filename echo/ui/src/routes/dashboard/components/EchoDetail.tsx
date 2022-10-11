@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 
+import DownloadIcon from "@mui/icons-material/Download";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import { CircularProgress, Stack, Typography } from "@mui/material";
 
+import useDownloadEchoSubtitles from "hooks/useDownloadEchoSubtitles";
+import useDownloadEchoText from "hooks/useDownloadEchoText";
 import useGetEcho from "hooks/useGetEcho";
 import { useLightningState } from "hooks/useLightningState";
+import { Breadcrumbs, Button } from "lightning-ui/src/design-system/components";
 import { SupportedMediaType, isVideo } from "utils";
 
 import AudioPreview from "./AudioPreview";
+import Subtitles from "./Subtitles";
 import VideoPreview from "./VideoPreview";
 
 type Props = {
@@ -16,8 +21,10 @@ type Props = {
 
 export default function EchoDetail({ echoID }: Props) {
   const lightningState = useLightningState();
+  const downloadEcho = useDownloadEchoText();
+  const downloadSubtitles = useDownloadEchoSubtitles();
 
-  const { data: echo } = useGetEcho(echoID ?? "", true);
+  const { data: echo, isLoading } = useGetEcho(echoID, true);
 
   const [currentSegment, setCurrentSegment] = useState(0);
 
@@ -35,11 +42,20 @@ export default function EchoDetail({ echoID }: Props) {
     [echo?.segments],
   );
 
-  if (!echo) {
+  if (!echoID) {
     return (
       <Stack direction={"column"} alignItems={"center"} justifyContent={"center"} height={"100%"}>
         <GraphicEqIcon fontSize="large" />
         <Typography variant={"body2"}>Select an Echo to view details</Typography>
+      </Stack>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2} height={"100%"}>
+        <CircularProgress />
+        <Typography variant={"body2"}>Fetching Echo</Typography>
       </Stack>
     );
   }
@@ -59,20 +75,50 @@ export default function EchoDetail({ echoID }: Props) {
   const sourcePreview = isVideo(echo.echo.mediaType as SupportedMediaType) ? (
     <VideoPreview sourceFileURL={sourceFileURL} onCurrentTimeChange={onCurrentTimeChange} />
   ) : (
-    <AudioPreview sourceFileURL={sourceFileURL} />
+    <AudioPreview sourceFileURL={sourceFileURL} onCurrentTimeChange={onCurrentTimeChange} />
   );
 
   return (
     <Stack direction={"column"}>
-      <Typography variant={"h6"}>{echo.echo.displayName ?? echo.echo.id}</Typography>
+      <Stack padding={2}>
+        <Breadcrumbs
+          items={[
+            { title: "Echoes", href: "" },
+            { title: echo.echo.displayName ?? echo.echo.id, href: "" },
+          ]}
+        />
+      </Stack>
       <Stack direction={"row"} justifyContent={"center"}>
         {sourcePreview}
       </Stack>
-      {echo?.segments && echo.segments.length > 0 && currentSegment >= 0 && (
-        <Stack>
-          <Typography variant={"body2"}>"{echo?.segments[currentSegment].text.trim()}"</Typography>
+      <Stack padding={2}>
+        <Stack direction={"row"} justifyContent={"space-between"} marginBottom={2}>
+          <Typography variant={"h6"}>Captions</Typography>
+          <Stack direction={"row"} spacing={2}>
+            <Button
+              aria-label={"Download Subtitles"}
+              size={"small"}
+              variant={"text"}
+              icon={<DownloadIcon />}
+              disabled={echo.segments.length === 0}
+              onClick={() => downloadSubtitles(echo.echo, echo.segments)}
+              text={"Subtitles"}
+            />
+            <Button
+              aria-label={"Download Text"}
+              size={"small"}
+              variant={"text"}
+              icon={<DownloadIcon />}
+              disabled={echo.echo.text === ""}
+              onClick={() => downloadEcho(echo.echo)}
+              text={"Text"}
+            />
+          </Stack>
         </Stack>
-      )}
+        {echo?.segments && echo.segments.length > 0 && currentSegment >= 0 && (
+          <Subtitles segments={echo.segments} currentSegment={currentSegment} />
+        )}
+      </Stack>
     </Stack>
   );
 }

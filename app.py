@@ -170,7 +170,7 @@ class EchoApp(LightningFlow):
 
                 return GetEchoResponse(echo=echo, segments=segments)
 
-        raise ValueError(f"Echo with ID '{config.echo_id}' not found!")
+        return None
 
     def delete_echo(self, config: DeleteEchoConfig) -> None:
         if self._echo_db_client is None:

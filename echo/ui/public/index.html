@@ -14,6 +14,31 @@
     <meta name="theme-color" content="#000000" />
     <link rel="apple-touch-icon" href="./favicon.svg" />
     <link rel="manifest" href="./manifest.json" />
+
+    <style>
+      /* These fonts are hardcoded because the static files are not served from the root of the URL but
+      rather from a subpath, e.g., http://localhost:4000/root.web_frontend/static/... and this is problematic to resolve
+      font imports that are already relative inside the CSS files of lightning-ui.
+      */
+      @font-face {
+        font-family: "UCity";
+        font-display: "swap";
+        font-weight: 300;
+        src: url("./static/media/UCity-Light.8352e423a843d9a0c52a.otf") format("opentype");
+      }
+      @font-face {
+        font-family: "UCity";
+        font-display: "swap";
+        font-weight: 400;
+        src: url("./static/media/UCity-Regular.e28f5006c1976d08baaa.otf") format("opentype");
+      }
+      @font-face {
+        font-family: "UCity";
+        font-display: "swap";
+        font-weight: 600;
+        src: url("./static/media/UCity-Semibold.b37489cc447430fe4ba7.otf") format("opentype");
+      }
+    </style>
   </head>
   <body>
     <script src="https://storage.googleapis.com/grid-packages/lightning-ui/v0.0.0/LightningState.js"></script>
