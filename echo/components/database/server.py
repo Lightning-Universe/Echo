@@ -11,6 +11,7 @@ from uvicorn import run
 
 from echo.models.general import GeneralModel
 from echo.models.utils import get_primary_key
+from echo.monitoring.sentry import init_sentry
 
 logger = Logger(__name__)
 
@@ -85,6 +86,9 @@ class Database(LightningWork):
         models: Optional[List[Type[SQLModel]]] = None,
     ):
         super().__init__(parallel=True, cloud_build_config=BuildConfig(["sqlmodel"]))
+
+        init_sentry()
+
         self.db_file_name = Path(db_file_name)
         self.debug = debug
         self._models = models

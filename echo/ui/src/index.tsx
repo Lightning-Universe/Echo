@@ -1,6 +1,7 @@
 import React from "react";
 
-import * as FullStory from "@fullstory/browser";
+import * as Sentry from "@sentry/react";
+import { BrowserTracing } from "@sentry/tracing";
 import FontFaceObserver from "fontfaceobserver";
 import ReactDOM from "react-dom";
 
@@ -8,11 +9,16 @@ import App from "./App";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 
-FullStory.init({
-  orgId: "o-1A6KRB-na1",
-  // Enable FullStory only in the beta env
-  devMode: process.env.REACT_APP_ENV !== "beta",
-});
+if (process.env.NODE_ENV === "production") {
+  Sentry.init({
+    dsn: process.env.REACT_APP_ECHO_SENTRY_DSN,
+    integrations: [new BrowserTracing()],
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: 1.0,
+  });
+}
 
 // Make sure Roboto Mono is loaded before rendering the app as it is used within a canvas element
 // The rest of the fonts don't need to be loaded before the render as they will be applied

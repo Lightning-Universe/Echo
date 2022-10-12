@@ -7,4 +7,5 @@ uvicorn
 fastapi
 humps
 pytube
+sentry-sdk
 git+https://github.com/openai/whisper.git
