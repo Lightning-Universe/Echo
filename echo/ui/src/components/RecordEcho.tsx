@@ -64,6 +64,9 @@ export default function RecordEcho({
   } = useReactMediaRecorder({
     video: false,
     audio: true,
+    mediaRecorderOptions: {
+      mimeType: SupportedMediaType.audioWAV,
+    },
     onStop: (blobUrl, blob) => {
       setSourceBlob(blob);
       setSourceBlobURL(blobUrl);
@@ -152,7 +155,6 @@ export default function RecordEcho({
     (e: ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         setSourceType(EchoSourceType.file);
-        // FIXME(alecmerdler): More accurate media type detection...
         setSourceMediaType(e.target.files[0].type as SupportedMediaType);
         setSourceBlob(e.target.files[0]);
         setSourceBlobURL(URL.createObjectURL(e.target.files[0]));

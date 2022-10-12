@@ -8,4 +8,5 @@ fastapi
 humps
 pytube
 sentry-sdk
+python-magic
 git+https://github.com/openai/whisper.git

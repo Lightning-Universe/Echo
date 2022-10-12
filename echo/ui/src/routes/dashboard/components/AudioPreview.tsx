@@ -22,9 +22,20 @@ export default function AudioPreview({ sourceFileURL, onCurrentTimeChange }: Pro
     }
   }, [onCurrentTimeChange]);
 
+  useEffect(() => {
+    if (audioPlayer.current) {
+      audioPlayer.current.addEventListener("error", () => {
+        if (audioPlayer.current) {
+          // FIXME(alecmerdler): Debugging
+          alert(`Error ${audioPlayer.current.error?.code}; details: ${audioPlayer.current.error?.message}`);
+        }
+      });
+    }
+  });
+
   return (
     <Stack height={"100%"} width={"100%"} padding={2}>
-      <audio style={{ width: "100%" }} ref={audioPlayer} src={sourceFileURL} controls />
+      <audio style={{ width: "100%" }} src={sourceFileURL} ref={audioPlayer} controls />
     </Stack>
   );
 }
