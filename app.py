@@ -26,6 +26,7 @@ from echo.models.echo import (
     ListEchoesConfig,
 )
 from echo.models.segment import Segment
+from echo.monitoring.sentry import init_sentry
 
 logger = Logger(__name__)
 
@@ -55,6 +56,8 @@ class WebFrontend(LightningFlow):
 class EchoApp(LightningFlow):
     def __init__(self):
         super().__init__()
+
+        init_sentry()
 
         # Read config from environment variables
         self.model_size = os.environ.get("ECHO_MODEL_SIZE", "base")

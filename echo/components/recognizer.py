@@ -12,6 +12,7 @@ from lightning_app.utilities.app_helpers import Logger
 from echo.components.database.client import DatabaseClient
 from echo.media.video import contains_audio
 from echo.models.echo import Echo, Segment
+from echo.monitoring.sentry import init_sentry
 
 DEFAULT_MODEL_SIZE = "base"
 DRIVE_SOURCE_FILE_TIMEOUT_SECONDS = 18000
@@ -42,6 +43,8 @@ class SpeechRecognizer(LightningWork):
                 ]
             ),
         )
+
+        init_sentry()
 
         # NOTE: Private attributes don't need to be serializable, so we use them to store complex objects
         self._drive = drive

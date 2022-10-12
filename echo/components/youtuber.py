@@ -5,6 +5,8 @@ from lightning_app.storage import Drive
 from lightning_app.utilities.app_helpers import Logger
 from pytube import YouTube
 
+from echo.monitoring.sentry import init_sentry
+
 logger = Logger(__name__)
 
 
@@ -21,6 +23,8 @@ class YouTuber(LightningWork):
             cloud_compute=CloudCompute("cpu"),
             cloud_build_config=BuildConfig(requirements=["pytube"]),
         )
+
+        init_sentry()
 
         self.drive = drive
         self.base_dir = base_dir

@@ -7,6 +7,8 @@ from lightning import BuildConfig, LightningWork
 from lightning_app.storage import Drive
 from werkzeug.datastructures import FileStorage
 
+from echo.monitoring.sentry import init_sentry
+
 
 class FileServer(LightningWork):
     def __init__(self, drive: Drive, base_dir: str = None, chunk_size=10240, **kwargs):
@@ -22,6 +24,8 @@ class FileServer(LightningWork):
             parallel=True,
             **kwargs,
         )
+
+        init_sentry()
 
         self.drive = drive
         self.base_dir = base_dir
