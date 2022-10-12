@@ -84,6 +84,11 @@ class EchoApp(LightningFlow):
         self.youtuber_autoscaler_cron_schedule = os.environ.get(
             "ECHO_YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
         )
+        self.source_type_file_enabled = os.environ.get("ECHO_SOURCE_TYPE_FILE_ENABLED", "true").lower() == "true"
+        self.source_type_recording_enabled = (
+            os.environ.get("ECHO_SOURCE_TYPE_RECORDING_ENABLED", "true").lower() == "true"
+        )
+        self.source_type_youtube_enabled = os.environ.get("ECHO_SOURCE_TYPE_YOUTUBE_ENABLED", "true").lower() == "true"
 
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
@@ -127,9 +132,11 @@ class EchoApp(LightningFlow):
                 self.recognizer.run(
                     Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text=""), db_url=self.database.url
                 )
-            # NOTE: Calling `self.youtuber.run()` with a dummy Echo so that the cloud machine is created
-            for _ in range(self.youtuber_min_replicas):
-                self.youtuber.run(youtube_url=DUMMY_YOUTUBE_URL, echo_id=DUMMY_ECHO_ID)
+
+            if self.source_type_youtube_enabled:
+                # NOTE: Calling `self.youtuber.run()` with a dummy Echo so that the cloud machine is created
+                for _ in range(self.youtuber_min_replicas):
+                    self.youtuber.run(youtube_url=DUMMY_YOUTUBE_URL, echo_id=DUMMY_ECHO_ID)
 
         if self.schedule(self.recognizer_autoscaler_cron_schedule):
             self.recognizer.ensure_min_replicas()
@@ -141,6 +148,16 @@ class EchoApp(LightningFlow):
         if self._echo_db_client is None:
             logger.warn("Database client not initialized!")
             return None
+
+        # Guard against disabled source types
+        if echo.source_youtube_url is None:
+            if not self.source_type_recording_enabled or not self.source_type_file_enabled:
+                logger.warn("Source type file/recording is disabled!")
+                return None
+        else:
+            if not self.source_type_youtube_enabled:
+                logger.warn("Source type YouTube is disabled!")
+                return None
 
         # Create Echo in the database
         self._echo_db_client.post(echo)
