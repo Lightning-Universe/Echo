@@ -1,7 +1,8 @@
 import json
-import mimetypes
 import os
+from dataclasses import dataclass
 
+import magic
 from flask import Flask, request, send_file
 from flask_cors import CORS
 from lightning import BuildConfig, LightningWork
@@ -9,6 +10,12 @@ from lightning_app.storage import Drive
 from werkzeug.datastructures import FileStorage
 
 from echo.monitoring.sentry import init_sentry
+
+
+@dataclass
+class CustomBuildConfig(BuildConfig):
+    def build_commands(self):
+        return ["sudo apt-get update", "sudo apt-get install -y libmagic1"]
 
 
 class FileServer(LightningWork):
@@ -21,7 +28,7 @@ class FileServer(LightningWork):
             chunk_size: The quantity of bytes to download/upload at once.
         """
         super().__init__(
-            cloud_build_config=BuildConfig(["flask", "flask-cors"]),
+            cloud_build_config=CustomBuildConfig(requirements=["flask", "flask-cors", "python-magic"]),
             parallel=True,
             **kwargs,
         )
@@ -105,7 +112,9 @@ class FileServer(LightningWork):
         if not os.path.exists(filepath):
             self.drive.get(self._get_drive_filepath(echo_id))
 
-        return send_file(filepath, mimetype=mimetypes.guess_type(filepath))
+        mimetype = magic.Magic(mime=True).from_file(filepath)
+
+        return send_file(filepath, mimetype=mimetype)
 
     def _get_drive_filepath(self, echo_id: str):
         """Returns file path stored on the shared Drive."""

@@ -10,6 +10,7 @@ from lightning_app.storage import Drive
 from lightning_app.utilities.app_helpers import Logger
 
 from echo.components.database.client import DatabaseClient
+from echo.media.mime import UNSUPPORTED_MEDIA_TYPES, get_mimetype
 from echo.media.video import contains_audio
 from echo.models.echo import Echo, Segment
 from echo.monitoring.sentry import init_sentry
@@ -24,7 +25,7 @@ logger = Logger(__name__)
 @dataclass
 class CustomBuildConfig(BuildConfig):
     def build_commands(self):
-        return ["sudo apt-get update", "sudo apt-get install -y ffmpeg"]
+        return ["sudo apt-get update", "sudo apt-get install -y ffmpeg libmagic1"]
 
 
 class SpeechRecognizer(LightningWork):
@@ -57,14 +58,14 @@ class SpeechRecognizer(LightningWork):
 
         return self._model.transcribe(audio_file_path, fp16=torch.cuda.is_available())
 
-    def convert_to_audio(self, echo_id: str, video_file_path: str):
-        if not contains_audio(video_file_path):
-            raise ValueError(f"Video does not contain an audio stream: {video_file_path}")
+    def convert_to_audio(self, echo_id: str, source_file_path: str):
+        if not contains_audio(source_file_path):
+            raise ValueError(f"Source does not contain an audio stream: {source_file_path}")
 
         extracted_audio_file_path = f"{echo_id}-extracted.mp3"
         # TODO(alecmerdler): Figure out how to use `ffmpeg-python` rather than shelling out...
-        # TODO(alecmerdler): Handle exceptions from `ffmpeg` (no audio stream, etc)...
-        subprocess.call(f"ffmpeg -i {video_file_path} -vn -acodec libmp3lame {extracted_audio_file_path}", shell=True)
+        # TODO(alecmerdler): Handle exceptions from `ffmpeg`
+        subprocess.call(f"ffmpeg -i {source_file_path} -vn -acodec libmp3lame {extracted_audio_file_path}", shell=True)
 
         return extracted_audio_file_path
 
@@ -87,6 +88,14 @@ class SpeechRecognizer(LightningWork):
 
         audio_file_path = echo.source_file_path
         self._drive.get(echo.source_file_path, timeout=DRIVE_SOURCE_FILE_TIMEOUT_SECONDS)
+
+        if get_mimetype(audio_file_path) in UNSUPPORTED_MEDIA_TYPES:
+            new_source_file_path = self.convert_to_audio(echo.id, audio_file_path)
+
+            os.remove(audio_file_path)
+            os.rename(new_source_file_path, audio_file_path)
+
+            self._drive.put(audio_file_path)
 
         if echo.media_type.split("/")[0] == "video":
             audio_file_path = self.convert_to_audio(echo.id, echo.source_file_path)
