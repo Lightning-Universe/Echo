@@ -1,4 +1,5 @@
 import json
+import mimetypes
 import os
 
 from flask import Flask, request, send_file
@@ -104,7 +105,7 @@ class FileServer(LightningWork):
         if not os.path.exists(filepath):
             self.drive.get(self._get_drive_filepath(echo_id))
 
-        return send_file(filepath)
+        return send_file(filepath, mimetype=mimetypes.guess_type(filepath))
 
     def _get_drive_filepath(self, echo_id: str):
         """Returns file path stored on the shared Drive."""
