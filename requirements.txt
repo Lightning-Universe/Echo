@@ -1,10 +1,9 @@
 lightning
-flask
-flask-cors
 sqlmodel
 pydantic
 uvicorn
 fastapi
+python-multipart
 humps
 pytube
 sentry-sdk
