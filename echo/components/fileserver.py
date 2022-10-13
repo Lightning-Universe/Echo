@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 from dataclasses import dataclass
 
 import magic
@@ -7,15 +8,19 @@ from flask import Flask, request, send_file
 from flask_cors import CORS
 from lightning import BuildConfig, LightningWork
 from lightning_app.storage import Drive
+from lightning_app.utilities.app_helpers import Logger
 from werkzeug.datastructures import FileStorage
 
+from echo.media.mime import UNSUPPORTED_MEDIA_TYPES, get_mimetype
 from echo.monitoring.sentry import init_sentry
+
+logger = Logger(__name__)
 
 
 @dataclass
 class CustomBuildConfig(BuildConfig):
     def build_commands(self):
-        return ["sudo apt-get update", "sudo apt-get install -y libmagic1"]
+        return ["sudo apt-get update", "sudo apt-get install -y libmagic1 ffmpeg"]
 
 
 class FileServer(LightningWork):
@@ -70,7 +75,8 @@ class FileServer(LightningWork):
         self.uploaded_files[echo_id] = {"progress": (0, None), "done": False}
 
         # Save file to shared Drive
-        with open(self._get_filepath(echo_id), "wb") as out_file:
+        filepath = self._get_filepath(echo_id)
+        with open(filepath, "wb") as out_file:
             content = file.read(self.chunk_size)
             while content:
                 size = out_file.write(content)
@@ -80,8 +86,18 @@ class FileServer(LightningWork):
                 )
                 content = file.read(self.chunk_size)
 
+        if get_mimetype(filepath) in UNSUPPORTED_MEDIA_TYPES:
+            # TODO(alecmerdler): Figure out how to use `ffmpeg-python` rather than shelling out...
+            # TODO(alecmerdler): Handle exceptions from `ffmpeg`
+            subprocess.call(f"ffmpeg -i {filepath} -vn -acodec libmp3lame -y {filepath}.mp3", shell=True)
+
+            assert get_mimetype(f"{filepath}.mp3") == "audio/mpeg"
+
+            os.remove(filepath)
+            os.rename(f"{filepath}.mp3", filepath)
+
         self.drive.put(self._get_drive_filepath(echo_id))
-        os.remove(self._get_filepath(echo_id))
+        os.remove(filepath)
 
         full_size = self.uploaded_files[echo_id]["progress"][0]
         self.uploaded_files[echo_id] = {

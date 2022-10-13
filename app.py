@@ -89,8 +89,8 @@ class EchoApp(LightningFlow):
         self._echo_db_client = None
         self._segment_db_client = None
 
-        # Initialize shared storage for transferring audio files to recognizers
-        self.drive = Drive(id=SHARED_STORAGE_DRIVE_ID, allow_duplicates=True)
+        # Initialize shared storage for transferring media files to recognizers
+        self.drive = Drive(id=SHARED_STORAGE_DRIVE_ID, allow_duplicates=False, component_name="echo")
 
         base_dir = os.path.join(os.path.dirname(__file__), "fileserver")
 

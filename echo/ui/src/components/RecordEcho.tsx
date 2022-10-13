@@ -64,6 +64,9 @@ export default function RecordEcho({
   } = useReactMediaRecorder({
     video: false,
     audio: true,
+    mediaRecorderOptions: {
+      mimeType: SupportedMediaType.audioWAV,
+    },
     onStop: (blobUrl, blob) => {
       setSourceBlob(blob);
       setSourceBlobURL(blobUrl);
