@@ -1,4 +1,4 @@
-from typing import Optional, Type
+from typing import List, Optional, Type
 
 import requests
 from requests import Session
@@ -6,7 +6,9 @@ from requests.adapters import HTTPAdapter
 from sqlmodel import SQLModel
 from urllib3.util.retry import Retry
 
+from echo.models.echo import Echo
 from echo.models.general import GeneralModel
+from echo.models.segment import Segment
 
 _CONNECTION_RETRY_TOTAL = 5
 _CONNECTION_RETRY_BACKOFF_FACTOR = 1
@@ -38,32 +40,46 @@ class DatabaseClient:
             raise ValueError("db_url must be provided")
 
         self.model = model
-        self.db_url = db_url + "/general/"
+        self.db_url = db_url
+        self.general_endpoint = db_url + "/general/"
         self.session = _configure_session()
 
-    def get(self, config: Optional[Type[SQLModel]] = None):
-        cls = config if config else self.model
-        resp = self.session.get(self.db_url, data=GeneralModel.from_cls(cls).json())
+    def list_echoes_for_user(self, user_id: str) -> List[Echo]:
+        resp = self.session.get(f"{self.db_url}/echoes/?user_id={user_id}")
         assert resp.status_code == 200
-        return [cls(**data) for data in resp.json()]
+        return [self.model(**data) for data in resp.json()]
+
+    def get_echo(self, echo_id: str) -> Optional[Echo]:
+        resp = self.session.get(f"{self.db_url}/echoes/{echo_id}")
+        assert resp.status_code == 200
+        obj = resp.json()
+        return self.model(**obj) if obj else None
+
+    def list_segments_for_echo(self, echo_id: str) -> List[Segment]:
+        resp = self.session.get(f"{self.db_url}/segments/?echo_id={echo_id}")
+        assert resp.status_code == 200
+        return [self.model(**data) for data in resp.json()]
+
+    def delete_echo(self, echo_id: str) -> None:
+        resp = self.session.delete(f"{self.db_url}/echoes/{echo_id}")
+        assert resp.status_code == 200
+        return None
+
+    def delete_segments_for_echo(self, echo_id: str) -> None:
+        resp = self.session.delete(f"{self.db_url}/segments/?echo_id={echo_id}")
+        assert resp.status_code == 200
+        return None
 
     def post(self, config: SQLModel):
         resp = self.session.post(
-            self.db_url,
+            self.general_endpoint,
             data=GeneralModel.from_obj(config).json(),
         )
         assert resp.status_code == 200
 
     def put(self, config: SQLModel):
         resp = self.session.put(
-            self.db_url,
-            data=GeneralModel.from_obj(config).json(),
-        )
-        assert resp.status_code == 200
-
-    def delete(self, config: SQLModel):
-        resp = self.session.delete(
-            self.db_url,
+            self.general_endpoint,
             data=GeneralModel.from_obj(config).json(),
         )
         assert resp.status_code == 200

@@ -53,7 +53,7 @@ class GetEchoConfig(BaseModel):
 class GetEchoResponse(BaseModel):
     """Used for the `get echo` command."""
 
-    echo: Echo
+    echo: Optional[Echo] = None
     segments: Optional[List[Segment]] = None
 
     class Config:
