@@ -4,6 +4,7 @@ import subprocess
 from dataclasses import dataclass
 
 import magic
+import uvicorn
 from flask import Flask, request, send_file
 from flask_cors import CORS
 from lightning import BuildConfig, LightningWork
@@ -64,7 +65,7 @@ class FileServer(LightningWork):
             """Download a file for a specific Echo."""
             return self.download_file(echo_id)
 
-        flask_app.run(host=self.host, port=self.port, load_dotenv=False)
+        uvicorn.run(app=flask_app, host=self.host, port=self.port, log_level="error")
 
     def alive(self):
         """Hack: Returns whether the server is alive."""
