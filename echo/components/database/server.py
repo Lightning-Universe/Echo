@@ -9,7 +9,9 @@ from lightning_app.utilities.app_helpers import Logger
 from sqlmodel import Session, SQLModel, select
 from uvicorn import run
 
+from echo.models.echo import Echo
 from echo.models.general import GeneralModel
+from echo.models.segment import Segment
 from echo.models.utils import get_primary_key
 from echo.monitoring.sentry import init_sentry
 
@@ -18,11 +20,43 @@ logger = Logger(__name__)
 engine = None
 
 
-def general_get(config: GeneralModel):
+def list_echoes_for_user(user_id: str):
     with Session(engine) as session:
-        statement = select(config.data_cls)
+        statement = select(Echo).where(Echo.user_id == user_id)
         results = session.exec(statement)
         return results.all()
+
+
+def get_echo(echo_id: str):
+    with Session(engine) as session:
+        statement = select(Echo).where(Echo.id == echo_id)
+        results = session.exec(statement)
+        return results.first()
+
+
+def list_segments_for_echo(echo_id: str):
+    with Session(engine) as session:
+        statement = select(Segment).where(Segment.echo_id == echo_id).order_by(Segment.start)
+        results = session.exec(statement)
+        return results.all()
+
+
+def delete_echo(echo_id: str):
+    with Session(engine) as session:
+        statement = select(Echo).where(Echo.id == echo_id)
+        results = session.exec(statement)
+        result = results.one()
+        session.delete(result)
+        session.commit()
+
+
+def delete_segments_for_echo(echo_id: str):
+    with Session(engine) as session:
+        statement = select(Segment).where(Segment.echo_id == echo_id)
+        results = session.exec(statement)
+        for result in results:
+            session.delete(result)
+        session.commit()
 
 
 def general_post(config: GeneralModel):
@@ -50,18 +84,6 @@ def general_put(config: GeneralModel):
         session.add(result)
         session.commit()
         session.refresh(result)
-
-
-def general_delete(config: GeneralModel):
-    with Session(engine) as session:
-        update_data = config.convert_to_model()
-        primary_key = get_primary_key(update_data.__class__)
-        identifier = getattr(update_data.__class__, primary_key, None)
-        statement = select(update_data.__class__).where(identifier == getattr(update_data, primary_key))
-        results = session.exec(statement)
-        result = results.one()
-        session.delete(result)
-        session.commit()
 
 
 def create_engine(db_file_name: str, models: List[Type[SQLModel]], echo: bool):
@@ -98,10 +120,14 @@ class Database(LightningWork):
 
         create_engine(self.db_file_name, self._models, self.debug)
 
-        app.get("/general/")(general_get)
+        app.get("/echoes/")(list_echoes_for_user)
+        app.get("/echoes/{echo_id}")(get_echo)
+        app.get("/segments/")(list_segments_for_echo)
+        app.delete("/echoes/{echo_id}")(delete_echo)
+        app.delete("/segments/")(delete_segments_for_echo)
+
         app.post("/general/")(general_post)
         app.put("/general/")(general_put)
-        app.delete("/general/")(general_delete)
 
         run(app, host=self.host, port=self.port, log_level="error")
 

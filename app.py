@@ -139,7 +139,8 @@ class EchoApp(LightningFlow):
 
     def create_echo(self, echo: Echo) -> Echo:
         if self._echo_db_client is None:
-            raise RuntimeError("Database client not initialized!")
+            logger.warn("Database client not initialized!")
+            return None
 
         # Create Echo in the database
         self._echo_db_client.post(echo)
@@ -153,47 +154,32 @@ class EchoApp(LightningFlow):
 
     def list_echoes(self, config: ListEchoesConfig) -> List[Echo]:
         if self._echo_db_client is None:
-            raise RuntimeError("Database client not initialized!")
+            logger.warn("Database client not initialized!")
+            return None
 
-        echoes: List[Echo] = self._echo_db_client.get()
-        echoes_for_user = filter(lambda echo: echo.user_id == config.user_id, echoes)
+        echoes = self._echo_db_client.list_echoes_for_user(config.user_id)
 
-        return list(echoes_for_user)
+        return echoes
 
     def get_echo(self, config: GetEchoConfig) -> GetEchoResponse:
         if self._echo_db_client is None:
-            raise RuntimeError("Database client not initialized!")
+            logger.warn("Database client not initialized!")
+            return None
 
-        echoes: List[Echo] = self._echo_db_client.get()
-        echoes_for_user = filter(lambda echo: echo.user_id == config.user_id, echoes)
-        for echo in echoes_for_user:
-            if echo.id == config.echo_id:
-                segments = None
-                if config.include_segments:
-                    segments: List[Segment] = self._segment_db_client.get()
-                    segments_for_echo = filter(lambda segment: segment.echo_id == echo.id, segments)
-                    segments_ordered_desc = sorted(
-                        # The ID of the Segment is in the format `{echo_id}-{index}`
-                        list(segments_for_echo),
-                        key=lambda segment: int(segment.id.replace(f"{echo.id}-", "")),
-                    )
+        echo = self._echo_db_client.get_echo(config.echo_id)
+        segments = None
+        if config.include_segments:
+            segments = self._segment_db_client.list_segments_for_echo(config.echo_id)
 
-                return GetEchoResponse(echo=echo, segments=segments_ordered_desc)
-
-        return None
+        return GetEchoResponse(echo=echo, segments=segments)
 
     def delete_echo(self, config: DeleteEchoConfig) -> None:
         if self._echo_db_client is None:
-            raise RuntimeError("Database client not initialized!")
+            logger.warn("Database client not initialized!")
+            return None
 
-        # Delete Segments
-        segments: List[Segment] = self._segment_db_client.get()
-        segments_for_echo = filter(lambda segment: segment.echo_id == config.echo_id, segments)
-        for segment in segments_for_echo:
-            self._segment_db_client.delete(config=segment)
-
-        # Delete Echo
-        self._echo_db_client.delete(config=Echo(id=config.echo_id, user_id=config.user_id))
+        self._segment_db_client.delete_segments_for_echo(config.echo_id)
+        self._echo_db_client.delete_echo(config.echo_id)
 
         return None
 
