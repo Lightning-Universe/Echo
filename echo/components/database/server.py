@@ -2,12 +2,12 @@ import os
 import pathlib
 from typing import List, Optional, Type
 
-import uvicorn
 from fastapi import FastAPI
 from lightning import BuildConfig, LightningWork
 from lightning_app.storage import Path
 from lightning_app.utilities.app_helpers import Logger
 from sqlmodel import Session, SQLModel, select
+from uvicorn import run
 
 from echo.models.echo import Echo
 from echo.models.general import GeneralModel
@@ -129,7 +129,7 @@ class Database(LightningWork):
         app.post("/general/")(general_post)
         app.put("/general/")(general_put)
 
-        uvicorn.run(app, host=self.host, port=self.port, log_level="error")
+        run(app, host=self.host, port=self.port, log_level="error")
 
     def alive(self):
         """Hack: Returns whether the server is alive."""
