@@ -4,11 +4,18 @@ import { Stack } from "@mui/material";
 
 type Props = {
   sourceFileURL: string;
+  playFrom: number;
   onCurrentTimeChange: (currentTime: number) => void;
 };
 
-export default function AudioPreview({ sourceFileURL, onCurrentTimeChange }: Props) {
+export default function AudioPreview({ sourceFileURL, playFrom, onCurrentTimeChange }: Props) {
   const audioPlayer = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (audioPlayer.current) {
+      audioPlayer.current.currentTime = playFrom;
+    }
+  }, [playFrom]);
 
   useEffect(() => {
     if (audioPlayer.current) {
@@ -21,17 +28,6 @@ export default function AudioPreview({ sourceFileURL, onCurrentTimeChange }: Pro
       return () => clearInterval(interval);
     }
   }, [onCurrentTimeChange]);
-
-  useEffect(() => {
-    if (audioPlayer.current) {
-      audioPlayer.current.addEventListener("error", () => {
-        if (audioPlayer.current) {
-          // FIXME(alecmerdler): Debugging
-          alert(`Error ${audioPlayer.current.error?.code}; details: ${audioPlayer.current.error?.message}`);
-        }
-      });
-    }
-  });
 
   return (
     <Stack height={"100%"} width={"100%"} padding={2}>
