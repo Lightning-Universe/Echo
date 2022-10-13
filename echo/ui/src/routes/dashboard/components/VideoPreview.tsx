@@ -4,11 +4,18 @@ import { Stack } from "@mui/material";
 
 type Props = {
   sourceFileURL: string;
+  playFrom: number;
   onCurrentTimeChange: (currentTime: number) => void;
 };
 
-export default function VideoPreview({ sourceFileURL, onCurrentTimeChange }: Props) {
+export default function VideoPreview({ sourceFileURL, playFrom, onCurrentTimeChange }: Props) {
   const videoPlayer = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoPlayer.current) {
+      videoPlayer.current.currentTime = playFrom;
+    }
+  }, [playFrom]);
 
   useEffect(() => {
     if (videoPlayer.current) {

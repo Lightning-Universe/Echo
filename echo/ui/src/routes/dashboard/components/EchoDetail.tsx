@@ -27,6 +27,7 @@ export default function EchoDetail({ echoID, goBack }: Props) {
 
   const { data: echo, isLoading } = useGetEcho(echoID, true);
 
+  const [playMediaFrom, setPlayMediaFrom] = useState(0);
   const [currentSegment, setCurrentSegment] = useState(0);
 
   useEffect(() => {
@@ -74,13 +75,13 @@ export default function EchoDetail({ echoID, goBack }: Props) {
   const sourceFileURL = `${fileserverURL}/download/${echo.echo.id}`;
 
   const sourcePreview = isVideo(echo.echo.mediaType as SupportedMediaType) ? (
-    <VideoPreview sourceFileURL={sourceFileURL} onCurrentTimeChange={onCurrentTimeChange} />
+    <VideoPreview sourceFileURL={sourceFileURL} playFrom={playMediaFrom} onCurrentTimeChange={onCurrentTimeChange} />
   ) : (
-    <AudioPreview sourceFileURL={sourceFileURL} onCurrentTimeChange={onCurrentTimeChange} />
+    <AudioPreview sourceFileURL={sourceFileURL} playFrom={playMediaFrom} onCurrentTimeChange={onCurrentTimeChange} />
   );
 
   return (
-    <Stack direction={"column"}>
+    <Stack direction={"column"} height={"100%"}>
       <Stack padding={2}>
         <Breadcrumbs aria-label="breadcrumb">
           <Link color={"primary"} sx={{ ":hover": { cursor: "pointer" } }} onClick={() => goBack()}>
@@ -92,7 +93,7 @@ export default function EchoDetail({ echoID, goBack }: Props) {
       <Stack direction={"row"} justifyContent={"center"}>
         {sourcePreview}
       </Stack>
-      <Stack padding={2}>
+      <Stack padding={2} flexGrow={1}>
         <Stack direction={"row"} justifyContent={"space-between"} marginBottom={2}>
           <Typography variant={"h6"}>Captions</Typography>
           <Stack direction={"row"} spacing={2}>
@@ -116,9 +117,11 @@ export default function EchoDetail({ echoID, goBack }: Props) {
             />
           </Stack>
         </Stack>
-        {echo?.segments && echo.segments.length > 0 && currentSegment >= 0 && (
-          <Subtitles segments={echo.segments} currentSegment={currentSegment} />
-        )}
+        <Stack flexGrow={1} sx={{ overflowY: "scroll" }} maxHeight={"35vh"}>
+          {echo?.segments && echo.segments.length > 0 && currentSegment >= 0 && (
+            <Subtitles segments={echo.segments} currentSegment={currentSegment} onSelectTimestamp={setPlayMediaFrom} />
+          )}
+        </Stack>
       </Stack>
     </Stack>
   );
