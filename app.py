@@ -115,7 +115,6 @@ class EchoApp(LightningFlow):
 
     def run(self):
         # Run child components
-        # FIXME(alecmerdler): For some reason, all Works are loading the Whisper model which takes a long time...
         self.database.run()
         self.fileserver.run()
 
@@ -124,11 +123,13 @@ class EchoApp(LightningFlow):
             self._segment_db_client = DatabaseClient(model=Segment, db_url=self.database.db_url)
 
             # NOTE: Calling `self.recognizer.run()` with a dummy Echo so that the cloud machine is created
-            self.recognizer.run(
-                Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text=""), db_url=self.database.url
-            )
+            for _ in range(self.recognizer_min_replicas):
+                self.recognizer.run(
+                    Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text=""), db_url=self.database.url
+                )
             # NOTE: Calling `self.youtuber.run()` with a dummy Echo so that the cloud machine is created
-            self.youtuber.run(youtube_url=DUMMY_YOUTUBE_URL, echo_id=DUMMY_ECHO_ID)
+            for _ in range(self.youtuber_min_replicas):
+                self.youtuber.run(youtube_url=DUMMY_YOUTUBE_URL, echo_id=DUMMY_ECHO_ID)
 
         if self.schedule(self.recognizer_autoscaler_cron_schedule):
             self.recognizer.ensure_min_replicas()
@@ -185,8 +186,16 @@ class EchoApp(LightningFlow):
         if self._echo_db_client is None:
             raise RuntimeError("Database client not initialized!")
 
-        # FIXME(alecmerdler): Ensure cascade delete occurs for Echo -> Segment...
-        return self._echo_db_client.delete(config=Echo(id=config.echo_id, user_id=config.user_id))
+        # Delete Segments
+        segments: List[Segment] = self._segment_db_client.get()
+        segments_for_echo = filter(lambda segment: segment.echo_id == config.echo_id, segments)
+        for segment in segments_for_echo:
+            self._segment_db_client.delete(config=segment)
+
+        # Delete Echo
+        self._echo_db_client.delete(config=Echo(id=config.echo_id, user_id=config.user_id))
+
+        return None
 
     def login(self):
         if not self.enable_multi_tenancy:
