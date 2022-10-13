@@ -10,7 +10,7 @@ from lightning_app.storage import Drive
 from lightning_app.utilities.app_helpers import Logger
 
 from echo.components.database.client import DatabaseClient
-from echo.media.mime import UNSUPPORTED_MEDIA_TYPES, get_mimetype
+from echo.media.mime import get_mimetype
 from echo.media.video import contains_audio
 from echo.models.echo import Echo, Segment
 from echo.monitoring.sentry import init_sentry
@@ -89,15 +89,7 @@ class SpeechRecognizer(LightningWork):
         audio_file_path = echo.source_file_path
         self._drive.get(echo.source_file_path, timeout=DRIVE_SOURCE_FILE_TIMEOUT_SECONDS)
 
-        if get_mimetype(audio_file_path) in UNSUPPORTED_MEDIA_TYPES:
-            new_source_file_path = self.convert_to_audio(echo.id, audio_file_path)
-
-            os.remove(audio_file_path)
-            os.rename(new_source_file_path, audio_file_path)
-
-            self._drive.put(audio_file_path)
-
-        if echo.media_type.split("/")[0] == "video":
+        if get_mimetype(audio_file_path).split("/")[0] == "audio":
             audio_file_path = self.convert_to_audio(echo.id, echo.source_file_path)
 
         # Run the speech recognition model and save the result

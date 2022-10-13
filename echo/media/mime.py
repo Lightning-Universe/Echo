@@ -1,7 +1,7 @@
 import magic
 
-# iOS does not support the <audio> tag for WebM files
-UNSUPPORTED_MEDIA_TYPES = ["video/webm"]
+# iOS does not support playback of `.webm` files
+UNSUPPORTED_MEDIA_TYPES = ["video/webm", "audio/webm"]
 
 
 def get_mimetype(filepath):
