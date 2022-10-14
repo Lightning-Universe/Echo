@@ -30,6 +30,12 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
 
   const createEchoDisabled = !!userEchoesLimit && echoes.length >= userEchoesLimit;
 
+  const maxAgeSeconds = process.env.REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS;
+  const garbageCollectionWarning =
+    maxAgeSeconds !== undefined
+      ? `Echoes older than ${(Number(maxAgeSeconds) / 3600).toFixed(0)} hours will be automatically deleted.`
+      : "";
+
   const selectEcho = useCallback(
     (echoID?: string) => {
       if (echoID) {
@@ -95,6 +101,7 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
       <Stack direction={"column"} alignItems={"center"} justifyContent={"center"} spacing={2} height={"100%"}>
         <GraphicEqIcon fontSize="large" />
         <Typography variant={"body2"}>You don't have any Echoes</Typography>
+        <Typography variant={"caption"}>{garbageCollectionWarning}</Typography>
       </Stack>
     ) : (
       <Table header={header} rows={rows} />
