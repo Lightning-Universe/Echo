@@ -33,3 +33,5 @@ export function getUrl() {
 
   return url;
 }
+
+export const userEchoesLimit = Number(process.env.REACT_APP_ECHO_USER_ECHOES_LIMIT);

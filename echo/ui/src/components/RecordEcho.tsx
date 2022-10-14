@@ -34,6 +34,8 @@ type Props = {
   onSelectSourceType: (sourceType?: EchoSourceType) => void;
   onCreateEcho: (echoID: string) => void;
   onCancel: () => void;
+  disabled?: boolean;
+  disabledReason?: string;
 };
 
 export default function RecordEcho({
@@ -42,6 +44,8 @@ export default function RecordEcho({
   echoDisplayName,
   sourceYouTubeURL,
   onCancel,
+  disabled,
+  disabledReason,
 }: Props) {
   const [sourceType, setSourceType] = useState<EchoSourceType>();
   const [sourceBlob, setSourceBlob] = useState<Blob>();
@@ -197,32 +201,32 @@ export default function RecordEcho({
             <SpeedDialAction
               data-cy={"create-echo-microphone"}
               icon={<KeyboardVoiceIcon />}
-              onClick={selectRecording}
-              tooltipTitle={"Record Audio"}
+              onClick={disabled ? () => null : selectRecording}
+              tooltipTitle={disabled ? disabledReason : "Record Audio"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.youtube) && (
             <SpeedDialAction
               data-cy={"create-echo-youtube"}
               icon={<YouTubeIcon />}
-              onClick={selectYouTubeURL}
-              tooltipTitle={"YouTube URL"}
+              onClick={disabled ? () => null : selectYouTubeURL}
+              tooltipTitle={disabled ? disabledReason : "YouTube URL"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.file) && (
             <SpeedDialAction
               data-cy={"create-echo-audio-upload"}
               icon={<AudioFileIcon />}
-              onClick={selectSourceFile}
-              tooltipTitle={"Choose Audio File"}
+              onClick={disabled ? () => null : selectSourceFile}
+              tooltipTitle={disabled ? disabledReason : "Choose Audio File"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.file) && (
             <SpeedDialAction
               data-cy={"create-echo-video-upload"}
               icon={<VideoFileIcon />}
-              onClick={selectSourceFile}
-              tooltipTitle={"Choose Video File"}
+              onClick={disabled ? () => null : selectSourceFile}
+              tooltipTitle={disabled ? disabledReason : "Choose Video File"}
             />
           )}
           {/* Hidden source file input */}
