@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime, timedelta
 from typing import List
 
 from lightning import LightningApp, LightningFlow
@@ -36,14 +37,17 @@ RECOGNIZER_ATTRIBUTE_PREFIX = "recognizer_"
 RECOGNIZER_MIN_REPLICAS_DEFAULT = 1
 RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
-RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
+RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
 
 YOUTUBER_MIN_REPLICAS_DEFAULT = 1
 YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
-YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
+YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
 
 USER_ECHOES_LIMIT_DEFAULT = 3
+
+GARBAGE_COLLECTION_CRON_SCHEDULE_DEFAULT = None
+GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT = 60 * 60 * 24
 
 # FIXME: Duplicating this from `recognizer.py` because `lightning run app` gives import error...
 DUMMY_ECHO_ID = "dummy"
@@ -74,7 +78,7 @@ class EchoApp(LightningFlow):
             os.environ.get("ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK", RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT)
         )
         self.recognizer_autoscaler_cron_schedule = os.environ.get(
-            "ECHO_RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", RECOGNIZER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
+            "ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT", RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT
         )
         self.youtuber_min_replicas = int(os.environ.get("ECHO_YOUTUBER_MIN_REPLICAS", YOUTUBER_MIN_REPLICAS_DEFAULT))
         self.youtuber_max_idle_seconds_per_work = int(
@@ -84,7 +88,7 @@ class EchoApp(LightningFlow):
             os.environ.get("ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK", YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT)
         )
         self.youtuber_autoscaler_cron_schedule = os.environ.get(
-            "ECHO_YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
+            "ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT", YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT
         )
         self.user_echoes_limit = int(os.environ.get("ECHO_USER_ECHOES_LIMIT", USER_ECHOES_LIMIT_DEFAULT))
         self.source_type_file_enabled = os.environ.get("ECHO_SOURCE_TYPE_FILE_ENABLED", "true").lower() == "true"
@@ -92,6 +96,13 @@ class EchoApp(LightningFlow):
             os.environ.get("ECHO_SOURCE_TYPE_RECORDING_ENABLED", "true").lower() == "true"
         )
         self.source_type_youtube_enabled = os.environ.get("ECHO_SOURCE_TYPE_YOUTUBE_ENABLED", "true").lower() == "true"
+
+        self.garbage_collection_cron_schedule = os.environ.get(
+            "ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE", GARBAGE_COLLECTION_CRON_SCHEDULE_DEFAULT
+        )
+        self.garbage_collection_max_age_seconds = int(
+            os.environ.get("ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS", GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT)
+        )
 
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
@@ -147,6 +158,17 @@ class EchoApp(LightningFlow):
         if self.schedule(self.youtuber_autoscaler_cron_schedule):
             self.youtuber.ensure_min_replicas()
 
+        if self.garbage_collection_cron_schedule and self.schedule(self.garbage_collection_cron_schedule):
+            self._perform_garbage_collection()
+
+    def _perform_garbage_collection(self):
+        if self._echo_db_client is not None:
+            created_before = datetime.now() - timedelta(seconds=self.garbage_collection_max_age_seconds)
+            old_echoes = self._echo_db_client.list_echoes(user_id=None, created_before=int(created_before.timestamp()))
+            for echo in old_echoes:
+                logger.info(f"Deleting old Echo {echo.id}")
+                self.delete_echo(config=DeleteEchoConfig(echo_id=echo.id))
+
     def create_echo(self, echo: Echo) -> Echo:
         if self._echo_db_client is None:
             logger.warn("Database client not initialized!")
@@ -163,7 +185,7 @@ class EchoApp(LightningFlow):
                 return None
 
         # Guard against exceeding per-user Echoes limit
-        echoes = self._echo_db_client.list_echoes_for_user(echo.user_id)
+        echoes = self._echo_db_client.list_echoes(echo.user_id)
         if len(echoes) >= self.user_echoes_limit:
             logger.warn("User Echoes limit exceeded!")
             return None
@@ -183,7 +205,7 @@ class EchoApp(LightningFlow):
             logger.warn("Database client not initialized!")
             return None
 
-        echoes = self._echo_db_client.list_echoes_for_user(config.user_id)
+        echoes = self._echo_db_client.list_echoes(config.user_id)
 
         return echoes
 
@@ -206,6 +228,7 @@ class EchoApp(LightningFlow):
 
         self._segment_db_client.delete_segments_for_echo(config.echo_id)
         self._echo_db_client.delete_echo(config.echo_id)
+        self.fileserver.delete_file(config.echo_id)
 
         return None
 

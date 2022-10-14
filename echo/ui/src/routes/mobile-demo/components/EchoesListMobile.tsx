@@ -37,6 +37,12 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
   const completedEchoes = echoes.filter(echo => echo.text);
   const pendingEchoes = echoes.filter(echo => !echo.text);
 
+  const maxAgeSeconds = process.env.REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS;
+  const garbageCollectionWarning =
+    maxAgeSeconds !== undefined
+      ? `Echoes older than ${(Number(maxAgeSeconds) / 3600).toFixed(0)} hours will be automatically deleted.`
+      : "";
+
   return (
     <List sx={{ height: "100%" }}>
       {isLoading && (
@@ -48,6 +54,7 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
         <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2} height={"100%"}>
           <GraphicEqIcon />
           <Typography variant={"body1"}>You don't have any Echoes yet</Typography>
+          <Typography variant={"caption"}>{garbageCollectionWarning}</Typography>
         </Stack>
       )}
       {[...completedEchoes, ...pendingEchoes].map(echo => (

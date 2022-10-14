@@ -202,6 +202,7 @@ export default function RecordEcho({
               data-cy={"create-echo-microphone"}
               icon={<KeyboardVoiceIcon />}
               onClick={disabled ? () => null : selectRecording}
+              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
               tooltipTitle={disabled ? disabledReason : "Record Audio"}
             />
           )}
@@ -210,6 +211,7 @@ export default function RecordEcho({
               data-cy={"create-echo-youtube"}
               icon={<YouTubeIcon />}
               onClick={disabled ? () => null : selectYouTubeURL}
+              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
               tooltipTitle={disabled ? disabledReason : "YouTube URL"}
             />
           )}
@@ -218,6 +220,7 @@ export default function RecordEcho({
               data-cy={"create-echo-audio-upload"}
               icon={<AudioFileIcon />}
               onClick={disabled ? () => null : selectSourceFile}
+              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
               tooltipTitle={disabled ? disabledReason : "Choose Audio File"}
             />
           )}
@@ -226,6 +229,7 @@ export default function RecordEcho({
               data-cy={"create-echo-video-upload"}
               icon={<VideoFileIcon />}
               onClick={disabled ? () => null : selectSourceFile}
+              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
               tooltipTitle={disabled ? disabledReason : "Choose Video File"}
             />
           )}

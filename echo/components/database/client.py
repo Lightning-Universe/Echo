@@ -44,8 +44,15 @@ class DatabaseClient:
         self.general_endpoint = db_url + "/general/"
         self.session = _configure_session()
 
-    def list_echoes_for_user(self, user_id: str) -> List[Echo]:
-        resp = self.session.get(f"{self.db_url}/echoes/?user_id={user_id}")
+    def list_echoes(self, user_id: Optional[str] = None, created_before: Optional[int] = None) -> List[Echo]:
+        endpoint = f"{self.db_url}/echoes/"
+
+        if user_id is not None:
+            endpoint += f"?user_id={user_id}"
+        if created_before is not None:
+            endpoint += f"{'?' if user_id is None else '&'}created_before={created_before}"
+
+        resp = self.session.get(endpoint)
         assert resp.status_code == 200
         return [self.model(**data) for data in resp.json()]
 

@@ -138,6 +138,9 @@ class FileServer(LightningWork):
 
         return FileResponse(path=filepath, filename=filepath, media_type=mimetype)
 
+    def delete_file(self, echo_id: str):
+        self.drive.delete(self._get_drive_filepath(echo_id))
+
     def _get_drive_filepath(self, echo_id: str):
         """Returns file path stored on the shared Drive."""
         # NOTE: Drive throws `SameFileError` when using absolute path in `put()`, so we use relative path.

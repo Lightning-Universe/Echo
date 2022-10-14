@@ -1,5 +1,6 @@
 import os
 import pathlib
+from datetime import datetime
 from typing import List, Optional, Type
 
 import uvicorn
@@ -20,9 +21,14 @@ logger = Logger(__name__)
 engine = None
 
 
-def list_echoes_for_user(user_id: str):
+def list_echoes(user_id: Optional[str] = None, created_before: Optional[int] = None):
     with Session(engine) as session:
-        statement = select(Echo).where(Echo.user_id == user_id)
+        statement = select(Echo)
+        if user_id:
+            statement = statement.where(Echo.user_id == user_id)
+        if created_before:
+            statement = statement.where(Echo.created_at < datetime.fromtimestamp(created_before))
+
         results = session.exec(statement)
         return results.all()
 
@@ -120,7 +126,7 @@ class Database(LightningWork):
 
         create_engine(self.db_file_name, self._models, self.debug)
 
-        app.get("/echoes/")(list_echoes_for_user)
+        app.get("/echoes/")(list_echoes)
         app.get("/echoes/{echo_id}")(get_echo)
         app.get("/segments/")(list_segments_for_echo)
         app.delete("/echoes/{echo_id}")(delete_echo)

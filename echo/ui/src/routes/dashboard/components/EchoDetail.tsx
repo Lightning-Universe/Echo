@@ -46,7 +46,7 @@ export default function EchoDetail({ echoID, goBack }: Props) {
 
   if (!echoID) {
     return (
-      <Stack direction={"column"} alignItems={"center"} justifyContent={"center"} height={"100%"}>
+      <Stack direction={"column"} alignItems={"center"} justifyContent={"center"} spacing={2} height={"100%"}>
         <GraphicEqIcon fontSize="large" />
         <Typography variant={"body2"}>Select an Echo to view details</Typography>
       </Stack>
