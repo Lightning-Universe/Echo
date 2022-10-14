@@ -12,8 +12,11 @@
       "previewLimit": 50,
       "driver": "SQLite",
       "name": "echo-database",
-      "database": "${workspaceFolder:LAI-Echo-App}/database.db"
+      "database": "${workspaceFolder}/database.db"
     }
   ],
-  "sqltools.useNodeRuntime": true
+  "sqltools.useNodeRuntime": true,
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": "file:///home/alec/work/Lightning-AI/LAI-Echo-App/.github/workflows/deploy.yaml"
+  }
 }

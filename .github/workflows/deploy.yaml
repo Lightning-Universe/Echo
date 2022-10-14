@@ -1,0 +1,68 @@
+name: Deploy to lightning.ai
+# TODO(alecmerdler): Replicate for `echo-staging` on every merge to `main` branch
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v3.1.0
+      - name: Install frontend dependencies
+        run: cd echo/ui && yarn install
+      - name: Build frontend
+        run: cd echo/ui && yarn build
+        env:
+          REACT_APP_ECHO_SENTRY_DSN: ${{secrets.ECHO_SENTRY_DSN}}
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v1
+        with:
+          name: echo-frontend-build
+          path: echo/ui/build
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: build
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install Python dependencies
+        run: |
+          pip --version
+          pip install . --upgrade --quiet
+          pip list
+        shell: bash
+      - name: Retrieve frontend build
+        uses: actions/download-artifact@v1
+        with:
+          name: echo-frontend-build
+      - name: Deploy
+        env:
+          LIGHTNING_USER_ID: ${{secrets.LIGHTNING_USER_ID}}
+          LIGHTNING_API_KEY: ${{secrets.LIGHTNING_API_KEY}}
+        run: |
+          lightning run app app.py \
+            --cloud \
+            --name "echo-prod" \
+            --env ECHO_MODE=production
+            --env ECHO_MODEL_SIZE=base
+            --env ECHO_ENABLE_MULTI_TENANCY=true
+            --env ECHO_RECOGNIZER_MIN_REPLICAS=1
+            --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120
+            --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=10
+            --env ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *"
+            --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu
+            --env ECHO_YOUTUBER_MIN_REPLICAS=1
+            --env ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK=120
+            --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=10
+            --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *"
+            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu
+            --env ECHO_USER_ECHOES_LIMIT=100
+            --env ECHO_SOURCE_TYPE_FILE_ENABLED=true
+            --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=true
+            --env ECHO_SOURCE_TYPE_YOUTUBE_ENABLED=true
+            --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE=
+            --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400
+            --env ECHO_SENTRY_DSN=${{secrets.ECHO_SENTRY_DSN}} \
+            --env MUSE_ROOT_PATH="/muse" \
+        shell: bash

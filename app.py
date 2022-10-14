@@ -85,7 +85,7 @@ class EchoApp(LightningFlow):
             os.environ.get("ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK", RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT)
         )
         self.recognizer_autoscaler_cron_schedule = os.environ.get(
-            "ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT", RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT
+            "ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE", RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT
         )
         self.recognizer_cloud_compute = os.environ.get(
             "ECHO_RECOGNIZER_CLOUD_COMPUTE", RECOGNIZER_CLOUD_COMPUTE_DEFAULT
@@ -98,7 +98,7 @@ class EchoApp(LightningFlow):
             os.environ.get("ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK", YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT)
         )
         self.youtuber_autoscaler_cron_schedule = os.environ.get(
-            "ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT", YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT
+            "ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE", YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT
         )
         self.youtuber_cloud_compute = os.environ.get("ECHO_YOUTUBER_CLOUD_COMPUTE", YOUTUBER_CLOUD_COMPUTE_DEFAULT)
         self.user_echoes_limit = int(os.environ.get("ECHO_USER_ECHOES_LIMIT", USER_ECHOES_LIMIT_DEFAULT))
