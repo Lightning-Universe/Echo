@@ -19,6 +19,11 @@ export enum EchoSourceType {
   youtube = "youtube",
 }
 
+export const enabledEchoSourceTypes = new Map<EchoSourceType, boolean>()
+  .set(EchoSourceType.file, process.env.REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED !== "false")
+  .set(EchoSourceType.recording, process.env.REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED !== "false")
+  .set(EchoSourceType.youtube, process.env.REACT_APP_ECHO_SOURCE_TYPE_YOUTUBE_ENABLED !== "false");
+
 export const isAudio = (mediaType: SupportedMediaType) => mediaType.split("/")[0] === "audio";
 export const isVideo = (mediaType: SupportedMediaType) => mediaType.split("/")[0] === "video";
 

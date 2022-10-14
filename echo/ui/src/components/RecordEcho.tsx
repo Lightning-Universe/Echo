@@ -24,7 +24,7 @@ import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
 
 import useCreateEcho from "hooks/useCreateEcho";
-import { EchoSourceType, SupportedMediaType } from "utils";
+import { EchoSourceType, SupportedMediaType, enabledEchoSourceTypes } from "utils";
 
 import AudioWaveform from "./AudioWaveform";
 
@@ -193,30 +193,38 @@ export default function RecordEcho({
           direction={"left"}
           hidden={recordingStatus !== "idle"}
           icon={<SpeedDialIcon sx={{ color: "#FFFFFF" }} openIcon={<GraphicEqIcon htmlColor="#FFFFFF" />} />}>
-          <SpeedDialAction
-            data-cy={"create-echo-microphone"}
-            icon={<KeyboardVoiceIcon />}
-            onClick={selectRecording}
-            tooltipTitle={"Record Audio"}
-          />
-          <SpeedDialAction
-            data-cy={"create-echo-youtube"}
-            icon={<YouTubeIcon />}
-            onClick={selectYouTubeURL}
-            tooltipTitle={"YouTube URL"}
-          />
-          <SpeedDialAction
-            data-cy={"create-echo-audio-upload"}
-            icon={<AudioFileIcon />}
-            onClick={selectSourceFile}
-            tooltipTitle={"Choose Audio File"}
-          />
-          <SpeedDialAction
-            data-cy={"create-echo-video-upload"}
-            icon={<VideoFileIcon />}
-            onClick={selectSourceFile}
-            tooltipTitle={"Choose Video File"}
-          />
+          {enabledEchoSourceTypes.get(EchoSourceType.recording) && (
+            <SpeedDialAction
+              data-cy={"create-echo-microphone"}
+              icon={<KeyboardVoiceIcon />}
+              onClick={selectRecording}
+              tooltipTitle={"Record Audio"}
+            />
+          )}
+          {enabledEchoSourceTypes.get(EchoSourceType.youtube) && (
+            <SpeedDialAction
+              data-cy={"create-echo-youtube"}
+              icon={<YouTubeIcon />}
+              onClick={selectYouTubeURL}
+              tooltipTitle={"YouTube URL"}
+            />
+          )}
+          {enabledEchoSourceTypes.get(EchoSourceType.file) && (
+            <SpeedDialAction
+              data-cy={"create-echo-audio-upload"}
+              icon={<AudioFileIcon />}
+              onClick={selectSourceFile}
+              tooltipTitle={"Choose Audio File"}
+            />
+          )}
+          {enabledEchoSourceTypes.get(EchoSourceType.file) && (
+            <SpeedDialAction
+              data-cy={"create-echo-video-upload"}
+              icon={<VideoFileIcon />}
+              onClick={selectSourceFile}
+              tooltipTitle={"Choose Video File"}
+            />
+          )}
           {/* Hidden source file input */}
           <input
             ref={sourceFileInput}
