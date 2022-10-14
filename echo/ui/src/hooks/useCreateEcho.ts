@@ -32,7 +32,7 @@ export default function useCreateEcho() {
         await fetch(uploadURL, { body, method: "PUT" });
       }
 
-      return echoClient.appClientCommand.createEchoCommandCreateEchoPost({
+      return echoClient.appApi.handleCreateEchoApiEchoesPost({
         id: echoID,
         userId,
         displayName,

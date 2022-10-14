@@ -80,7 +80,10 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
         <Typography variant={"body2"}>{echo.createdAt}</Typography>,
         <Typography variant={"body2"}>{echo.completedTranscriptionAt ?? "-"}</Typography>,
         <Stack direction={"row"}>
-          <IconButton aria-label="Delete" disabled={!echo.text} onClick={() => deleteEchoMutation.mutate(echo.id)}>
+          <IconButton
+            aria-label="Delete"
+            disabled={!echo.completedTranscriptionAt}
+            onClick={() => deleteEchoMutation.mutate(echo.id)}>
             <DeleteIcon fontSize={"small"} />
           </IconButton>
         </Stack>,

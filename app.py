@@ -3,7 +3,9 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List
 
+from fastapi import HTTPException
 from lightning import LightningApp, LightningFlow
+from lightning_app.api.http_methods import Delete, Get, Post
 from lightning_app.frontend import StaticWebFrontend
 from lightning_app.storage import Drive
 from lightning_app.utilities.app_helpers import Logger
@@ -200,6 +202,8 @@ class EchoApp(LightningFlow):
         # Run speech recognition for the Echo
         self.recognizer.run(echo, db_url=self.database.url)
 
+        return echo
+
     def list_echoes(self, config: ListEchoesConfig) -> List[Echo]:
         if self._echo_db_client is None:
             logger.warn("Database client not initialized!")
@@ -239,6 +243,38 @@ class EchoApp(LightningFlow):
         new_user_id = str(uuid.uuid4())
 
         return LoginResponse(user_id=new_user_id)
+
+    def handle_create_echo(self, echo: Echo):
+        created_echo = self.create_echo(echo)
+        if created_echo is None:
+            raise HTTPException(status_code=400, detail="Failed to create Echo")
+
+        return echo
+
+    def handle_list_echoes(self, user_id: str):
+        return self.list_echoes(ListEchoesConfig(user_id=user_id))
+
+    def handle_get_echo(self, echo_id: str, include_segments: bool):
+        echo = self.get_echo(GetEchoConfig(echo_id=echo_id, include_segments=include_segments))
+        if echo is None:
+            raise HTTPException(status_code=404, detail="Echo not found")
+
+        return echo
+
+    def handle_delete_echo(self, echo_id: str):
+        return self.delete_echo(DeleteEchoConfig(echo_id=echo_id))
+
+    def handle_login(self):
+        return self.login()
+
+    def configure_api(self):
+        return [
+            Post("/api/echoes", method=self.handle_create_echo),
+            Get("/api/echoes", method=self.handle_list_echoes),
+            Get("/api/echoes/{echo_id}", method=self.handle_get_echo),
+            Delete("/api/echoes/{echo_id}", method=self.handle_delete_echo),
+            Get("/api/login", method=self.handle_login),
+        ]
 
     def configure_commands(self):
         return [
