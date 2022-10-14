@@ -17,5 +17,6 @@ export type { HTTPValidationError } from "./models/HTTPValidationError";
 export type { ListEchoesConfig } from "./models/ListEchoesConfig";
 export type { ValidationError } from "./models/ValidationError";
 
+export { AppApiService } from "./services/AppApiService";
 export { AppClientCommandService } from "./services/AppClientCommandService";
 export { DefaultService } from "./services/DefaultService";

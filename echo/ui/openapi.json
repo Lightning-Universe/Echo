@@ -279,6 +279,179 @@
         }
       }
     },
+    "/api/echoes": {
+      "get": {
+        "tags": ["app_api"],
+        "summary": "Handle List Echoes",
+        "operationId": "handle_list_echoes_api_echoes_get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            },
+            "name": "user_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["app_api"],
+        "summary": "Handle Create Echo",
+        "operationId": "handle_create_echo_api_echoes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Echo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/echoes/{echo_id}": {
+      "get": {
+        "tags": ["app_api"],
+        "summary": "Handle Get Echo",
+        "operationId": "handle_get_echo_api_echoes__echo_id__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "Echo Id",
+              "type": "string"
+            },
+            "name": "echo_id",
+            "in": "path"
+          },
+          {
+            "required": true,
+            "schema": {
+              "title": "Include Segments",
+              "type": "boolean"
+            },
+            "name": "include_segments",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["app_api"],
+        "summary": "Handle Delete Echo",
+        "operationId": "handle_delete_echo_api_echoes__echo_id__delete",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "Echo Id",
+              "type": "string"
+            },
+            "name": "echo_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/login": {
+      "get": {
+        "tags": ["app_api"],
+        "summary": "Handle Login",
+        "operationId": "handle_login_api_login_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/command/create_echo": {
       "post": {
         "tags": ["app_client_command"],
@@ -314,8 +487,8 @@
             }
           }
         },
-        "cls_name": "CreateEcho",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
+        "cls_name": "CreateEcho"
       }
     },
     "/command/list_echoes": {
@@ -353,8 +526,8 @@
             }
           }
         },
-        "cls_name": "ListEchoes",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
+        "cls_name": "ListEchoes"
       }
     },
     "/command/get_echo": {
@@ -392,8 +565,8 @@
             }
           }
         },
-        "cls_name": "GetEcho",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
+        "cls_name": "GetEcho"
       }
     },
     "/command/delete_echo": {
@@ -431,8 +604,8 @@
             }
           }
         },
-        "cls_name": "DeleteEcho",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/echo.py",
+        "cls_name": "DeleteEcho"
       }
     },
     "/command/login": {
@@ -450,8 +623,8 @@
             }
           }
         },
-        "cls_name": "Login",
-        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/auth.py"
+        "cls_path": "/home/alec/work/Lightning-AI/LAI-Echo-App/echo/commands/auth.py",
+        "cls_name": "Login"
       }
     },
     "/api{full_path}": {

@@ -66,7 +66,7 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
               edge="end"
               aria-label="delete"
               onClick={e => deleteEcho(e, echo.id)}
-              disabled={!echo.text || deleteEchoMutation.variables === echo.id}>
+              disabled={!echo.completedTranscriptionAt || deleteEchoMutation.variables === echo.id}>
               <DeleteIcon />
             </IconButton>
           }>
