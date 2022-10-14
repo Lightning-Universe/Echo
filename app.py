@@ -43,6 +43,8 @@ YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT = "*/5 * * * *"
 
+USER_ECHOES_LIMIT_DEFAULT = 3
+
 # FIXME: Duplicating this from `recognizer.py` because `lightning run app` gives import error...
 DUMMY_ECHO_ID = "dummy"
 DUMMY_YOUTUBE_URL = "dummy"
@@ -84,6 +86,7 @@ class EchoApp(LightningFlow):
         self.youtuber_autoscaler_cron_schedule = os.environ.get(
             "ECHO_YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT", YOUTUBER_AUTOSCALER_CROM_SCHEDULE_DEFAULT
         )
+        self.user_echoes_limit = int(os.environ.get("ECHO_USER_ECHOES_LIMIT", USER_ECHOES_LIMIT_DEFAULT))
         self.source_type_file_enabled = os.environ.get("ECHO_SOURCE_TYPE_FILE_ENABLED", "true").lower() == "true"
         self.source_type_recording_enabled = (
             os.environ.get("ECHO_SOURCE_TYPE_RECORDING_ENABLED", "true").lower() == "true"
@@ -158,6 +161,12 @@ class EchoApp(LightningFlow):
             if not self.source_type_youtube_enabled:
                 logger.warn("Source type YouTube is disabled!")
                 return None
+
+        # Guard against exceeding per-user Echoes limit
+        echoes = self._echo_db_client.list_echoes_for_user(echo.user_id)
+        if len(echoes) >= self.user_echoes_limit:
+            logger.warn("User Echoes limit exceeded!")
+            return None
 
         # Create Echo in the database
         self._echo_db_client.post(echo)

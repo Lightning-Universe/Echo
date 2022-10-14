@@ -8,7 +8,7 @@ import RecordEcho from "components/RecordEcho";
 import useDeleteEcho from "hooks/useDeleteEcho";
 import useListEchoes from "hooks/useListEchoes";
 import { Table } from "lightning-ui/src/design-system/components";
-import { EchoSourceType } from "utils";
+import { EchoSourceType, userEchoesLimit } from "utils";
 
 import CreateEchoForm from "./CreateEchoForm";
 
@@ -21,12 +21,14 @@ type Props = {
 };
 
 export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selectedEchoID }: Props) {
-  const { isLoading, data: echoes } = useListEchoes();
+  const { isLoading, data: echoes = [] } = useListEchoes();
   const deleteEchoMutation = useDeleteEcho();
 
   const [createEchoWithSourceType, setCreateEchoWithSourceType] = useState<EchoSourceType>();
   const [createEchoWithDisplayName, setCreateEchoWithDisplayName] = useState<string>();
   const [sourceYouTubeURL, setSourceYouTubeURL] = useState<string>();
+
+  const createEchoDisabled = !!userEchoesLimit && echoes.length >= userEchoesLimit;
 
   const selectEcho = useCallback(
     (echoID?: string) => {
@@ -123,6 +125,10 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
           onCreateEcho={onCreateEcho}
           sourceYouTubeURL={sourceYouTubeURL}
           onCancel={() => onToggleCreatingEcho(false)}
+          disabled={createEchoDisabled}
+          disabledReason={
+            createEchoDisabled ? "Maximum Echoes created, please delete an Echo to create a new one" : undefined
+          }
         />
       </Stack>
     </Stack>
