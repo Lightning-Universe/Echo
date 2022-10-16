@@ -16,6 +16,7 @@ from echo.models.echo import Echo, Segment
 from echo.monitoring.sentry import init_sentry
 
 DEFAULT_MODEL_SIZE = "base"
+DEFAULT_CLOUD_COMPUTE = "gpu"
 DRIVE_SOURCE_FILE_TIMEOUT_SECONDS = 18000
 DUMMY_ECHO_ID = "dummy"
 
@@ -32,11 +33,12 @@ class SpeechRecognizer(LightningWork):
     def __init__(
         self,
         model_size=DEFAULT_MODEL_SIZE,
+        cloud_compute=DEFAULT_CLOUD_COMPUTE,
         drive: Drive = None,
     ):
         super().__init__(
             parallel=True,
-            cloud_compute=CloudCompute("gpu"),
+            cloud_compute=CloudCompute(cloud_compute),
             cloud_build_config=CustomBuildConfig(
                 requirements=[
                     "torch",
