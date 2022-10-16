@@ -127,7 +127,6 @@ class EchoApp(LightningFlow):
         self.database = Database(models=[Echo])
         self.youtuber = LoadBalancer(
             name="youtuber",
-            cloud_compute=self.youtuber_cloud_compute,
             min_replicas=self.youtuber_min_replicas,
             max_idle_seconds_per_work=self.youtuber_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.youtuber_max_pending_calls_per_work,
@@ -137,7 +136,6 @@ class EchoApp(LightningFlow):
         )
         self.recognizer = LoadBalancer(
             name="recognizer",
-            cloud_compute=self.recognizer_cloud_compute,
             min_replicas=self.recognizer_min_replicas,
             max_idle_seconds_per_work=self.recognizer_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.recognizer_max_pending_calls_per_work,
