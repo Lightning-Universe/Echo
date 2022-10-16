@@ -48,7 +48,10 @@ YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
 YOUTUBER_CLOUD_COMPUTE_DEFAULT = "cpu"
 
-USER_ECHOES_LIMIT_DEFAULT = 3
+USER_ECHOES_LIMIT_DEFAULT = 100
+ECHO_SOURCE_TYPE_FILE_ENABLED_DEFAULT = "true"
+ECHO_SOURCE_TYPE_RECORDING_ENABLED_DEFAULT = "true"
+ECHO_SOURCE_TYPE_YOUTUBE_ENABLED_DEFAULT = "true"
 
 GARBAGE_COLLECTION_CRON_SCHEDULE_DEFAULT = None
 GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT = 60 * 60 * 24
@@ -99,12 +102,15 @@ class EchoApp(LightningFlow):
         )
         self.youtuber_cloud_compute = os.environ.get("ECHO_YOUTUBER_CLOUD_COMPUTE", YOUTUBER_CLOUD_COMPUTE_DEFAULT)
         self.user_echoes_limit = int(os.environ.get("ECHO_USER_ECHOES_LIMIT", USER_ECHOES_LIMIT_DEFAULT))
-        self.source_type_file_enabled = os.environ.get("ECHO_SOURCE_TYPE_FILE_ENABLED", "true").lower() == "true"
-        self.source_type_recording_enabled = (
-            os.environ.get("ECHO_SOURCE_TYPE_RECORDING_ENABLED", "true").lower() == "true"
+        self.source_type_file_enabled = (
+            os.environ.get("ECHO_SOURCE_TYPE_FILE_ENABLED", ECHO_SOURCE_TYPE_FILE_ENABLED_DEFAULT) == "true"
         )
-        self.source_type_youtube_enabled = os.environ.get("ECHO_SOURCE_TYPE_YOUTUBE_ENABLED", "true").lower() == "true"
-
+        self.source_type_recording_enabled = (
+            os.environ.get("ECHO_SOURCE_TYPE_RECORDING_ENABLED", ECHO_SOURCE_TYPE_RECORDING_ENABLED_DEFAULT) == "true"
+        )
+        self.source_type_youtube_enabled = (
+            os.environ.get("ECHO_SOURCE_TYPE_YOUTUBE_ENABLED", ECHO_SOURCE_TYPE_YOUTUBE_ENABLED_DEFAULT) == "true"
+        )
         self.garbage_collection_cron_schedule = os.environ.get(
             "ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE", GARBAGE_COLLECTION_CRON_SCHEDULE_DEFAULT
         )
