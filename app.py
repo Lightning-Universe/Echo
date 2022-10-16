@@ -40,11 +40,13 @@ RECOGNIZER_MIN_REPLICAS_DEFAULT = 1
 RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
+RECOGNIZER_CLOUD_COMPUTE_DEFAULT = "gpu"
 
 YOUTUBER_MIN_REPLICAS_DEFAULT = 1
 YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
+YOUTUBER_CLOUD_COMPUTE_DEFAULT = "cpu"
 
 USER_ECHOES_LIMIT_DEFAULT = 3
 
@@ -82,6 +84,9 @@ class EchoApp(LightningFlow):
         self.recognizer_autoscaler_cron_schedule = os.environ.get(
             "ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT", RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT
         )
+        self.recognizer_cloud_compute = os.environ.get(
+            "ECHO_RECOGNIZER_CLOUD_COMPUTE", RECOGNIZER_CLOUD_COMPUTE_DEFAULT
+        )
         self.youtuber_min_replicas = int(os.environ.get("ECHO_YOUTUBER_MIN_REPLICAS", YOUTUBER_MIN_REPLICAS_DEFAULT))
         self.youtuber_max_idle_seconds_per_work = int(
             os.environ.get("ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK", YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT)
@@ -92,6 +97,7 @@ class EchoApp(LightningFlow):
         self.youtuber_autoscaler_cron_schedule = os.environ.get(
             "ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT", YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT
         )
+        self.youtuber_cloud_compute = os.environ.get("ECHO_YOUTUBER_CLOUD_COMPUTE", YOUTUBER_CLOUD_COMPUTE_DEFAULT)
         self.user_echoes_limit = int(os.environ.get("ECHO_USER_ECHOES_LIMIT", USER_ECHOES_LIMIT_DEFAULT))
         self.source_type_file_enabled = os.environ.get("ECHO_SOURCE_TYPE_FILE_ENABLED", "true").lower() == "true"
         self.source_type_recording_enabled = (
@@ -121,17 +127,23 @@ class EchoApp(LightningFlow):
         self.database = Database(models=[Echo])
         self.youtuber = LoadBalancer(
             name="youtuber",
+            cloud_compute=self.youtuber_cloud_compute,
             min_replicas=self.youtuber_min_replicas,
             max_idle_seconds_per_work=self.youtuber_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.youtuber_max_pending_calls_per_work,
-            create_work=lambda: YouTuber(drive=self.drive, base_dir=base_dir),
+            create_work=lambda: YouTuber(
+                cloud_compute=self.youtuber_cloud_compute, drive=self.drive, base_dir=base_dir
+            ),
         )
         self.recognizer = LoadBalancer(
             name="recognizer",
+            cloud_compute=self.recognizer_cloud_compute,
             min_replicas=self.recognizer_min_replicas,
             max_idle_seconds_per_work=self.recognizer_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.recognizer_max_pending_calls_per_work,
-            create_work=lambda: SpeechRecognizer(drive=self.drive, model_size=self.model_size),
+            create_work=lambda: SpeechRecognizer(
+                cloud_compute=self.recognizer_cloud_compute, drive=self.drive, model_size=self.model_size
+            ),
         )
 
     def run(self):
