@@ -25,7 +25,7 @@ ______________________________________________________________________
 
 Use Echo to generate quick captions of video and audio content. Powered by OpenAI’s Whisper, Echo benefits from near-human speech recognition to transcribe spoken words into text.
 
-## Runing Echo
+## Running Echo
 
 ### Configuration
 
