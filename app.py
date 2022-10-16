@@ -230,9 +230,12 @@ class EchoApp(LightningFlow):
             logger.warn("Database client not initialized!")
             return None
 
-        self._segment_db_client.delete_segments_for_echo(config.echo_id)
-        self._echo_db_client.delete_echo(config.echo_id)
-        self.fileserver.delete_file(config.echo_id)
+        try:
+            self._segment_db_client.delete_segments_for_echo(config.echo_id)
+            self._echo_db_client.delete_echo(config.echo_id)
+            self.fileserver.delete_file(config.echo_id)
+        except Exception as e:
+            logger.error(e)
 
         return None
 
