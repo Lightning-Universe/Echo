@@ -12,15 +12,16 @@ logger = Logger(__name__)
 
 DUMMY_ECHO_ID = "dummy"
 DUMMY_YOUTUBE_URL = "dummy"
+DEFAULT_CLOUD_COMPUTE = "cpu"
 
 
 class YouTuber(LightningWork):
     """Handles downloading and extracting videos from YouTube."""
 
-    def __init__(self, drive: Drive, base_dir: str = None):
+    def __init__(self, drive: Drive, cloud_compute=DEFAULT_CLOUD_COMPUTE, base_dir: str = None):
         super().__init__(
             parallel=True,
-            cloud_compute=CloudCompute("cpu"),
+            cloud_compute=CloudCompute(DEFAULT_CLOUD_COMPUTE),
             cloud_build_config=BuildConfig(requirements=["pytube"]),
         )
 
