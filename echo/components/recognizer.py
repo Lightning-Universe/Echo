@@ -91,7 +91,7 @@ class SpeechRecognizer(LightningWork):
         audio_file_path = echo.source_file_path
         self._drive.get(echo.source_file_path, timeout=DRIVE_SOURCE_FILE_TIMEOUT_SECONDS)
 
-        if get_mimetype(audio_file_path).split("/")[0] == "audio":
+        if get_mimetype(audio_file_path).split("/")[0] != "audio":
             audio_file_path = self.convert_to_audio(echo.id, echo.source_file_path)
 
         # Run the speech recognition model and save the result
