@@ -15,7 +15,7 @@ jobs:
       - name: Build frontend
         run: cd echo/ui && yarn build
         env:
-          REACT_APP_ECHO_SENTRY_DSN: ${{secrets.ECHO_SENTRY_DSN}}
+          REACT_APP_ECHO_SENTRY_DSN: ${{ secrets.ECHO_SENTRY_DSN }}
       - name: Upload frontend build
         uses: actions/upload-artifact@v1
         with:
@@ -32,7 +32,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip --version
-          pip install . --upgrade --quiet
+          pip install -r requirements.txt --quiet
           pip list
         shell: bash
       - name: Retrieve frontend build
@@ -41,9 +41,9 @@ jobs:
           name: echo-frontend-build
       - name: Deploy
         env:
-          LIGHTNING_USER_ID: ${{secrets.LIGHTNING_USER_ID}}
-          LIGHTNING_API_KEY: ${{secrets.LIGHTNING_API_KEY}}
-          LIGHTNING_CLOUD_PROJECT_ID: ${{secrets.LIGHTNING_CLOUD_PROJECT_ID}}
+          LIGHTNING_USER_ID: ${{ secrets.LIGHTNING_USER_ID }}
+          LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
+          LIGHTNING_CLOUD_PROJECT_ID: ${{ secrets.LIGHTNING_CLOUD_PROJECT_ID }}
         run: |
           lightning run app app.py \
             --cloud \
@@ -61,12 +61,11 @@ jobs:
             --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=10
             --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *"
             --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu
-            --env ECHO_USER_ECHOES_LIMIT=100
-            --env ECHO_SOURCE_TYPE_FILE_ENABLED=true
+            --env ECHO_USER_ECHOES_LIMIT=3
+            --env ECHO_SOURCE_TYPE_FILE_ENABLED=false
             --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=true
             --env ECHO_SOURCE_TYPE_YOUTUBE_ENABLED=true
-            --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE=
+            --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE="*/30 * * * *"
             --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400
-            --env ECHO_SENTRY_DSN=${{secrets.ECHO_SENTRY_DSN}} \
-            --env MUSE_ROOT_PATH="/muse" \
+            --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
         shell: bash
