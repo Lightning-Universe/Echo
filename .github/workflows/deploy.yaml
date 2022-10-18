@@ -15,6 +15,10 @@ jobs:
       - name: Build frontend
         run: cd echo/ui && yarn build
         env:
+          REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED: "false"
+          REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED: "true"
+          REACT_APP_ECHO_SOURCE_TYPE_YOUTUBE_ENABLED: "true"
+          REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS: 84600
           REACT_APP_ECHO_SENTRY_DSN: ${{ secrets.ECHO_SENTRY_DSN }}
       - name: Upload frontend build
         uses: actions/upload-artifact@v1
@@ -25,6 +29,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: build
     steps:
+      - uses: actions/checkout@v3.1.0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
