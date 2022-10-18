@@ -7,6 +7,9 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v3.1.0
+      - uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.LIGHTNING_UI_SSH_KEY }}
       - name: Install frontend dependencies
         run: cd echo/ui && yarn install
       - name: Build frontend
@@ -40,6 +43,7 @@ jobs:
         env:
           LIGHTNING_USER_ID: ${{secrets.LIGHTNING_USER_ID}}
           LIGHTNING_API_KEY: ${{secrets.LIGHTNING_API_KEY}}
+          LIGHTNING_CLOUD_PROJECT_ID: ${{secrets.LIGHTNING_CLOUD_PROJECT_ID}}
         run: |
           lightning run app app.py \
             --cloud \
