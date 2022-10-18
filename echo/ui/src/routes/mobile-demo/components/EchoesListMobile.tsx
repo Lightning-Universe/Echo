@@ -38,10 +38,9 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
   const pendingEchoes = echoes.filter(echo => !echo.text);
 
   const maxAgeSeconds = process.env.REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS;
-  const garbageCollectionWarning =
-    maxAgeSeconds !== undefined
-      ? `Echoes older than ${(Number(maxAgeSeconds) / 3600).toFixed(0)} hours will be automatically deleted.`
-      : "";
+  const garbageCollectionWarning = !!maxAgeSeconds
+    ? `Echoes older than ${(Number(maxAgeSeconds) / 3600).toFixed(0)} hours will be automatically deleted.`
+    : "";
 
   return (
     <List sx={{ height: "100%" }}>
