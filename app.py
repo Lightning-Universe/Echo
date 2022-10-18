@@ -193,13 +193,13 @@ class EchoApp(LightningFlow):
             return None
 
         # Guard against disabled source types
-        if echo.source_youtube_url is None:
-            if not self.source_type_recording_enabled or not self.source_type_file_enabled:
-                logger.warn("Source type file/recording is disabled!")
-                return None
-        else:
+        if echo.source_youtube_url is not None:
             if not self.source_type_youtube_enabled:
                 logger.warn("Source type YouTube is disabled!")
+                return None
+        if echo.source_youtube_url is None:
+            if not self.source_type_recording_enabled and not self.source_type_file_enabled:
+                logger.warn("Source type file/recording is disabled!")
                 return None
 
         # Guard against exceeding per-user Echoes limit
