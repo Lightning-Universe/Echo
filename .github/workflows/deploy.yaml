@@ -44,6 +44,7 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: echo-frontend-build
+          path: echo/ui/build
       - name: Deploy
         env:
           LIGHTNING_USER_ID: ${{ secrets.LIGHTNING_USER_ID }}
