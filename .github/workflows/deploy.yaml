@@ -53,24 +53,25 @@ jobs:
           lightning run app app.py \
             --cloud \
             --name "echo-prod" \
-            --env ECHO_MODE=production
-            --env ECHO_MODEL_SIZE=base
-            --env ECHO_ENABLE_MULTI_TENANCY=true
-            --env ECHO_RECOGNIZER_MIN_REPLICAS=1
-            --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120
-            --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=10
-            --env ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *"
-            --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu
-            --env ECHO_YOUTUBER_MIN_REPLICAS=1
-            --env ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK=120
-            --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=10
-            --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *"
-            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu
-            --env ECHO_USER_ECHOES_LIMIT=3
-            --env ECHO_SOURCE_TYPE_FILE_ENABLED=false
-            --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=true
-            --env ECHO_SOURCE_TYPE_YOUTUBE_ENABLED=true
-            --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE="*/30 * * * *"
-            --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400
+            --open-ui false \
+            --env ECHO_MODE=production \
+            --env ECHO_MODEL_SIZE=base \
+            --env ECHO_ENABLE_MULTI_TENANCY=true \
+            --env ECHO_RECOGNIZER_MIN_REPLICAS=1 \
+            --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120 \
+            --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=10 \
+            --env ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
+            --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu \
+            --env ECHO_YOUTUBER_MIN_REPLICAS=1 \
+            --env ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK=120 \
+            --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=10 \
+            --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
+            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu \
+            --env ECHO_USER_ECHOES_LIMIT=3 \
+            --env ECHO_SOURCE_TYPE_FILE_ENABLED=false \
+            --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=true \
+            --env ECHO_SOURCE_TYPE_YOUTUBE_ENABLED=true \
+            --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE="*/30 * * * *" \
+            --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400 \
             --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
         shell: bash
