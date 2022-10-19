@@ -19,7 +19,7 @@
 </div>
 </div>
 
-______________________________________________________________________
+---
 
 # Lightning Echo
 
@@ -29,7 +29,8 @@ Use Echo to generate quick captions of video and audio content. Powered by OpenA
 
 ### Configuration
 
-All configuration is done using environment variables, which are documented below with their default values.
+<details>
+  <summary>All configuration is done using environment variables, which are documented below with their default values.</summary>
 
 | Name                                         | Type                                                                                      | Default Value    | Description                                                                                                                                                                              |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -58,6 +59,8 @@ All configuration is done using environment variables, which are documented belo
 | `ECHO_ROOT_PATH`                             | string                                                                                    | `/`              | Used to serve the app under a subpath or proxy.                                                                                                                                          |
 | `ECHO_SENTRY_DSN`                            | string                                                                                    | `None`           | ID of the Sentry project for monitoring                                                                                                                                                  |
 | `ECHO_SENTRY_SAMPLE_RATE`                    | float                                                                                     | `0.1`            | Sample rate for Sentry monitoring                                                                                                                                                        |
+
+</details>
 
 ## Development
 
