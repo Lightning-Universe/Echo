@@ -60,6 +60,7 @@ All configuration is done using environment variables, which are documented belo
 
 - Python 3.8+
 - `ffmpeg`
+- `libmagic`
 - `yarn` (for frontend development)
 
 1. Clone the repo:
@@ -101,6 +102,25 @@ yarn build
 ```
 # Run from project root
 lightning run app app.py
+```
+
+### End-to-End Tests
+
+End-to-end tests are written using [Cypress](https://www.cypress.io/). To run them against a local instance of the app, follow these instructions:
+
+1. Clean the environment:
+
+```sh
+./scripts/clean.sh
+```
+
+2. Start app locally using the instructions above.
+
+1. Run Cypress:
+
+```sh
+cd echo/ui
+yarn run e2e
 ```
 
 ### Debug using VSCode
