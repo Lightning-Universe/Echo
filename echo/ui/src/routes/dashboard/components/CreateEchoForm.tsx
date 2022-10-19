@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { Stack } from "@mui/material";
 
 import { TextField } from "lightning-ui/src/design-system/components";
-import { EchoSourceType } from "utils";
+import { EchoSourceType, videoMaxDurationSeconds } from "utils";
 
 type Props = {
   sourceType: EchoSourceType;
@@ -47,6 +47,11 @@ export default function CreateEchoForm({ sourceType, youtubeURLUpdated, displayN
           placeholder={"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
           value={sourceYouTubeURL}
           onChange={value => onChangeYouTubeURL(value ?? "")}
+          helperText={
+            videoMaxDurationSeconds
+              ? `Video must be less than ${(videoMaxDurationSeconds / 60).toFixed(0)} minutes long.`
+              : ""
+          }
           optional={false}
         />
       )}

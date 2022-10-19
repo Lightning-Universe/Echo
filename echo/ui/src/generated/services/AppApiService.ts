@@ -90,6 +90,24 @@ export class AppApiService {
   }
 
   /**
+   * Handle Validate Echo
+   * @param requestBody
+   * @returns any Successful Response
+   * @throws ApiError
+   */
+  public handleValidateEchoApiValidatePost(requestBody: Echo): CancelablePromise<any> {
+    return this.httpRequest.request({
+      method: "POST",
+      url: "/api/validate",
+      body: requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: `Validation Error`,
+      },
+    });
+  }
+
+  /**
    * Handle Login
    * @returns any Successful Response
    * @throws ApiError

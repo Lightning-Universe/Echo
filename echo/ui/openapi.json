@@ -435,6 +435,43 @@
         }
       }
     },
+    "/api/validate": {
+      "post": {
+        "tags": ["app_api"],
+        "summary": "Handle Validate Echo",
+        "operationId": "handle_validate_echo_api_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Echo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/login": {
       "get": {
         "tags": ["app_api"],

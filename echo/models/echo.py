@@ -70,3 +70,14 @@ class DeleteEchoConfig(BaseModel):
     class Config:
         alias_generator = to_camelcase
         allow_population_by_field_name = True
+
+
+class ValidateEchoResponse(BaseModel):
+    """Used for the `/api/validate` endpoint."""
+
+    valid: bool = False
+    reason: Optional[str] = None
+
+    class Config:
+        alias_generator = to_camelcase
+        allow_population_by_field_name = True
