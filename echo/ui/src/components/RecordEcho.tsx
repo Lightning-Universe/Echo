@@ -9,6 +9,7 @@ import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import VideoFileIcon from "@mui/icons-material/VideoFile";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import {
+  Alert,
   Fab,
   LinearProgress,
   SpeedDial,
@@ -24,6 +25,7 @@ import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
 
 import useCreateEcho from "hooks/useCreateEcho";
+import useValidateEcho from "hooks/useValidateEcho";
 import { EchoSourceType, SupportedMediaType, enabledEchoSourceTypes } from "utils";
 
 import AudioWaveform from "./AudioWaveform";
@@ -57,6 +59,7 @@ export default function RecordEcho({
   const onMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const createEchoMutation = useCreateEcho();
+  const validateEchoMutation = useValidateEcho();
 
   const {
     status: recordingStatus,
@@ -77,39 +80,58 @@ export default function RecordEcho({
     },
   });
 
-  const createEcho = useCallback(async () => {
+  const createEcho = useCallback(() => {
     const echoID = uuidv4();
 
-    if (!sourceType || !sourceMediaType) {
+    if (!sourceMediaType) {
       return;
     }
 
-    switch (sourceType) {
-      case EchoSourceType.youtube:
-        if (sourceYouTubeURL) {
-          createEchoMutation.mutate({
-            echoID,
-            displayName: echoDisplayName ?? echoID,
-            sourceYouTubeURL,
-            mediaType: sourceMediaType,
-          });
-        }
+    validateEchoMutation.mutate({
+      echoID,
+      displayName: echoDisplayName ?? echoID,
+      mediaType: sourceMediaType,
+      sourceYouTubeURL,
+    });
+  }, [sourceMediaType, echoDisplayName, sourceYouTubeURL, validateEchoMutation]);
 
-        return onCreateEcho(echoID);
-      case EchoSourceType.recording:
-      case EchoSourceType.file:
-        if (sourceBlob) {
-          createEchoMutation.mutate({
-            echoID,
-            displayName: echoDisplayName ?? echoID,
-            sourceFile: sourceBlob,
-            mediaType: sourceMediaType,
-          });
+  useEffect(() => {
+    if (validateEchoMutation.isSuccess && validateEchoMutation.data.valid) {
+      validateEchoMutation.reset();
 
-          clearBlobUrl();
+      const echoID = uuidv4();
+
+      if (!sourceType || !sourceMediaType) {
+        return;
+      }
+
+      switch (sourceType) {
+        case EchoSourceType.youtube:
+          if (sourceYouTubeURL) {
+            createEchoMutation.mutate({
+              echoID,
+              displayName: echoDisplayName ?? echoID,
+              sourceYouTubeURL,
+              mediaType: sourceMediaType,
+            });
+          }
 
           return onCreateEcho(echoID);
-        }
+        case EchoSourceType.recording:
+        case EchoSourceType.file:
+          if (sourceBlob) {
+            createEchoMutation.mutate({
+              echoID,
+              displayName: echoDisplayName ?? echoID,
+              sourceFile: sourceBlob,
+              mediaType: sourceMediaType,
+            });
+
+            clearBlobUrl();
+
+            return onCreateEcho(echoID);
+          }
+      }
     }
   }, [
     sourceBlob,
@@ -120,6 +142,7 @@ export default function RecordEcho({
     echoDisplayName,
     sourceType,
     sourceYouTubeURL,
+    validateEchoMutation,
   ]);
 
   useEffect(() => {
@@ -170,6 +193,8 @@ export default function RecordEcho({
   );
 
   const discardSource = useCallback(() => {
+    validateEchoMutation.reset();
+
     setSourceType(undefined);
     setSourceMediaType(undefined);
     setSourceBlob(undefined);
@@ -180,7 +205,7 @@ export default function RecordEcho({
     if (mediaBlobUrl) {
       clearBlobUrl();
     }
-  }, [clearBlobUrl, mediaBlobUrl, onSelectSourceType, onCancel]);
+  }, [clearBlobUrl, mediaBlobUrl, onSelectSourceType, onCancel, validateEchoMutation]);
 
   const showSourceSelect = !createEchoMutation.isLoading && sourceType === undefined;
   const showRecordingControls =
@@ -301,6 +326,11 @@ export default function RecordEcho({
     return (
       <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} width="100%" spacing={2}>
         {onMobile && sourceType !== EchoSourceType.youtube && audioPlayback}
+        {validateEchoMutation.isSuccess && !validateEchoMutation.data.valid && (
+          <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} spacing={2} width={"100%"}>
+            <Alert severity="error">Error creating Echo: {validateEchoMutation.data?.reason}</Alert>
+          </Stack>
+        )}
         <Stack direction={"row"} alignItems={"center"} justifyContent={"center"} width={"100%"} spacing={2}>
           {!onMobile && sourceType !== EchoSourceType.youtube && audioPlayback}
           <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>

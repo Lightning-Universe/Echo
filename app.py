@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List
 
-from fastapi import HTTPException
 from lightning import LightningApp, LightningFlow
 from lightning_app.api.http_methods import Delete, Get, Post
 from lightning_app.frontend import StaticWebFrontend
@@ -20,6 +19,7 @@ from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.components.recognizer import SpeechRecognizer
 from echo.components.youtuber import YouTuber
 from echo.constants import SHARED_STORAGE_DRIVE_ID
+from echo.media.video import is_valid_youtube_url, youtube_video_length
 from echo.models.auth import LoginResponse
 from echo.models.echo import (
     DeleteEchoConfig,
@@ -27,6 +27,7 @@ from echo.models.echo import (
     GetEchoConfig,
     GetEchoResponse,
     ListEchoesConfig,
+    ValidateEchoResponse,
 )
 from echo.models.segment import Segment
 from echo.monitoring.sentry import init_sentry
@@ -49,9 +50,11 @@ YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
 YOUTUBER_CLOUD_COMPUTE_DEFAULT = "cpu"
 
 USER_ECHOES_LIMIT_DEFAULT = 100
-ECHO_SOURCE_TYPE_FILE_ENABLED_DEFAULT = "true"
-ECHO_SOURCE_TYPE_RECORDING_ENABLED_DEFAULT = "true"
-ECHO_SOURCE_TYPE_YOUTUBE_ENABLED_DEFAULT = "true"
+SOURCE_TYPE_FILE_ENABLED_DEFAULT = "true"
+SOURCE_TYPE_RECORDING_ENABLED_DEFAULT = "true"
+SOURCE_TYPE_YOUTUBE_ENABLED_DEFAULT = "true"
+
+VIDEO_SOURCE_MAX_DURATION_SECONDS_DEFAULT = 60 * 15
 
 GARBAGE_COLLECTION_CRON_SCHEDULE_DEFAULT = None
 GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT = 60 * 60 * 24
@@ -103,19 +106,22 @@ class EchoApp(LightningFlow):
         self.youtuber_cloud_compute = os.environ.get("ECHO_YOUTUBER_CLOUD_COMPUTE", YOUTUBER_CLOUD_COMPUTE_DEFAULT)
         self.user_echoes_limit = int(os.environ.get("ECHO_USER_ECHOES_LIMIT", USER_ECHOES_LIMIT_DEFAULT))
         self.source_type_file_enabled = (
-            os.environ.get("ECHO_SOURCE_TYPE_FILE_ENABLED", ECHO_SOURCE_TYPE_FILE_ENABLED_DEFAULT) == "true"
+            os.environ.get("ECHO_SOURCE_TYPE_FILE_ENABLED", SOURCE_TYPE_FILE_ENABLED_DEFAULT) == "true"
         )
         self.source_type_recording_enabled = (
-            os.environ.get("ECHO_SOURCE_TYPE_RECORDING_ENABLED", ECHO_SOURCE_TYPE_RECORDING_ENABLED_DEFAULT) == "true"
+            os.environ.get("ECHO_SOURCE_TYPE_RECORDING_ENABLED", SOURCE_TYPE_RECORDING_ENABLED_DEFAULT) == "true"
         )
         self.source_type_youtube_enabled = (
-            os.environ.get("ECHO_SOURCE_TYPE_YOUTUBE_ENABLED", ECHO_SOURCE_TYPE_YOUTUBE_ENABLED_DEFAULT) == "true"
+            os.environ.get("ECHO_SOURCE_TYPE_YOUTUBE_ENABLED", SOURCE_TYPE_YOUTUBE_ENABLED_DEFAULT) == "true"
         )
         self.garbage_collection_cron_schedule = os.environ.get(
             "ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE", GARBAGE_COLLECTION_CRON_SCHEDULE_DEFAULT
         )
         self.garbage_collection_max_age_seconds = int(
             os.environ.get("ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS", GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT)
+        )
+        self.video_source_max_duration_seconds = int(
+            os.environ.get("ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS", VIDEO_SOURCE_MAX_DURATION_SECONDS_DEFAULT)
         )
 
         # Need to wait for database to be ready before initializing clients
@@ -192,22 +198,6 @@ class EchoApp(LightningFlow):
             logger.warn("Database client not initialized!")
             return None
 
-        # Guard against disabled source types
-        if echo.source_youtube_url is not None:
-            if not self.source_type_youtube_enabled:
-                logger.warn("Source type YouTube is disabled!")
-                return None
-        if echo.source_youtube_url is None:
-            if not self.source_type_recording_enabled and not self.source_type_file_enabled:
-                logger.warn("Source type file/recording is disabled!")
-                return None
-
-        # Guard against exceeding per-user Echoes limit
-        echoes = self._echo_db_client.list_echoes(echo.user_id)
-        if len(echoes) >= self.user_echoes_limit:
-            logger.warn("User Echoes limit exceeded!")
-            return None
-
         # Create Echo in the database
         self._echo_db_client.post(echo)
 
@@ -264,24 +254,42 @@ class EchoApp(LightningFlow):
         return LoginResponse(user_id=new_user_id)
 
     def handle_create_echo(self, echo: Echo):
-        created_echo = self.create_echo(echo)
-        if created_echo is None:
-            raise HTTPException(status_code=400, detail="Failed to create Echo")
-
-        return echo
+        # FIXME: Framework does not support raising `HTTPException(status_code=400)` without crashing the entire Flow
+        return self.create_echo(echo)
 
     def handle_list_echoes(self, user_id: str):
         return self.list_echoes(ListEchoesConfig(user_id=user_id))
 
     def handle_get_echo(self, echo_id: str, include_segments: bool):
-        echo = self.get_echo(GetEchoConfig(echo_id=echo_id, include_segments=include_segments))
-        if echo is None:
-            raise HTTPException(status_code=404, detail="Echo not found")
-
-        return echo
+        # FIXME: Framework does not support raising `HTTPException(status_code=404)` without crashing the entire Flow
+        return self.get_echo(GetEchoConfig(echo_id=echo_id, include_segments=include_segments))
 
     def handle_delete_echo(self, echo_id: str):
         return self.delete_echo(DeleteEchoConfig(echo_id=echo_id))
+
+    def handle_validate_echo(self, echo: Echo) -> ValidateEchoResponse:
+        # Guard against disabled source types
+        if echo.source_youtube_url is not None:
+            if not self.source_type_youtube_enabled:
+                return ValidateEchoResponse(valid=False, reason="Source type YouTube is disabled")
+        if echo.source_youtube_url is None:
+            if not self.source_type_recording_enabled and not self.source_type_file_enabled:
+                return ValidateEchoResponse(valid=False, reason="Source type file/recording is disabled")
+
+        # Guard against exceeding per-user Echoes limit
+        echoes = self._echo_db_client.list_echoes(echo.user_id)
+        if len(echoes) >= self.user_echoes_limit:
+            return ValidateEchoResponse(valid=False, reason="User Echoes limit exceeded")
+
+        if echo.source_youtube_url is not None:
+            if not is_valid_youtube_url(echo.source_youtube_url):
+                return ValidateEchoResponse(valid=False, reason="Invalid YouTube URL")
+
+            video_length = youtube_video_length(echo.source_youtube_url)
+            if video_length > self.video_source_max_duration_seconds:
+                return ValidateEchoResponse(valid=False, reason="YouTube video exceeds maximum duration allowed")
+
+        return ValidateEchoResponse(valid=True, reason="All fields valid")
 
     def handle_login(self):
         return self.login()
@@ -292,6 +300,7 @@ class EchoApp(LightningFlow):
             Get("/api/echoes", method=self.handle_list_echoes),
             Get("/api/echoes/{echo_id}", method=self.handle_get_echo),
             Delete("/api/echoes/{echo_id}", method=self.handle_delete_echo),
+            Post("/api/validate", method=self.handle_validate_echo),
             Get("/api/login", method=self.handle_login),
         ]
 

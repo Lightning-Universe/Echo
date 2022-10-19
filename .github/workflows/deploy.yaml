@@ -75,4 +75,5 @@ jobs:
             --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE="*/30 * * * *" \
             --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400 \
             --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
+            --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=900 \
         shell: bash

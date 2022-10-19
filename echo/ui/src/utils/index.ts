@@ -35,3 +35,4 @@ export function getUrl() {
 }
 
 export const userEchoesLimit = Number(process.env.REACT_APP_ECHO_USER_ECHOES_LIMIT);
+export const videoMaxDurationSeconds = Number(process.env.REACT_APP_ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS);
