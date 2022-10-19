@@ -56,18 +56,18 @@ jobs:
             --name "echo-prod" \
             --open-ui false \
             --env ECHO_MODE=production \
-            --env ECHO_MODEL_SIZE=base \
+            --env ECHO_MODEL_SIZE=tiny \
             --env ECHO_ENABLE_MULTI_TENANCY=true \
-            --env ECHO_RECOGNIZER_MIN_REPLICAS=1 \
+            --env ECHO_RECOGNIZER_MIN_REPLICAS=2 \
             --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120 \
-            --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=10 \
+            --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
             --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu \
-            --env ECHO_YOUTUBER_MIN_REPLICAS=1 \
+            --env ECHO_YOUTUBER_MIN_REPLICAS=2 \
             --env ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK=120 \
-            --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=10 \
+            --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
-            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu \
+            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu-small \
             --env ECHO_USER_ECHOES_LIMIT=3 \
             --env ECHO_SOURCE_TYPE_FILE_ENABLED=false \
             --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=true \
@@ -75,5 +75,7 @@ jobs:
             --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE="*/30 * * * *" \
             --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400 \
             --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
-            --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=900 \
+            --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=300 \
+            --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
+            --env ECHO_LOADBALANCER_AUTH_TOKEN=${{ secrets.ECHO_LOADBALANCER_AUTH_TOKEN }} \
         shell: bash

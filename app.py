@@ -30,12 +30,15 @@ from echo.models.echo import (
     ListEchoesConfig,
     ValidateEchoResponse,
 )
+from echo.models.loadbalancer import ScaleRequest
 from echo.models.segment import Segment
 from echo.monitoring.sentry import init_sentry
 from echo.utils.analytics import analytics
 
 logger = Logger(__name__)
 
+
+REST_API_TIMEOUT_SECONDS = 60 * 5
 
 RECOGNIZER_ATTRIBUTE_PREFIX = "recognizer_"
 
@@ -67,6 +70,9 @@ GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT = 60 * 60 * 24
 # FIXME: Duplicating this from `recognizer.py` because `lightning run app` gives import error...
 DUMMY_ECHO_ID = "dummy"
 DUMMY_YOUTUBE_URL = "dummy"
+
+
+dummy_echo = Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text="")
 
 
 class WebFrontend(LightningFlow):
@@ -129,6 +135,7 @@ class EchoApp(LightningFlow):
             os.environ.get("ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS", VIDEO_SOURCE_MAX_DURATION_SECONDS_DEFAULT)
         )
         self.database_cloud_compute = os.environ.get("ECHO_DATABASE_CLOUD_COMPUTE", DATABASE_CLOUD_COMPUTE_DEFAULT)
+        self.loadbalancer_auth_token = os.environ.get("ECHO_LOADBALANCER_AUTH_TOKEN", None)
 
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
@@ -145,21 +152,21 @@ class EchoApp(LightningFlow):
         self.database = Database(models=[Echo], cloud_compute=self.database_cloud_compute)
         self.youtuber = LoadBalancer(
             name="youtuber",
-            min_replicas=self.youtuber_min_replicas,
             max_idle_seconds_per_work=self.youtuber_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.youtuber_max_pending_calls_per_work,
             create_work=lambda: YouTuber(
                 cloud_compute=self.youtuber_cloud_compute, drive=self.drive, base_dir=base_dir
             ),
+            dummy_run_kwargs={"youtube_url": DUMMY_YOUTUBE_URL, "echo_id": DUMMY_ECHO_ID},
         )
         self.recognizer = LoadBalancer(
             name="recognizer",
-            min_replicas=self.recognizer_min_replicas,
             max_idle_seconds_per_work=self.recognizer_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.recognizer_max_pending_calls_per_work,
             create_work=lambda: SpeechRecognizer(
                 cloud_compute=self.recognizer_cloud_compute, drive=self.drive, model_size=self.model_size
             ),
+            dummy_run_kwargs={"echo": dummy_echo, "db_url": None},
         )
 
     def run(self):
@@ -172,10 +179,10 @@ class EchoApp(LightningFlow):
             self._segment_db_client = DatabaseClient(model=Segment, db_url=self.database.db_url)
 
         if self.schedule(self.recognizer_autoscaler_cron_schedule):
-            self.recognizer.ensure_min_replicas()
+            self.recognizer.ensure_min_replicas(min_replicas=self.recognizer_min_replicas)
 
         if self.schedule(self.youtuber_autoscaler_cron_schedule) and self.source_type_youtube_enabled:
-            self.youtuber.ensure_min_replicas()
+            self.youtuber.ensure_min_replicas(min_replicas=self.youtuber_min_replicas)
 
         if self.garbage_collection_cron_schedule and self.schedule(self.garbage_collection_cron_schedule):
             self._perform_garbage_collection()
@@ -294,14 +301,27 @@ class EchoApp(LightningFlow):
     def handle_login(self):
         return self.login()
 
+    def handle_scale(self, scale_request: ScaleRequest):
+        # Auth token prevents unauthorized scaling
+        if scale_request.auth_token != self.loadbalancer_auth_token:
+            return None
+
+        if scale_request.service == "recognizer":
+            self.recognizer_min_replicas = scale_request.min_replicas
+            self.recognizer.ensure_min_replicas(min_replicas=self.recognizer_min_replicas)
+        elif scale_request.service == "youtuber":
+            self.youtuber_min_replicas = scale_request.min_replicas
+            self.youtuber.ensure_min_replicas(min_replicas=self.youtuber_min_replicas)
+
     def configure_api(self):
         return [
-            Post("/api/echoes", method=self.handle_create_echo),
-            Get("/api/echoes", method=self.handle_list_echoes),
-            Get("/api/echoes/{echo_id}", method=self.handle_get_echo),
-            Delete("/api/echoes/{echo_id}", method=self.handle_delete_echo),
-            Post("/api/validate", method=self.handle_validate_echo),
-            Get("/api/login", method=self.handle_login),
+            Post("/api/echoes", method=self.handle_create_echo, timeout=REST_API_TIMEOUT_SECONDS),
+            Get("/api/echoes", method=self.handle_list_echoes, timeout=REST_API_TIMEOUT_SECONDS),
+            Get("/api/echoes/{echo_id}", method=self.handle_get_echo, timeout=REST_API_TIMEOUT_SECONDS),
+            Delete("/api/echoes/{echo_id}", method=self.handle_delete_echo, timeout=REST_API_TIMEOUT_SECONDS),
+            Post("/api/validate", method=self.handle_validate_echo, timeout=REST_API_TIMEOUT_SECONDS),
+            Get("/api/login", method=self.handle_login, timeout=REST_API_TIMEOUT_SECONDS),
+            Post("/api/scale", method=self.handle_scale, timeout=REST_API_TIMEOUT_SECONDS),
         ]
 
     def configure_commands(self):
