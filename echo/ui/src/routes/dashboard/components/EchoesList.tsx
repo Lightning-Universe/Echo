@@ -71,6 +71,7 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
           checked={selectedEchoID === echo.id}
           onChange={() => selectEcho(echo.id)}
           value={echo}
+          data-cy={`select-echo-${echo.id}`}
           size={"small"}
           sx={{ padding: 0 }}
         />,

@@ -31,7 +31,9 @@
     "lint:fix": "eslint --cache --max-warnings=0 . --fix && prettier -w .",
     "eject": "react-scripts eject",
     "test": "cypress run --component --browser chrome",
-    "test:open": "cypress open --component --browser chrome"
+    "test:open": "cypress open --component --browser chrome",
+    "e2e": "cypress run --e2e --headed --browser chrome",
+    "e2e:open": "cypress open --e2e --browser chrome"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
@@ -88,6 +90,7 @@
     "cra-build-watch": "^3.4.0",
     "craco-babel-loader": "^1.0.3",
     "cypress": "^10.9.0",
+    "cypress-iframe": "^1.0.1",
     "lint-staged": "^12.3.2",
     "openapi-typescript-codegen": "^0.23.0",
     "prettier": "2.5.1",

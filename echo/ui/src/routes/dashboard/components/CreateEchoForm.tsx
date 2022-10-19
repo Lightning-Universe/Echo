@@ -35,6 +35,7 @@ export default function CreateEchoForm({ sourceType, youtubeURLUpdated, displayN
     <Stack direction={"column"} spacing={4} maxWidth={"75vh"}>
       <TextField
         label={"Name"}
+        data-cy={"create-echo-name"}
         placeholder={"My Echo"}
         helperText={'Give your Echo a name based on the content (e.g. "Commencement Speech 2014")'}
         value={displayName}
@@ -45,6 +46,7 @@ export default function CreateEchoForm({ sourceType, youtubeURLUpdated, displayN
         <TextField
           label={"YouTube URL"}
           placeholder={"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
+          data-cy={"create-echo-youtube-url"}
           value={sourceYouTubeURL}
           onChange={value => onChangeYouTubeURL(value ?? "")}
           helperText={
