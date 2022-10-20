@@ -213,6 +213,14 @@ export default function RecordEcho({
   const showPlaybackControls =
     !createEchoMutation.isLoading && (sourceType === EchoSourceType.youtube || sourceBlob !== undefined);
 
+  if (disabled) {
+    return (
+      <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} width={"100%"}>
+        <Alert severity="warning">{disabledReason}</Alert>
+      </Stack>
+    );
+  }
+
   if (showSourceSelect) {
     return (
       <Stack direction={"row"} justifyContent={"flex-end"} width={"100%"}>
@@ -226,36 +234,32 @@ export default function RecordEcho({
             <SpeedDialAction
               data-cy={"create-echo-microphone"}
               icon={<KeyboardVoiceIcon />}
-              onClick={disabled ? () => null : selectRecording}
-              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
-              tooltipTitle={disabled ? disabledReason : "Record Audio"}
+              onClick={selectRecording}
+              tooltipTitle={"Record Audio"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.youtube) && (
             <SpeedDialAction
               data-cy={"create-echo-youtube"}
               icon={<YouTubeIcon />}
-              onClick={disabled ? () => null : selectYouTubeURL}
-              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
-              tooltipTitle={disabled ? disabledReason : "YouTube URL"}
+              onClick={selectYouTubeURL}
+              tooltipTitle={"YouTube URL"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.file) && (
             <SpeedDialAction
               data-cy={"create-echo-audio-upload"}
               icon={<AudioFileIcon />}
-              onClick={disabled ? () => null : selectSourceFile}
-              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
-              tooltipTitle={disabled ? disabledReason : "Choose Audio File"}
+              onClick={selectSourceFile}
+              tooltipTitle={"Choose Audio File"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.file) && (
             <SpeedDialAction
               data-cy={"create-echo-video-upload"}
               icon={<VideoFileIcon />}
-              onClick={disabled ? () => null : selectSourceFile}
-              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
-              tooltipTitle={disabled ? disabledReason : "Choose Video File"}
+              onClick={selectSourceFile}
+              tooltipTitle={"Choose Video File"}
             />
           )}
           {/* Hidden source file input */}
