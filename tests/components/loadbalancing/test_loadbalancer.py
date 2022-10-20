@@ -26,10 +26,10 @@ class LoadBalancerTestApp(LightningFlow):
         self.max_idle_seconds_per_work = max_idle_seconds_per_work
 
         self.work = LoadBalancer(
-            min_replicas=min_replicas,
             max_idle_seconds_per_work=max_idle_seconds_per_work,
             max_pending_calls_per_work=max_pending_calls_per_work,
             create_work=lambda: TestWork(),
+            dummy_run_kwargs={},
         )
 
     def run(self):
@@ -43,7 +43,7 @@ class LoadBalancerTestApp(LightningFlow):
         if self.test_name == "does_not_exceed_max_pending_calls_per_work":
             self.work.run()
 
-            if len(self.work.pool) > self.min_replicas:
+            if len(self.work.pool) >= self.min_replicas:
                 for work in self.work.pool:
                     assert pending_calls(work) <= self.max_pending_calls_per_work
 
