@@ -57,6 +57,7 @@ SOURCE_TYPE_RECORDING_ENABLED_DEFAULT = "true"
 SOURCE_TYPE_YOUTUBE_ENABLED_DEFAULT = "true"
 
 VIDEO_SOURCE_MAX_DURATION_SECONDS_DEFAULT = 60 * 15
+MAX_DISPLAY_NAME_LENGTH = 32
 
 GARBAGE_COLLECTION_CRON_SCHEDULE_DEFAULT = None
 GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT = 60 * 60 * 24
@@ -168,21 +169,10 @@ class EchoApp(LightningFlow):
             self._echo_db_client = DatabaseClient(model=Echo, db_url=self.database.db_url)
             self._segment_db_client = DatabaseClient(model=Segment, db_url=self.database.db_url)
 
-            # NOTE: Calling `self.recognizer.run()` with a dummy Echo so that the cloud machine is created
-            for _ in range(self.recognizer_min_replicas):
-                self.recognizer.run(
-                    Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text=""), db_url=self.database.url
-                )
-
-            if self.source_type_youtube_enabled:
-                # NOTE: Calling `self.youtuber.run()` with a dummy Echo so that the cloud machine is created
-                for _ in range(self.youtuber_min_replicas):
-                    self.youtuber.run(youtube_url=DUMMY_YOUTUBE_URL, echo_id=DUMMY_ECHO_ID)
-
         if self.schedule(self.recognizer_autoscaler_cron_schedule):
             self.recognizer.ensure_min_replicas()
 
-        if self.schedule(self.youtuber_autoscaler_cron_schedule):
+        if self.schedule(self.youtuber_autoscaler_cron_schedule) and self.source_type_youtube_enabled:
             self.youtuber.ensure_min_replicas()
 
         if self.garbage_collection_cron_schedule and self.schedule(self.garbage_collection_cron_schedule):
@@ -209,7 +199,7 @@ class EchoApp(LightningFlow):
             self.youtuber.run(youtube_url=echo.source_youtube_url, echo_id=echo.id)
 
         # Run speech recognition for the Echo
-        self.recognizer.run(echo, db_url=self.database.url)
+        self.recognizer.run(echo=echo, db_url=self.database.url)
 
         return echo
 
@@ -278,6 +268,11 @@ class EchoApp(LightningFlow):
         if echo.source_youtube_url is None:
             if not self.source_type_recording_enabled and not self.source_type_file_enabled:
                 return ValidateEchoResponse(valid=False, reason="Source type file/recording is disabled")
+
+        if len(echo.display_name) > MAX_DISPLAY_NAME_LENGTH:
+            return ValidateEchoResponse(
+                valid=False, reason=f"Display name must be less than {MAX_DISPLAY_NAME_LENGTH} characters"
+            )
 
         # Guard against exceeding per-user Echoes limit
         echoes = self._echo_db_client.list_echoes(echo.user_id)
