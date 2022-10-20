@@ -20,6 +20,7 @@ from echo.components.recognizer import SpeechRecognizer
 from echo.components.youtuber import YouTuber
 from echo.constants import SHARED_STORAGE_DRIVE_ID
 from echo.media.video import is_valid_youtube_url, youtube_video_length
+from echo.meta import app_meta
 from echo.models.auth import LoginResponse
 from echo.models.echo import (
     DeleteEchoConfig,
@@ -31,6 +32,7 @@ from echo.models.echo import (
 )
 from echo.models.segment import Segment
 from echo.monitoring.sentry import init_sentry
+from echo.utils.analytics import analytics
 
 logger = Logger(__name__)
 
@@ -319,4 +321,7 @@ class EchoApp(LightningFlow):
         return [{"name": "home", "content": content}]
 
 
-app = LightningApp(EchoApp())
+analytics_enabled = os.environ.get("ECHO_ANALYTICS_ENABLED", "false").lower() == "true"
+meta_tags = [app_meta, *(analytics if analytics_enabled else [])]
+
+app = LightningApp(EchoApp(), meta_tags=meta_tags)
