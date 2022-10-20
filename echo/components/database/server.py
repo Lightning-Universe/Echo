@@ -5,7 +5,7 @@ from typing import List, Optional, Type
 
 import uvicorn
 from fastapi import FastAPI
-from lightning import BuildConfig, LightningWork
+from lightning import BuildConfig, CloudCompute, LightningWork
 from lightning_app.storage import Path
 from lightning_app.utilities.app_helpers import Logger
 from sqlmodel import Session, SQLModel, select
@@ -17,6 +17,9 @@ from echo.models.utils import get_primary_key
 from echo.monitoring.sentry import init_sentry
 
 logger = Logger(__name__)
+
+
+DEFAULT_CLOUD_COMPUTE = "cpu"
 
 engine = None
 
@@ -53,6 +56,12 @@ def delete_echo(echo_id: str):
         results = session.exec(statement)
         result = results.one()
         session.delete(result)
+        session.commit()
+
+
+def create_segments_for_echo(segments: List[Segment]):
+    with Session(engine) as session:
+        session.add_all(segments)
         session.commit()
 
 
@@ -112,8 +121,11 @@ class Database(LightningWork):
         db_file_name: str = "database.db",
         debug: bool = False,
         models: Optional[List[Type[SQLModel]]] = None,
+        cloud_compute=DEFAULT_CLOUD_COMPUTE,
     ):
-        super().__init__(parallel=True, cloud_build_config=BuildConfig(["sqlmodel"]))
+        super().__init__(
+            parallel=True, cloud_compute=CloudCompute(cloud_compute), cloud_build_config=BuildConfig(["sqlmodel"])
+        )
 
         init_sentry()
 
@@ -130,6 +142,7 @@ class Database(LightningWork):
         app.get("/echoes/{echo_id}")(get_echo)
         app.get("/segments/")(list_segments_for_echo)
         app.delete("/echoes/{echo_id}")(delete_echo)
+        app.post("/segments")(create_segments_for_echo)
         app.delete("/segments/")(delete_segments_for_echo)
 
         app.post("/general/")(general_post)

@@ -53,6 +53,7 @@ All configuration is done using environment variables, which are documented belo
 | `ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE`      | [cron](https://crontab.guru/#*_*_*_*_*)                                                   | `None`           | How often the garbage collector will check for old Echoes and delete them.                                                                                                               |
 | `ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS`    | integer                                                                                   | 86400 (24 hours) | Echoes that are older than this will be deleted (if `ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS` is set).                                                                                   |
 | `ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS`     | integer                                                                                   | 960 (15 minutes) | Restricts the length of YouTube videos that can be processed.                                                                                                                            |
+| `ECHO_DATABASE_CLOUD_COMPUTE`                | [Cloud Compute](https://lightning.ai/lightning-docs/core_api/lightning_work/compute.html) | `cpu`            | The instance type the database server will use when running in the cloud.                                                                                                                |
 
 ## Development
 

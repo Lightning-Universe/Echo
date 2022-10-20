@@ -67,6 +67,11 @@ class DatabaseClient:
         assert resp.status_code == 200
         return [self.model(**data) for data in resp.json()]
 
+    def create_segments_for_echo(self, segments: List[Segment]):
+        resp = self.session.post(f"{self.db_url}/segments", json=[s.dict() for s in segments])
+        assert resp.status_code == 200
+        return None
+
     def delete_echo(self, echo_id: str) -> None:
         resp = self.session.delete(f"{self.db_url}/echoes/{echo_id}")
         assert resp.status_code == 200
