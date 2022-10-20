@@ -49,6 +49,8 @@ YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
 YOUTUBER_CLOUD_COMPUTE_DEFAULT = "cpu"
 
+DATABASE_CLOUD_COMPUTE_DEFAULT = "cpu"
+
 USER_ECHOES_LIMIT_DEFAULT = 100
 SOURCE_TYPE_FILE_ENABLED_DEFAULT = "true"
 SOURCE_TYPE_RECORDING_ENABLED_DEFAULT = "true"
@@ -123,6 +125,7 @@ class EchoApp(LightningFlow):
         self.video_source_max_duration_seconds = int(
             os.environ.get("ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS", VIDEO_SOURCE_MAX_DURATION_SECONDS_DEFAULT)
         )
+        self.database_cloud_compute = os.environ.get("ECHO_DATABASE_CLOUD_COMPUTE", DATABASE_CLOUD_COMPUTE_DEFAULT)
 
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
@@ -136,7 +139,7 @@ class EchoApp(LightningFlow):
         # Initialize child components
         self.web_frontend = WebFrontend()
         self.fileserver = FileServer(drive=self.drive, base_dir=base_dir)
-        self.database = Database(models=[Echo])
+        self.database = Database(models=[Echo], cloud_compute=self.database_cloud_compute)
         self.youtuber = LoadBalancer(
             name="youtuber",
             min_replicas=self.youtuber_min_replicas,
