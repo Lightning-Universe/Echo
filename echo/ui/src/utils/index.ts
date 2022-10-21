@@ -31,6 +31,10 @@ export function getUrl() {
   let url = window.location !== window.parent.location ? document.referrer : document.location.href;
   url = url.replace(/\/$/, "").replace("/view/home", "");
 
+  if (process.env.REACT_APP_ECHO_ROOT_PATH !== "/") {
+    url = url + process.env.REACT_APP_ECHO_ROOT_PATH;
+  }
+
   return url;
 }
 
