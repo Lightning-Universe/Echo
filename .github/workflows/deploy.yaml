@@ -16,6 +16,7 @@ jobs:
         run: cd echo/ui && yarn build
         env:
           REACT_APP_ECHO_ROOT_PATH: /echo
+          REACT_APP_ECHO_SHOW_BANNER: "true"
           REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED: "false"
           REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED: "true"
           REACT_APP_ECHO_SOURCE_TYPE_YOUTUBE_ENABLED: "true"
