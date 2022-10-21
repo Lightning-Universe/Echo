@@ -15,6 +15,7 @@ jobs:
       - name: Build frontend
         run: cd echo/ui && yarn build
         env:
+          REACT_APP_ECHO_ROOT_PATH: /echo
           REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED: "false"
           REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED: "true"
           REACT_APP_ECHO_SOURCE_TYPE_YOUTUBE_ENABLED: "true"
@@ -83,4 +84,5 @@ jobs:
             --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
             --env ECHO_ROOT_PATH=/echo \
             --env ECHO_LOADBALANCER_AUTH_TOKEN=lightningrules \
+            --env ECHO_ANALYTICS_ENABLED=true \
         shell: bash

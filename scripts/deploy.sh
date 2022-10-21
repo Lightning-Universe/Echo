@@ -25,4 +25,5 @@ lightning run app \
   --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
   --env ECHO_LOADBALANCER_AUTH_TOKEN=abc123 \
   --env ECHO_ROOT_PATH=/ \
+  --env ECHO_ANALYTICS_ENABLED=false \
   app.py
