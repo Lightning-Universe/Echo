@@ -55,6 +55,7 @@ All configuration is done using environment variables, which are documented belo
 | `ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS`     | integer                                                                                   | 960 (15 minutes) | Restricts the length of YouTube videos that can be processed.                                                                                                                            |
 | `ECHO_DATABASE_CLOUD_COMPUTE`                | [Cloud Compute](https://lightning.ai/lightning-docs/core_api/lightning_work/compute.html) | `cpu`            | The instance type the database server will use when running in the cloud.                                                                                                                |
 | `ECHO_LOADBALANCER_AUTH_TOKEN`               | string                                                                                    | `None`           | Secret authentication token which is used for manually scaling the different Works using the `/api/scale` endpoint                                                                       |
+| `ECHO_ROOT_PATH`                             | string                                                                                    | `/`              | Used to serve the app under a subpath or proxy.                                                                                                                                          |
 
 ## Development
 

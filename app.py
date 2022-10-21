@@ -8,6 +8,7 @@ from lightning_app.api.http_methods import Delete, Get, Post
 from lightning_app.frontend import StaticWebFrontend
 from lightning_app.storage import Drive
 from lightning_app.utilities.app_helpers import Logger
+from lightning_app.utilities.frontend import AppInfo
 
 from echo.authn.session import DEFAULT_USER_ID
 from echo.commands.auth import Login
@@ -342,6 +343,16 @@ class EchoApp(LightningFlow):
 
 
 analytics_enabled = os.environ.get("ECHO_ANALYTICS_ENABLED", "false").lower() == "true"
-meta_tags = [app_meta, *(analytics if analytics_enabled else [])]
 
-app = LightningApp(EchoApp(), meta_tags=meta_tags)
+app = LightningApp(
+    EchoApp(),
+    root_path=os.environ.get("ECHO_ROOT_PATH", ""),
+    info=AppInfo(
+        title="Transcription. Simple and open-source.",
+        favicon="https://storage.googleapis.com/grid-static/echo/echo-logo-no-text.svg",
+        # flake8: noqa E501
+        description="Echo uses near-human speech recognition to transcribe video and audio files - powered by Lightning and OpenAI's Whisper.",
+        image="https://lightningaidev.wpengine.com/wp-content/uploads/2022/10/Echo-MD2.png",
+        meta_tags=[*app_meta, *(analytics if analytics_enabled else [])],
+    ),
+)
