@@ -136,7 +136,7 @@ class FileServer(LightningWork):
 
         mimetype = magic.Magic(mime=True).from_file(filepath)
 
-        return FileResponse(path=filepath, filename=filepath, media_type=mimetype)
+        return FileResponse(path=filepath, filename=filepath, media_type=mimetype, headers={"Accept-Ranges": "bytes"})
 
     def delete_file(self, echo_id: str):
         self.drive.delete(self._get_drive_filepath(echo_id))

@@ -7,11 +7,13 @@ describe("creating an Echo from a YouTube URL", () => {
   const createEchoNameInput = `[data-cy="create-echo-name"] > input`;
   const createEchoYouTubeURLInput = `[data-cy="create-echo-youtube-url"] > input`;
   const selectEchoButtonFor = (echoID: string) => `[data-cy="select-echo-${echoID}"]`;
+  const subtitleFor = (index: number) => `[data-cy="subtitle-${index}"]`;
+  const videoPreview = `[data-cy="video-preview"]`;
 
   const displayNameExceedsMaxLength = "this display name exceeds the maximum length of 50 characters";
   const youtubeURLExceedsLengthLimit = "https://www.youtube.com/watch?v=xm3YgoEiEDc";
-  const youtubeURLValid = "https://www.youtube.com/watch?v=rgU4Oum8SLg";
-  const expectedText = `I'm out of MP the news and ether but but you can't buy ether is the final battle that I only have 85 of them`;
+  const youtubeURLValid = "https://www.youtube.com/watch?v=vFwHl7W5ooE";
+  const expectedText = `We are here together to talk about lightning.`;
   const echoProcessingTimeout = 60000;
 
   describe("using an invalid URL", () => {
@@ -101,6 +103,18 @@ describe("creating an Echo from a YouTube URL", () => {
       cy.iframe().contains("Echo is processing, please wait", { timeout: echoProcessingTimeout }).should("not.exist");
       cy.iframe().contains("Test Echo").should("be.visible");
       cy.iframe().contains(expectedText).should("be.visible");
+    });
+
+    it("clicking on a subtitle will jump the video to that timestamp", () => {
+      cy.iframe().find(subtitleFor(4)).click();
+
+      cy.iframe()
+        .find(videoPreview)
+        .then($video => {
+          const video = $video.get(0) as HTMLVideoElement;
+
+          expect(video.currentTime).not.to.equal(0);
+        });
     });
   });
 });

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { Stack, Typography } from "@mui/material";
 
+import { BuildYourAppBanner } from "components/BuildYourAppBanner";
 import RecordEcho from "components/RecordEcho";
 import useListEchoes from "hooks/useListEchoes";
 import CreateEchoForm from "routes/dashboard/components/CreateEchoForm";
@@ -22,8 +23,11 @@ export default function MobileDemo() {
 
   const createEchoDisabled = !!userEchoesLimit && echoes.length >= userEchoesLimit;
 
+  const showBanner = process.env.REACT_APP_ECHO_SHOW_BANNER === "true";
+
   return (
     <Stack direction={"column"} height={"95vh"}>
+      {showBanner && <BuildYourAppBanner />}
       <NavBar />
       <Stack direction={"column"} justifyContent={"space-between"} height={"100%"}>
         {createEchoWithSourceType !== undefined ? (

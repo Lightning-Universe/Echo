@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import DownloadIcon from "@mui/icons-material/Download";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
-import { Breadcrumbs, CircularProgress, Link, Stack, Typography } from "@mui/material";
+import { Breadcrumbs, CircularProgress, Link, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 
 import useDownloadEchoSubtitles from "hooks/useDownloadEchoSubtitles";
 import useDownloadEchoText from "hooks/useDownloadEchoText";
@@ -24,6 +24,9 @@ export default function EchoDetail({ echoID, goBack }: Props) {
   const lightningState = useLightningState();
   const downloadEcho = useDownloadEchoText();
   const downloadSubtitles = useDownloadEchoSubtitles();
+
+  const theme = useTheme();
+  const onMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const { data: echo, isLoading } = useGetEcho(echoID, true);
 
@@ -58,6 +61,11 @@ export default function EchoDetail({ echoID, goBack }: Props) {
       <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2} height={"100%"}>
         <CircularProgress />
         <Typography variant={"body2"}>Fetching Echo</Typography>
+        {onMobile && (
+          <Button variant={"text"} color={"primary"} onClick={() => goBack()}>
+            Go Back
+          </Button>
+        )}
       </Stack>
     );
   }
@@ -67,6 +75,11 @@ export default function EchoDetail({ echoID, goBack }: Props) {
       <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2} height={"100%"}>
         <CircularProgress />
         <Typography variant={"body2"}>Echo is processing, please wait</Typography>
+        {onMobile && (
+          <Button variant={"text"} color={"primary"} onClick={() => goBack()}>
+            Go Back
+          </Button>
+        )}
       </Stack>
     );
   }
@@ -82,7 +95,7 @@ export default function EchoDetail({ echoID, goBack }: Props) {
 
   return (
     <Stack direction={"column"} height={"100%"}>
-      <Stack padding={2}>
+      <Stack padding={2} height={"10%"}>
         <Breadcrumbs aria-label="breadcrumb">
           <Link color={"primary"} sx={{ ":hover": { cursor: "pointer" } }} onClick={() => goBack()}>
             Echoes
@@ -90,10 +103,10 @@ export default function EchoDetail({ echoID, goBack }: Props) {
           <Typography color="text.primary">{echo.echo.displayName ?? echo.echo.id}</Typography>
         </Breadcrumbs>
       </Stack>
-      <Stack direction={"row"} justifyContent={"center"}>
+      <Stack direction={"row"} justifyContent={"center"} height={"40%"}>
         {sourcePreview}
       </Stack>
-      <Stack padding={2} flexGrow={1}>
+      <Stack padding={2} height={"50%"}>
         <Stack direction={"row"} justifyContent={"space-between"} marginBottom={2}>
           <Typography variant={"h6"}>Captions</Typography>
           <Stack direction={"row"} spacing={2}>
