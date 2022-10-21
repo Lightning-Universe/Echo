@@ -80,5 +80,5 @@ jobs:
             --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=300 \
             --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
             --env ECHO_ROOT_PATH=/echo \
-            --env ECHO_LOADBALANCER_AUTH_TOKEN=${{ secrets.ECHO_LOADBALANCER_AUTH_TOKEN }} \
+            --env ECHO_LOADBALANCER_AUTH_TOKEN="${{ secrets.ECHO_LOADBALANCER_AUTH_TOKEN }}" \
         shell: bash
