@@ -52,6 +52,7 @@ jobs:
           LIGHTNING_USER_ID: ${{ secrets.LIGHTNING_USER_ID }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
           LIGHTNING_CLOUD_PROJECT_ID: ${{ secrets.LIGHTNING_CLOUD_PROJECT_ID }}
+          ECHO_LOADBALANCER_AUTH_TOKEN: ${{ secrets.ECHO_LOADBALANCER_AUTH_TOKEN }}
         run: |
           lightning run app app.py \
             --cloud \
@@ -80,5 +81,5 @@ jobs:
             --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=300 \
             --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
             --env ECHO_ROOT_PATH=/echo \
-            --env ECHO_LOADBALANCER_AUTH_TOKEN="${{ secrets.ECHO_LOADBALANCER_AUTH_TOKEN }}" \
+            --env ECHO_LOADBALANCER_AUTH_TOKEN="$ECHO_LOADBALANCER_AUTH_TOKEN" \
         shell: bash
