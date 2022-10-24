@@ -1,6 +1,50 @@
 name: Deploy to lightning.ai
-# TODO(alecmerdler): Replicate for `echo-staging` on every merge to `main` branch
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      sourceTypeFileEnabled:
+        type: boolean
+        required: false
+        default: false
+        description: "Allow Echoes to be created from uploaded audio/video files."
+      sourceTypeYouTubeEnabled:
+        type: boolean
+        required: false
+        default: true
+        description: "Allow Echoes to be created from YouTube URLs."
+      sourceTypeRecordingEnabled:
+        type: boolean
+        required: false
+        default: true
+        description: "Allow Echoes to be created from device microphone recordings."
+      appName:
+        type: string
+        required: false
+        default: echo-prod
+        description: "Change to deploy a new instance instead of updating the production instance."
+      rootPath:
+        type: choice
+        required: false
+        default: /echo
+        options:
+          - /echo
+          - ""
+        description: "Use `/echo` for the production instance, or leave blank for a new instance."
+      modelSize:
+        type: choice
+        required: true
+        default: tiny
+        options:
+          - tiny
+          - base
+          - small
+          - medium
+          - large
+        description: "Whisper model size."
+      loadbalancerAuthToken:
+        type: string
+        required: true
+        description: "Token used to authenticate against the `/v1/scale` API endpoint."
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -15,12 +59,11 @@ jobs:
       - name: Build frontend
         run: cd echo/ui && yarn build
         env:
-          PUBLIC_URL: https://storage.googleapis.com/lightning-echo-prod/build
-          REACT_APP_ECHO_ROOT_PATH: /echo
+          REACT_APP_ECHO_ROOT_PATH: ${{ inputs.rootPath }}
           REACT_APP_ECHO_SHOW_BANNER: "true"
-          REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED: "false"
-          REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED: "true"
-          REACT_APP_ECHO_SOURCE_TYPE_YOUTUBE_ENABLED: "true"
+          REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED: "${{ inputs.sourceTypeFileEnabled }}"
+          REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED: "${{ inputs.sourceTypeRecordingEnabled }}"
+          REACT_APP_ECHO_SOURCE_TYPE_YOUTUBE_ENABLED: "${{ inputs.sourceTypeYouTubeEnabled }}"
           REACT_APP_ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS: 300
           REACT_APP_ECHO_RECORDING_SOURCE_MAX_DURATION_SECONDS: 60
           REACT_APP_ECHO_USER_ECHOES_LIMIT: 3
@@ -31,27 +74,6 @@ jobs:
         with:
           name: echo-frontend-build
           path: echo/ui/build
-  upload-to-cdn:
-    runs-on: ubuntu-20.04
-    needs: build
-    permissions:
-      contents: "read"
-      id-token: "write"
-    steps:
-      - id: "auth"
-        uses: "google-github-actions/auth@v0"
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-      - name: Retrieve frontend build
-        uses: actions/download-artifact@v1
-        with:
-          name: echo-frontend-build
-          path: build
-      - id: "upload-folder"
-        uses: google-github-actions/upload-cloud-storage@v0
-        with:
-          path: build
-          destination: lightning-echo-prod
   deploy:
     runs-on: ubuntu-20.04
     needs: build
@@ -77,15 +99,13 @@ jobs:
           LIGHTNING_USER_ID: ${{ secrets.LIGHTNING_USER_ID }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
           LIGHTNING_CLOUD_PROJECT_ID: ${{ secrets.LIGHTNING_CLOUD_PROJECT_ID }}
-          # FIXME(alecmerdler): `lightning` CLI is rejecting this for some reason...
-          ECHO_LOADBALANCER_AUTH_TOKEN: ${{ secrets.ECHO_LOADBALANCER_AUTH_TOKEN }}
         run: |
           lightning run app app.py \
             --cloud \
-            --name "echo-prod" \
+            --name "${{ inputs.appName }}" \
             --open-ui false \
             --env ECHO_MODE=production \
-            --env ECHO_MODEL_SIZE=tiny \
+            --env ECHO_MODEL_SIZE=${{ inputs.modelSize }} \
             --env ECHO_ENABLE_MULTI_TENANCY=true \
             --env ECHO_RECOGNIZER_MIN_REPLICAS=2 \
             --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120 \
@@ -98,16 +118,15 @@ jobs:
             --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
             --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu-small \
             --env ECHO_USER_ECHOES_LIMIT=3 \
-            --env ECHO_SOURCE_TYPE_FILE_ENABLED=false \
-            --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=true \
-            --env ECHO_SOURCE_TYPE_YOUTUBE_ENABLED=true \
+            --env ECHO_SOURCE_TYPE_FILE_ENABLED=${{ inputs.sourceTypeFileEnabled }} \
+            --env ECHO_SOURCE_TYPE_RECORDING_ENABLED="${{ inputs.sourceTypeRecordingEnabled }} \
+            --env ECHO_SOURCE_TYPE_YOUTUBE_ENABLED=${{ inputs.sourceTypeYouTubeEnabled }} \
             --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE="*/30 * * * *" \
             --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400 \
             --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
-            --env ECHO_SENTRY_SAMPLE_RATE=0.1 \
             --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=300 \
             --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
-            --env ECHO_ROOT_PATH=/echo \
-            --env ECHO_LOADBALANCER_AUTH_TOKEN=lightningrules \
+            --env ECHO_ROOT_PATH=${{ inputs.rootPath }} \
+            --env ECHO_LOADBALANCER_AUTH_TOKEN=${{ inputs.loadbalancerAuthToken }} \
             --env ECHO_ANALYTICS_ENABLED=true \
         shell: bash
