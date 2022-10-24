@@ -11,7 +11,6 @@ export default function useListEchoes() {
 
   return useQuery<Echo[]>("listEchoes", () => echoClient.appApi.handleListEchoesApiEchoesGet(userId!), {
     enabled: !!userId,
-    refetchInterval: 1000,
     onSuccess: () => {
       queryClient.invalidateQueries(["getEcho"]);
     },
