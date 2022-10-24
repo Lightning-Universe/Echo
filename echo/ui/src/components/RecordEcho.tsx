@@ -26,6 +26,7 @@ import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
 
 import useCreateEcho from "hooks/useCreateEcho";
+import { useRecordEcho } from "hooks/useRecordEcho";
 import useValidateEcho from "hooks/useValidateEcho";
 import { EchoSourceType, SupportedMediaType, enabledEchoSourceTypes, recordingMaxDurationSeconds } from "utils";
 import { secondsToTime } from "utils/time";
@@ -63,6 +64,7 @@ export default function RecordEcho({
 
   const createEchoMutation = useCreateEcho();
   const validateEchoMutation = useValidateEcho();
+  const { setIsRecording } = useRecordEcho();
 
   const {
     status: recordingStatus,
@@ -78,6 +80,8 @@ export default function RecordEcho({
       mimeType: SupportedMediaType.audioWAV,
     },
     onStart: () => {
+      setIsRecording(true);
+
       const interval = setInterval(() => {
         if (recordingTimeElapsed.current >= recordingMaxDurationSeconds) {
           stopRecording();
@@ -88,6 +92,7 @@ export default function RecordEcho({
       }, 1000);
     },
     onStop: (blobUrl, blob) => {
+      setIsRecording(false);
       setSourceBlob(blob);
       setSourceBlobURL(blobUrl);
       recordingTimeElapsed.current = 0;

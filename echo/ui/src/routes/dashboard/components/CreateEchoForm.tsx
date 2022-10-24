@@ -1,9 +1,12 @@
-import { useCallback, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Stack } from "@mui/material";
 
 import { TextField } from "lightning-ui/src/design-system/components";
 import { EchoSourceType, videoMaxDurationSeconds } from "utils";
+
+const displayNamePlaceholder = "Five Easy Tricks to Learning ML";
+const youtubeVideoPlaceholder = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
 type Props = {
   sourceType: EchoSourceType;
@@ -12,43 +15,55 @@ type Props = {
 };
 
 export default function CreateEchoForm({ sourceType, youtubeURLUpdated, displayNameUpdated }: Props) {
-  const [displayName, setDisplayName] = useState("");
-  const [sourceYouTubeURL, setSourceYouTubeURL] = useState("");
+  const [displayName, setDisplayName] = useState(displayNamePlaceholder);
+  const [sourceYouTubeURL, setSourceYouTubeURL] = useState(youtubeVideoPlaceholder);
 
-  const onDisplayNameUpdated = useCallback(
-    (displayName: string) => {
-      setDisplayName(displayName);
-      displayNameUpdated(displayName);
-    },
-    [displayNameUpdated],
-  );
+  const displayNameInput = useRef<HTMLInputElement>(null);
+  const youtubeURLInput = useRef<HTMLInputElement>(null);
 
-  const onChangeYouTubeURL = useCallback(
-    (url: string) => {
-      setSourceYouTubeURL(url);
-      youtubeURLUpdated(url);
-    },
-    [youtubeURLUpdated],
-  );
+  useEffect(() => {
+    // Clear placeholders on input click
+    if (displayNameInput.current) {
+      displayNameInput.current.addEventListener("click", () => {
+        setDisplayName(currentValue => (currentValue === displayNamePlaceholder ? "" : currentValue));
+      });
+    }
+
+    if (youtubeURLInput.current) {
+      youtubeURLInput.current.addEventListener("click", () => {
+        setSourceYouTubeURL(currentValue => (currentValue === youtubeVideoPlaceholder ? "" : currentValue));
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    displayNameUpdated(displayName);
+  }, [displayName, displayNameUpdated]);
+
+  useEffect(() => {
+    youtubeURLUpdated(sourceYouTubeURL);
+  }, [sourceYouTubeURL, youtubeURLUpdated]);
 
   return (
     <Stack direction={"column"} spacing={4} maxWidth={"75vh"}>
       <TextField
         label={"Name"}
         data-cy={"create-echo-name"}
-        placeholder={"My Echo"}
-        helperText={'Give your Echo a name based on the content (e.g. "Commencement Speech 2014")'}
+        placeholder={displayNamePlaceholder}
+        helperText={"Give your Echo a name based on the content."}
         value={displayName}
-        onChange={value => onDisplayNameUpdated(value ?? "")}
+        onChange={value => setDisplayName(value ?? "")}
+        ref={displayNameInput}
         optional={false}
       />
       {sourceType === EchoSourceType.youtube && (
         <TextField
           label={"YouTube URL"}
-          placeholder={"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
+          placeholder={youtubeVideoPlaceholder}
           data-cy={"create-echo-youtube-url"}
           value={sourceYouTubeURL}
-          onChange={value => onChangeYouTubeURL(value ?? "")}
+          onChange={value => setSourceYouTubeURL(value ?? "")}
+          ref={youtubeURLInput}
           helperText={
             videoMaxDurationSeconds
               ? `Video must be less than ${(videoMaxDurationSeconds / 60).toFixed(0)} minutes long.`

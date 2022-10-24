@@ -42,9 +42,7 @@ export default function MobileDemo() {
           <EchoDetail echoID={selectedEchoID} goBack={() => setSelectedEchoID(undefined)} />
         ) : (
           <>
-            <Typography variant={"h6"} marginX={2} marginTop={2}>
-              Your Echoes
-            </Typography>
+            <Typography variant={"h6"}>Your Echoes</Typography>
             <Stack height={"75%"} sx={{ overflowY: "scroll" }}>
               <EchoesListMobile onSelectEchoID={setSelectedEchoID} />
             </Stack>

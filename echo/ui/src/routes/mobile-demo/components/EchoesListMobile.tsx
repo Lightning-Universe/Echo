@@ -3,7 +3,6 @@ import { useCallback } from "react";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
-import PendingIcon from "@mui/icons-material/Pending";
 import {
   CircularProgress,
   IconButton,
@@ -69,8 +68,22 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
               <DeleteIcon />
             </IconButton>
           }>
-          <ListItemIcon>{!echo.text ? <PendingIcon /> : <CheckCircleIcon color={"primary"} />}</ListItemIcon>
-          <ListItemText primary={echo.displayName} secondary={echo.mediaType} />
+          <ListItemIcon>
+            {!echo.text ? <CircularProgress size={"1em"} /> : <CheckCircleIcon color={"primary"} />}
+          </ListItemIcon>
+          <ListItemText
+            primary={echo.displayName}
+            secondary={
+              <Stack direction={"column"}>
+                <Typography variant="body2" color="text.primary">
+                  {echo.mediaType}
+                </Typography>
+                {echo.completedTranscriptionAt
+                  ? `Completed ${new Date(echo.completedTranscriptionAt).toLocaleString()}`
+                  : " Processing..."}
+              </Stack>
+            }
+          />
         </ListItem>
       ))}
     </List>

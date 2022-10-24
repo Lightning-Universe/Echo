@@ -64,6 +64,14 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
     [onSelectEchoID, onToggleCreatingEcho],
   );
 
+  const onDeleteEcho = useCallback(
+    (echoID: string) => {
+      onSelectEchoID();
+      deleteEchoMutation.mutate(echoID);
+    },
+    [deleteEchoMutation, onSelectEchoID],
+  );
+
   const rows = useMemo(
     () =>
       (echoes ?? []).map(echo => [
@@ -77,18 +85,20 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
         />,
         <Typography variant={"body2"}>{echo.displayName ?? echo.id}</Typography>,
         <Typography variant={"body2"}>{echo.mediaType}</Typography>,
-        <Typography variant={"body2"}>{echo.createdAt}</Typography>,
-        <Typography variant={"body2"}>{echo.completedTranscriptionAt ?? "-"}</Typography>,
+        <Typography variant={"body2"}>{echo.createdAt ? new Date(echo.createdAt).toLocaleString() : "-"}</Typography>,
+        <Typography variant={"body2"}>
+          {echo.completedTranscriptionAt ? new Date(echo.completedTranscriptionAt).toLocaleString() : "-"}
+        </Typography>,
         <Stack direction={"row"}>
           <IconButton
             aria-label="Delete"
             disabled={!echo.completedTranscriptionAt}
-            onClick={() => deleteEchoMutation.mutate(echo.id)}>
+            onClick={() => onDeleteEcho(echo.id)}>
             <DeleteIcon fontSize={"small"} />
           </IconButton>
         </Stack>,
       ]),
-    [echoes, selectEcho, selectedEchoID, deleteEchoMutation],
+    [echoes, selectEcho, selectedEchoID, onDeleteEcho],
   );
 
   if (isLoading) {
@@ -112,11 +122,7 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
 
   return (
     <Stack direction={"column"} justifyContent={"space-between"} height={"100%"}>
-      <Stack direction={"row"} marginBottom={2}>
-        <Typography variant={"h6"}>
-          {createEchoWithSourceType !== undefined ? "Create Echo" : "Your Echoes"}
-        </Typography>
-      </Stack>
+      <Typography variant={"h6"}>{createEchoWithSourceType !== undefined ? "Create Echo" : "Your Echoes"}</Typography>
       <Box height={"75%"} sx={{ overflowY: "scroll" }}>
         {createEchoWithSourceType !== undefined ? (
           <CreateEchoForm
