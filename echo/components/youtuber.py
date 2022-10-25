@@ -7,6 +7,7 @@ from lightning_app.utilities.app_helpers import Logger
 from pytube import YouTube
 
 from echo.monitoring.sentry import init_sentry
+from echo.utils.dependencies import RUST_INSTALL_SCRIPT
 
 logger = Logger(__name__)
 
@@ -19,7 +20,7 @@ DEFAULT_CLOUD_COMPUTE = "cpu"
 @dataclass
 class CustomBuildConfig(BuildConfig):
     def build_commands(self):
-        return ["sudo apt-get update", "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"]
+        return ["sudo apt-get update", RUST_INSTALL_SCRIPT]
 
 
 class YouTuber(LightningWork):
