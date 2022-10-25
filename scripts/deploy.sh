@@ -3,6 +3,7 @@
 lightning run app \
   --cloud \
   --open-ui=false \
+  --no-cache \
   --env ECHO_MODEL_SIZE=base \
   --env ECHO_ENABLE_MULTI_TENANCY=true \
   --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu \

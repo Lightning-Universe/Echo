@@ -15,6 +15,7 @@ from echo.media.mime import get_mimetype
 from echo.media.video import contains_audio
 from echo.models.echo import Echo, Segment
 from echo.monitoring.sentry import init_sentry
+from echo.utils.dependencies import RUST_INSTALL_SCRIPT
 
 DEFAULT_MODEL_SIZE = "base"
 DEFAULT_CLOUD_COMPUTE = "gpu"
@@ -30,7 +31,7 @@ class CustomBuildConfig(BuildConfig):
         return [
             "sudo apt-get update",
             "sudo apt-get install -y ffmpeg libmagic1",
-            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
+            RUST_INSTALL_SCRIPT,
         ]
 
 
