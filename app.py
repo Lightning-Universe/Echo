@@ -343,10 +343,11 @@ class EchoApp(LightningFlow):
 
 
 analytics_enabled = os.environ.get("ECHO_ANALYTICS_ENABLED", "false").lower() == "true"
+root_path = os.environ.get("ECHO_ROOT_PATH", "/")
 
 app = LightningApp(
     EchoApp(),
-    root_path=os.environ.get("ECHO_ROOT_PATH", ""),
+    root_path=root_path if root_path != "/" else "",
     info=AppInfo(
         title="Transcription. Simple and open-source.",
         favicon="https://storage.googleapis.com/grid-static/echo/echo-logo-no-text.svg",

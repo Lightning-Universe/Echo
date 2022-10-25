@@ -4,32 +4,32 @@ on:
     inputs:
       sourceTypeFileEnabled:
         type: boolean
-        required: false
+        required: true
         default: false
         description: "Allow Echoes to be created from uploaded audio/video files."
       sourceTypeYouTubeEnabled:
         type: boolean
-        required: false
+        required: true
         default: true
         description: "Allow Echoes to be created from YouTube URLs."
       sourceTypeRecordingEnabled:
         type: boolean
-        required: false
+        required: true
         default: true
         description: "Allow Echoes to be created from device microphone recordings."
       appName:
         type: string
-        required: false
+        required: true
         default: echo-prod
         description: "Change to deploy a new instance instead of updating the production instance."
       rootPath:
         type: choice
-        required: false
+        required: true
         default: /echo
         options:
           - /echo
-          - ""
-        description: "Use `/echo` for the production instance, or leave blank for a new instance."
+          - /
+        description: "Select `/echo` for the production instance (served at `lightning.ai/echo`). Otherwise, select `/`."
       modelSize:
         type: choice
         required: true
@@ -50,6 +50,8 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 35
     steps:
+      - name: Print inputs
+        run: echo "${{ toJSON(github.event.inputs) }}"
       - uses: actions/checkout@v3.1.0
       - uses: webfactory/ssh-agent@v0.5.4
         with:
