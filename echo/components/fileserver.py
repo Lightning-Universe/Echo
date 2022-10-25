@@ -21,7 +21,11 @@ logger = Logger(__name__)
 @dataclass
 class CustomBuildConfig(BuildConfig):
     def build_commands(self):
-        return ["sudo apt-get update", "sudo apt-get install -y libmagic1 ffmpeg"]
+        return [
+            "sudo apt-get update",
+            "sudo apt-get install -y libmagic1 ffmpeg",
+            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
+        ]
 
 
 class FileServer(LightningWork):

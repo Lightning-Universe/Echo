@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 
 from lightning import BuildConfig, CloudCompute, LightningWork
 from lightning_app.storage import Drive
@@ -15,6 +16,12 @@ DUMMY_YOUTUBE_URL = "dummy"
 DEFAULT_CLOUD_COMPUTE = "cpu"
 
 
+@dataclass
+class CustomBuildConfig(BuildConfig):
+    def build_commands(self):
+        return ["sudo apt-get update", "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"]
+
+
 class YouTuber(LightningWork):
     """Handles downloading and extracting videos from YouTube."""
 
@@ -22,7 +29,7 @@ class YouTuber(LightningWork):
         super().__init__(
             parallel=True,
             cloud_compute=CloudCompute(DEFAULT_CLOUD_COMPUTE),
-            cloud_build_config=BuildConfig(requirements=["pytube"]),
+            cloud_build_config=CustomBuildConfig(requirements=["pytube"]),
         )
 
         init_sentry()

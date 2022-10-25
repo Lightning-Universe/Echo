@@ -27,7 +27,11 @@ logger = Logger(__name__)
 @dataclass
 class CustomBuildConfig(BuildConfig):
     def build_commands(self):
-        return ["sudo apt-get update", "sudo apt-get install -y ffmpeg libmagic1"]
+        return [
+            "sudo apt-get update",
+            "sudo apt-get install -y ffmpeg libmagic1",
+            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
+        ]
 
 
 class SpeechRecognizer(LightningWork):
