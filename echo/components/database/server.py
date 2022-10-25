@@ -1,5 +1,6 @@
 import os
 import pathlib
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Type
 
@@ -115,6 +116,12 @@ def create_engine(db_file_name: str, models: List[Type[SQLModel]], echo: bool):
         logger.debug(e)
 
 
+@dataclass
+class CustomBuildConfig(BuildConfig):
+    def build_commands(self):
+        return ["sudo apt-get update", "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"]
+
+
 class Database(LightningWork):
     def __init__(
         self,
@@ -124,7 +131,9 @@ class Database(LightningWork):
         cloud_compute=DEFAULT_CLOUD_COMPUTE,
     ):
         super().__init__(
-            parallel=True, cloud_compute=CloudCompute(cloud_compute), cloud_build_config=BuildConfig(["sqlmodel"])
+            parallel=True,
+            cloud_compute=CloudCompute(cloud_compute),
+            cloud_build_config=CustomBuildConfig(requirements=["sqlmodel"]),
         )
 
         init_sentry()
