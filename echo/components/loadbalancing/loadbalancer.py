@@ -81,10 +81,10 @@ class LoadBalancer(LightningFlow):
                 new_work.run(**self._dummy_run_kwargs)
 
             # Check for idle Works and stop them to save on cloud costs
-            if len(self._work_pool.items()) <= min_replicas:
-                return
-
             for work_name, work in self._work_pool.copy().items():
+                if len(self._work_pool.items()) <= min_replicas:
+                    return
+
                 if self._is_idle(work):
                     logger.info(f"Found idle Work ({work.name}), stopping it")
                     self._remove_work(work_name)
