@@ -5,8 +5,8 @@ import { Stack } from "@mui/material";
 import { TextField } from "lightning-ui/src/design-system/components";
 import { EchoSourceType, videoMaxDurationSeconds } from "utils";
 
-const displayNamePlaceholder = "Five Easy Tricks to Learning ML";
-const youtubeVideoPlaceholder = "https://www.youtube.com/watch?v=GHMjD0Lp5DY";
+const displayNamePlaceholder = `Richard Feynman Speaks the Truth`;
+const youtubeVideoPlaceholder = "https://www.youtube.com/watch?v=B-eh2SD54fM";
 
 type Props = {
   sourceType: EchoSourceType;
