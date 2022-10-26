@@ -1,5 +1,6 @@
 import os
 import uuid
+import logging
 from datetime import datetime, timedelta
 from typing import List
 
@@ -37,6 +38,10 @@ from echo.monitoring.sentry import init_sentry
 from echo.utils.analytics import analytics
 
 logger = Logger(__name__)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter("%(levelname)s: %(message)s")
+console_handler.setFormatter(formatter)
+logger.logger.addHandler(console_handler)
 
 
 REST_API_TIMEOUT_SECONDS = 60 * 5
