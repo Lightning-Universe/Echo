@@ -5,7 +5,7 @@ import requests
 from lightning import LightningApp, LightningFlow
 
 WORKER_SCHEDULE = "*/1 * * * *"
-SCALE_FACTOR = 5
+SCALE_FACTOR = 1
 
 # NOTE: All videos are <5 minutes long
 videos = [

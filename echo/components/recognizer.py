@@ -1,5 +1,6 @@
 import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List
@@ -19,6 +20,7 @@ from echo.utils.dependencies import RUST_INSTALL_SCRIPT
 
 DEFAULT_MODEL_SIZE = "base"
 DEFAULT_CLOUD_COMPUTE = "gpu"
+DEFAULT_BATCH_INTERVAL_SECONDS = 0
 DRIVE_SOURCE_FILE_TIMEOUT_SECONDS = 18000
 DUMMY_ECHO_ID = "dummy"
 
@@ -57,14 +59,16 @@ class SpeechRecognizer(LightningWork):
 
         # NOTE: Private attributes don't need to be serializable, so we use them to store complex objects
         self._drive = drive
-        self._model = None
+        self._executor = ThreadPoolExecutor(thread_name_prefix="recognizer")
 
         self.model_size = model_size
 
     def recognize(self, audio_file_path: str):
         assert os.path.exists(audio_file_path), f"File does not exist: {audio_file_path}"
 
-        return self._model.transcribe(audio_file_path, fp16=torch.cuda.is_available())
+        model = whisper.load_model(self.model_size)
+
+        return model.transcribe(audio_file_path, fp16=torch.cuda.is_available())
 
     def convert_to_audio(self, echo_id: str, source_file_path: str):
         if not contains_audio(source_file_path):
@@ -77,12 +81,8 @@ class SpeechRecognizer(LightningWork):
 
         return extracted_audio_file_path
 
-    def run(self, echo: Echo, db_url: str):
+    def process(self, echo: Echo, db_url: str):
         """Runs speech recognition and returns the text for a given Echo."""
-        # Load model lazily at runtime, rather than in `__init__()`
-        if self._model is None:
-            self._model = whisper.load_model(self.model_size)
-
         # NOTE: Dummy Echo is used to spin up the cloud machine on app startup so subsequent requests are faster
         if echo.id == DUMMY_ECHO_ID:
             logger.info("Skipping dummy Echo")
@@ -126,3 +126,6 @@ class SpeechRecognizer(LightningWork):
         logger.info(f"Finished recognizing speech from: {echo.id}")
 
         os.remove(audio_file_path)
+
+    def run(self, echo: Echo, db_url: str):
+        self._executor.submit(self.process, echo, db_url)

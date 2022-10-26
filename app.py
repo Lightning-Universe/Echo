@@ -165,7 +165,9 @@ class EchoApp(LightningFlow):
             max_idle_seconds_per_work=self.recognizer_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.recognizer_max_pending_calls_per_work,
             create_work=lambda: SpeechRecognizer(
-                cloud_compute=self.recognizer_cloud_compute, drive=self.drive, model_size=self.model_size
+                cloud_compute=self.recognizer_cloud_compute,
+                drive=self.drive,
+                model_size=self.model_size,
             ),
             dummy_run_kwargs={"echo": dummy_echo, "db_url": None},
         )
