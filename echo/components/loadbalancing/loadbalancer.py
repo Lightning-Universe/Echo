@@ -5,9 +5,9 @@ from typing import Any, Callable, Dict
 
 from lightning import LightningFlow, LightningWork
 from lightning_app.structures import Dict as LightningDict
-from lightning_app.utilities.app_helpers import Logger
 from lightning_app.utilities.enum import WorkStageStatus
 
+from echo.utils.logging import make_logger
 from echo.utils.status import oldest_called, pending_calls
 
 DEFAULT_WORK_ATTRIBUTE_PREFIX = "loadbalanced_work_"
@@ -15,7 +15,7 @@ DEFAULT_MAX_IDLE_SECONDS_PER_WORK = 120
 DEFAULT_MAX_PENDING_CALLS_PER_WORK = 10
 
 
-logger = Logger(__name__)
+logger = make_logger(__name__)
 
 
 class LoadBalancer(LightningFlow):

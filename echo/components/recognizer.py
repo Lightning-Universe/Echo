@@ -8,7 +8,6 @@ import torch
 import whisper
 from lightning import BuildConfig, CloudCompute, LightningWork
 from lightning_app.storage import Drive
-from lightning_app.utilities.app_helpers import Logger
 
 from echo.components.database.client import DatabaseClient
 from echo.media.mime import get_mimetype
@@ -16,13 +15,14 @@ from echo.media.video import contains_audio
 from echo.models.echo import Echo, Segment
 from echo.monitoring.sentry import init_sentry
 from echo.utils.dependencies import RUST_INSTALL_SCRIPT
+from echo.utils.logging import make_logger
+
+logger = make_logger(__name__)
 
 DEFAULT_MODEL_SIZE = "base"
 DEFAULT_CLOUD_COMPUTE = "gpu"
 DRIVE_SOURCE_FILE_TIMEOUT_SECONDS = 18000
 DUMMY_ECHO_ID = "dummy"
-
-logger = Logger(__name__)
 
 
 @dataclass

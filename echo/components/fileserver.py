@@ -10,13 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from lightning import BuildConfig, LightningWork
 from lightning_app.storage import Drive
-from lightning_app.utilities.app_helpers import Logger
 
 from echo.media.mime import UNSUPPORTED_MEDIA_TYPES, get_mimetype
 from echo.monitoring.sentry import init_sentry
 from echo.utils.dependencies import RUST_INSTALL_SCRIPT
+from echo.utils.logging import make_logger
 
-logger = Logger(__name__)
+logger = make_logger(__name__)
 
 
 @dataclass

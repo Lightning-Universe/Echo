@@ -3,13 +3,13 @@ from dataclasses import dataclass
 
 from lightning import BuildConfig, CloudCompute, LightningWork
 from lightning_app.storage import Drive
-from lightning_app.utilities.app_helpers import Logger
 from pytube import YouTube
 
 from echo.monitoring.sentry import init_sentry
 from echo.utils.dependencies import RUST_INSTALL_SCRIPT
+from echo.utils.logging import make_logger
 
-logger = Logger(__name__)
+logger = make_logger(__name__)
 
 
 DUMMY_ECHO_ID = "dummy"

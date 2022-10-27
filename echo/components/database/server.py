@@ -8,7 +8,6 @@ import uvicorn
 from fastapi import FastAPI
 from lightning import BuildConfig, CloudCompute, LightningWork
 from lightning_app.storage import Path
-from lightning_app.utilities.app_helpers import Logger
 from sqlmodel import Session, SQLModel, select
 
 from echo.models.echo import Echo
@@ -17,8 +16,9 @@ from echo.models.segment import Segment
 from echo.models.utils import get_primary_key
 from echo.monitoring.sentry import init_sentry
 from echo.utils.dependencies import RUST_INSTALL_SCRIPT
+from echo.utils.logging import make_logger
 
-logger = Logger(__name__)
+logger = make_logger(__name__)
 
 
 DEFAULT_CLOUD_COMPUTE = "cpu"

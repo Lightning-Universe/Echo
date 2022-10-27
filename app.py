@@ -1,6 +1,5 @@
 import os
 import uuid
-import logging
 from datetime import datetime, timedelta
 from typing import List
 
@@ -8,7 +7,6 @@ from lightning import LightningApp, LightningFlow
 from lightning_app.api.http_methods import Delete, Get, Post
 from lightning_app.frontend import StaticWebFrontend
 from lightning_app.storage import Drive
-from lightning_app.utilities.app_helpers import Logger
 from lightning_app.utilities.frontend import AppInfo
 
 from echo.authn.session import DEFAULT_USER_ID
@@ -36,16 +34,12 @@ from echo.models.loadbalancer import ScaleRequest
 from echo.models.segment import Segment
 from echo.monitoring.sentry import init_sentry
 from echo.utils.analytics import analytics
+from echo.utils.logging import make_logger
 
-logger = Logger(__name__)
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter("%(levelname)s: %(message)s")
-console_handler.setFormatter(formatter)
-logger.logger.addHandler(console_handler)
+logger = make_logger(__name__)
 
 
 REST_API_TIMEOUT_SECONDS = 60 * 5
-
 RECOGNIZER_ATTRIBUTE_PREFIX = "recognizer_"
 
 RECOGNIZER_MIN_REPLICAS_DEFAULT = 1
