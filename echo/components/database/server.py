@@ -166,7 +166,7 @@ class Database(LightningWork):
 
     @property
     def db_url(self) -> Optional[str]:
-        use_localhost = "lightning.app_STATE_URL" not in os.environ
+        use_localhost = "LIGHTNING_APP_STATE_URL" not in os.environ
         if use_localhost:
             return self.url
         if self.internal_ip != "":

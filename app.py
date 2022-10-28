@@ -8,6 +8,7 @@ from lightning.app.api.http_methods import Delete, Get, Post
 from lightning.app.frontend import StaticWebFrontend
 from lightning.app.storage import Drive
 from lightning.app.utilities.app_helpers import Logger
+from lightning.app.utilities.frontend import AppInfo
 from echo.authn.session import DEFAULT_USER_ID
 from echo.commands.auth import Login
 from echo.commands.echo import CreateEcho, DeleteEcho, GetEcho, ListEchoes
