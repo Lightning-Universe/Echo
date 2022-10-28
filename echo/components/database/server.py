@@ -6,8 +6,8 @@ from typing import List, Optional, Type
 import uvicorn
 from fastapi import FastAPI
 from lightning import BuildConfig, LightningWork
-from lightning_app.storage import Path
-from lightning_app.utilities.app_helpers import Logger
+from lightning.app.storage import Path
+from lightning.app.utilities.app_helpers import Logger
 from sqlmodel import Session, SQLModel, select
 
 from echo.models.echo import Echo
@@ -143,7 +143,7 @@ class Database(LightningWork):
 
     @property
     def db_url(self) -> Optional[str]:
-        use_localhost = "LIGHTNING_APP_STATE_URL" not in os.environ
+        use_localhost = "lightning.app_STATE_URL" not in os.environ
         if use_localhost:
             return self.url
         if self.internal_ip != "":

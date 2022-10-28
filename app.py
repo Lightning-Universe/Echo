@@ -4,10 +4,10 @@ from datetime import datetime, timedelta
 from typing import List
 
 from lightning import LightningApp, LightningFlow
-from lightning_app.api.http_methods import Delete, Get, Post
-from lightning_app.frontend import StaticWebFrontend
-from lightning_app.storage import Drive
-from lightning_app.utilities.app_helpers import Logger
+from lightning.app.api.http_methods import Delete, Get, Post
+from lightning.app.frontend import StaticWebFrontend
+from lightning.app.storage import Drive
+from lightning.app.utilities.app_helpers import Logger
 
 from echo.authn.session import DEFAULT_USER_ID
 from echo.commands.auth import Login

@@ -4,8 +4,8 @@ from multiprocessing import Lock
 from typing import Any, Callable, Dict
 
 from lightning import LightningFlow, LightningWork
-from lightning_app.utilities.app_helpers import Logger
-from lightning_app.utilities.enum import WorkStageStatus
+from lightning.app.utilities.app_helpers import Logger
+from lightning.app.utilities.enum import WorkStageStatus
 
 from echo.utils.status import oldest_called, pending_calls
 
