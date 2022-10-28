@@ -9,6 +9,7 @@ from lightning_app.frontend import StaticWebFrontend
 from lightning_app.storage import Drive
 from lightning_app.utilities.app_helpers import Logger
 from lightning_app.utilities.frontend import AppInfo
+from prometheus_client import start_http_server
 
 from echo.authn.session import DEFAULT_USER_ID
 from echo.commands.auth import Login
@@ -19,7 +20,7 @@ from echo.components.fileserver import FileServer
 from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.components.recognizer import SpeechRecognizer
 from echo.components.youtuber import YouTuber
-from echo.constants import SHARED_STORAGE_DRIVE_ID
+from echo.constants import SHARED_STORAGE_DRIVE_ID, PROMETHEUS_PORT
 from echo.media.video import is_valid_youtube_url, youtube_video_length
 from echo.meta import app_meta
 from echo.models.auth import LoginResponse
@@ -35,6 +36,7 @@ from echo.models.loadbalancer import ScaleRequest
 from echo.models.segment import Segment
 from echo.monitoring.sentry import init_sentry
 from echo.utils.analytics import analytics
+import echo.utils.prometheus_metrics as metrics
 
 logger = Logger(__name__)
 
@@ -169,6 +171,7 @@ class EchoApp(LightningFlow):
             ),
             dummy_run_kwargs={"echo": dummy_echo, "db_url": None},
         )
+        self.prometheus_server_started = False
 
     def run(self):
         # Run child components
@@ -188,6 +191,12 @@ class EchoApp(LightningFlow):
         if self.garbage_collection_cron_schedule and self.schedule(self.garbage_collection_cron_schedule):
             self._perform_garbage_collection()
 
+        if not self.prometheus_server_started:
+            self.prometheus_server_started = True
+            # Start prometheus metrics server
+            start_http_server(PROMETHEUS_PORT)
+
+
     def _perform_garbage_collection(self):
         if self._echo_db_client is not None:
             created_before = datetime.now() - timedelta(seconds=self.garbage_collection_max_age_seconds)
@@ -197,6 +206,7 @@ class EchoApp(LightningFlow):
                 self.delete_echo(config=DeleteEchoConfig(echo_id=echo.id))
 
     def create_echo(self, echo: Echo) -> Echo:
+        metrics.creating_echos.inc()
         if self._echo_db_client is None:
             logger.warn("Database client not initialized!")
             return None

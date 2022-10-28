@@ -8,6 +8,8 @@ from lightning_app.structures import Dict as LightningDict
 from lightning_app.utilities.app_helpers import Logger
 from lightning_app.utilities.enum import WorkStageStatus
 
+import echo.utils.prometheus_metrics as metrics
+
 from echo.utils.status import oldest_called, pending_calls
 
 DEFAULT_WORK_ATTRIBUTE_PREFIX = "loadbalanced_work_"
@@ -45,6 +47,7 @@ class LoadBalancer(LightningFlow):
     def _add_work(self):
         """Adds the given Work to the Flow using a unique attribute name."""
         new_work: LightningWork = self._create_work()
+        metrics.works_counter.labels(name=new_work.name, method='created').inc()
 
         logger.info(f"Added new Work to pool: {new_work.name}")
 
@@ -56,6 +59,7 @@ class LoadBalancer(LightningFlow):
 
     def _remove_work(self, work_name: str):
         """Stops the given Work and removes it from the pool."""
+        metrics.works_counter.labels(method='removed').inc()
         if work_name in self._work_pool:
             self._work_pool[work_name].stop()
             del self._work_pool[work_name]
@@ -90,6 +94,7 @@ class LoadBalancer(LightningFlow):
                     self._remove_work(work_name)
 
     def run(self, *args, **kwargs):
+        metrics.lb_requests.labels(name=self._name).inc()
         with self._work_pool_rw_lock:
             succeeded = [work for work in self.pool if work.status.stage == WorkStageStatus.SUCCEEDED]
             running = [work for work in self.pool if work.status.stage == WorkStageStatus.RUNNING]
@@ -103,6 +108,7 @@ class LoadBalancer(LightningFlow):
             # Try to use a previously succeeded Work first
             for work in succeeded:
                 logger.info(f"Found succeeded Work ({work.name}), calling `run()`")
+                metrics.works_echos_requests.labels(name=work.name, work_state='succeeded').inc()
                 work.run(*args, **kwargs)
                 return
 
@@ -110,6 +116,7 @@ class LoadBalancer(LightningFlow):
             if len(available) > 0:
                 oldest_called_work = oldest_called(available)
                 logger.info(f"Found running Work ({oldest_called_work.name}), calling `run()`")
+                metrics.works_echos_requests.labels(name=oldest_called_work.name, work_state='available').inc()
                 oldest_called_work.run(*args, **kwargs)
                 return
 
@@ -119,6 +126,7 @@ class LoadBalancer(LightningFlow):
                 new_work = self._add_work()
                 logger.info(f"Scaling up, created new Work ({new_work.name})")
                 # NOTE: Calling `run()` with dummy args so that cloud machine is created
+                metrics.works_echos_requests.labels(name=new_work.name, work_state='new').inc()
                 new_work.run(**self._dummy_run_kwargs)
 
                 if len(running) == 0:
@@ -131,9 +139,11 @@ class LoadBalancer(LightningFlow):
                 current_pending_calls = [(work, pending_calls(work)) for work in running]
                 least_overloaded = min(current_pending_calls, key=lambda work: work[1])
                 logger.info(f"Found least overloaded running Work ({least_overloaded[0].name}), calling `run()`")
+                metrics.works_echos_requests.labels(name=new_work.name, work_state='running').inc()
                 least_overloaded[0].run(*args, **kwargs)
             else:
                 current_pending_calls = [(work, pending_calls(work)) for work in pending]
                 least_overloaded = min(current_pending_calls, key=lambda work: work[1])
                 logger.info(f"Found least overloaded pending Work ({least_overloaded[0].name}), calling `run()`")
+                metrics.works_echos_requests.labels(name=new_work.name, work_state='pending').inc()
                 least_overloaded[0].run(*args, **kwargs)
