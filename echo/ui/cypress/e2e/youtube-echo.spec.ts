@@ -19,7 +19,7 @@ describe("creating an Echo from a YouTube URL", () => {
   describe("using an invalid URL", () => {
     it("loads the app", () => {
       cy.intercept("/api/v1/state").as("getState");
-      cy.intercept("/api/echoes*").as("listEchoes");
+      cy.intercept("GET", "/api/echoes?user_id=*").as("listEchoes");
 
       cy.visit("/");
 
@@ -37,6 +37,7 @@ describe("creating an Echo from a YouTube URL", () => {
     });
 
     it("requires that Echo name is not empty", () => {
+      cy.iframe().find(createEchoNameInput).clear();
       cy.iframe().find(createEchoButton).should("be.disabled");
     });
 
@@ -86,7 +87,9 @@ describe("creating an Echo from a YouTube URL", () => {
 
       cy.intercept("POST", "/api/echoes", req => {
         createdEchoID = req.body.id;
-        req.continue();
+        req.continue(res => {
+          expect(res.statusCode).to.equal(200);
+        });
       });
 
       cy.iframe().contains("Test Echo").should("be.visible");
