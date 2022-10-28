@@ -139,11 +139,11 @@ class LoadBalancer(LightningFlow):
                 current_pending_calls = [(work, pending_calls(work)) for work in running]
                 least_overloaded = min(current_pending_calls, key=lambda work: work[1])
                 logger.info(f"Found least overloaded running Work ({least_overloaded[0].name}), calling `run()`")
-                metrics.works_echos_requests.labels(name=new_work.name, work_state='running').inc()
+                metrics.works_echos_requests.labels(name=least_overloaded[0], work_state='running').inc()
                 least_overloaded[0].run(*args, **kwargs)
             else:
                 current_pending_calls = [(work, pending_calls(work)) for work in pending]
                 least_overloaded = min(current_pending_calls, key=lambda work: work[1])
                 logger.info(f"Found least overloaded pending Work ({least_overloaded[0].name}), calling `run()`")
-                metrics.works_echos_requests.labels(name=new_work.name, work_state='pending').inc()
+                metrics.works_echos_requests.labels(name=least_overloaded[0], work_state='pending').inc()
                 least_overloaded[0].run(*args, **kwargs)
