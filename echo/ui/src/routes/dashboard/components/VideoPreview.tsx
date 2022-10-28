@@ -31,7 +31,7 @@ export default function VideoPreview({ sourceFileURL, playFrom, onCurrentTimeCha
 
   return (
     <Stack height={"100%"} width={"100%"} paddingY={2}>
-      <video height={"100%"} ref={videoPlayer} src={sourceFileURL} controls />
+      <video data-cy={"video-preview"} height={"100%"} ref={videoPlayer} src={sourceFileURL} controls />
     </Stack>
   );
 }

@@ -14,6 +14,7 @@ from lightning.app.utilities.app_helpers import Logger
 
 from echo.media.mime import UNSUPPORTED_MEDIA_TYPES, get_mimetype
 from echo.monitoring.sentry import init_sentry
+from echo.utils.dependencies import RUST_INSTALL_SCRIPT
 
 logger = Logger(__name__)
 
@@ -21,7 +22,11 @@ logger = Logger(__name__)
 @dataclass
 class CustomBuildConfig(BuildConfig):
     def build_commands(self):
-        return ["sudo apt-get update", "sudo apt-get install -y libmagic1 ffmpeg"]
+        return [
+            "sudo apt-get update",
+            "sudo apt-get install -y libmagic1 ffmpeg",
+            RUST_INSTALL_SCRIPT,
+        ]
 
 
 class FileServer(LightningWork):
@@ -136,7 +141,7 @@ class FileServer(LightningWork):
 
         mimetype = magic.Magic(mime=True).from_file(filepath)
 
-        return FileResponse(path=filepath, filename=filepath, media_type=mimetype)
+        return FileResponse(path=filepath, filename=filepath, media_type=mimetype, headers={"Accept-Ranges": "bytes"})
 
     def delete_file(self, echo_id: str):
         self.drive.delete(self._get_drive_filepath(echo_id))

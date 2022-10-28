@@ -28,6 +28,7 @@ export default function Subtitles({ segments, currentSegment, onSelectTimestamp 
       {segments.map((segment, index) => (
         <Stack
           id={subtitleIDFor(index)}
+          data-cy={`subtitle-${index}`}
           key={segment.id}
           direction={"row"}
           spacing={4}

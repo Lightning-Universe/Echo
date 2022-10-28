@@ -1,17 +1,19 @@
 import "cypress-iframe";
 
 describe("creating an Echo from a YouTube URL", () => {
-  const createEchoSpeedDial = `[data-cy="create-echo-speed-dial"]`;
   const createEchoYouTube = `[data-cy="create-echo-youtube"]`;
   const createEchoButton = `[data-cy="create-echo-confirm"]`;
   const discardSourceButton = `[data-cy="discard-source"]`;
-  const createEchoNameInput = `[data-cy="create-echo-name"]`;
-  const createEchoYouTubeURLInput = `[data-cy="create-echo-youtube-url"]`;
+  const createEchoNameInput = `[data-cy="create-echo-name"] > input`;
+  const createEchoYouTubeURLInput = `[data-cy="create-echo-youtube-url"] > input`;
   const selectEchoButtonFor = (echoID: string) => `[data-cy="select-echo-${echoID}"]`;
+  const subtitleFor = (index: number) => `[data-cy="subtitle-${index}"]`;
+  const videoPreview = `[data-cy="video-preview"]`;
 
+  const displayNameExceedsMaxLength = "this display name exceeds the maximum length of 50 characters";
   const youtubeURLExceedsLengthLimit = "https://www.youtube.com/watch?v=xm3YgoEiEDc";
-  const youtubeURLValid = "https://www.youtube.com/watch?v=rgU4Oum8SLg";
-  const expectedText = `I'm out of MP the news and ether but but you can't buy ether is the final battle that I only have 85 of them`;
+  const youtubeURLValid = "https://www.youtube.com/watch?v=vFwHl7W5ooE";
+  const expectedText = `We are here together to talk about lightning.`;
   const echoProcessingTimeout = 60000;
 
   describe("using an invalid URL", () => {
@@ -38,9 +40,17 @@ describe("creating an Echo from a YouTube URL", () => {
       cy.iframe().find(createEchoButton).should("be.disabled");
     });
 
+    it("requires that Echo name is within the length limit", () => {
+      cy.iframe().find(createEchoNameInput).clear().type(displayNameExceedsMaxLength);
+      cy.iframe().find(createEchoYouTubeURLInput).clear().type(youtubeURLValid);
+      cy.iframe().find(createEchoButton).click();
+
+      cy.iframe().contains("Error creating Echo: Display name must be less than 32 characters").should("be.visible");
+    });
+
     it("requires that YouTube URL is valid", () => {
-      cy.iframe().find(createEchoNameInput).type("Test Echo");
-      cy.iframe().find(createEchoYouTubeURLInput).type("invalid-url");
+      cy.iframe().find(createEchoNameInput).clear().type("Test Echo");
+      cy.iframe().find(createEchoYouTubeURLInput).clear().type("invalid-url");
       cy.iframe().find(createEchoButton).click();
 
       cy.iframe().contains("Error creating Echo: Invalid YouTube URL").should("be.visible");
@@ -70,8 +80,8 @@ describe("creating an Echo from a YouTube URL", () => {
 
     it("displays the created Echo in the list view", () => {
       cy.iframe().find(createEchoYouTube).click({ force: true });
-      cy.iframe().find(createEchoNameInput).type("Test Echo");
-      cy.iframe().find(createEchoYouTubeURLInput).type(youtubeURLValid);
+      cy.iframe().find(createEchoNameInput).clear().type("Test Echo");
+      cy.iframe().find(createEchoYouTubeURLInput).clear().type(youtubeURLValid);
       cy.iframe().find(createEchoButton).click();
 
       cy.intercept("POST", "/api/echoes", req => {
@@ -93,6 +103,18 @@ describe("creating an Echo from a YouTube URL", () => {
       cy.iframe().contains("Echo is processing, please wait", { timeout: echoProcessingTimeout }).should("not.exist");
       cy.iframe().contains("Test Echo").should("be.visible");
       cy.iframe().contains(expectedText).should("be.visible");
+    });
+
+    it("clicking on a subtitle will jump the video to that timestamp", () => {
+      cy.iframe().find(subtitleFor(4)).click();
+
+      cy.iframe()
+        .find(videoPreview)
+        .then($video => {
+          const video = $video.get(0) as HTMLVideoElement;
+
+          expect(video.currentTime).not.to.equal(0);
+        });
     });
   });
 });

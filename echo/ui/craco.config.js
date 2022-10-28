@@ -7,6 +7,7 @@ const appDirectory = fs.realpathSync(process.cwd());
 const resolvePackage = relativePath => path.resolve(appDirectory, relativePath);
 
 const isDev = process.env.NODE_ENV !== "production";
+const publicURL = process.env.PUBLIC_URL ?? "";
 
 const webpack = {
   configure: {
@@ -19,7 +20,7 @@ const webpack = {
 
 module.exports = {
   // We point to wepback-dev-server (http://localhost:3000) in development
-  ...(isDev ? {} : { webpack }),
+  ...(isDev || publicURL !== "" ? {} : { webpack }),
   plugins: [
     {
       plugin: cracoBabelLoader,

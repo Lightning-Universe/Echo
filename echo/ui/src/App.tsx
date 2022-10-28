@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { LightningStateContextProvider } from "hooks/useLightningState";
+import { RecordEchoContextProvider } from "hooks/useRecordEcho";
 import { theme } from "lightning-ui/src/design-system/theme";
 import Dashboard from "routes/dashboard/Dasboard";
 import MobileDemo from "routes/mobile-demo/MobileDemo";
@@ -65,12 +66,14 @@ function App() {
       <CssBaseline />
       <QueryClientProvider client={queryClient}>
         <LightningStateContextProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* NOTE: Framework does not support client-side routing yet, app is served under `/view/home` */}
-              <Route path={"*"} element={onMobile ? <MobileDemo /> : <Dashboard />} />
-            </Routes>
-          </BrowserRouter>
+          <RecordEchoContextProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* NOTE: Framework does not support client-side routing yet, app is served under `/view/home` */}
+                <Route path={"*"} element={onMobile ? <MobileDemo /> : <Dashboard />} />
+              </Routes>
+            </BrowserRouter>
+          </RecordEchoContextProvider>
         </LightningStateContextProvider>
       </QueryClientProvider>
     </MuiThemeProvider>

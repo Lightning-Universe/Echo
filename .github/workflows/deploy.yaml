@@ -1,30 +1,90 @@
 name: Deploy to lightning.ai
-# TODO(alecmerdler): Replicate for `echo-staging` on every merge to `main` branch
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      sourceTypeFileEnabled:
+        type: boolean
+        required: true
+        default: false
+        description: "Allow Echoes to be created from uploaded audio/video files."
+      sourceTypeYouTubeEnabled:
+        type: boolean
+        required: true
+        default: true
+        description: "Allow Echoes to be created from YouTube URLs."
+      sourceTypeRecordingEnabled:
+        type: boolean
+        required: true
+        default: true
+        description: "Allow Echoes to be created from device microphone recordings."
+      appName:
+        type: string
+        required: true
+        default: echo-prod
+        description: "Change to deploy a new instance instead of updating the production instance."
+      rootPath:
+        type: choice
+        required: true
+        default: /echo
+        options:
+          - /echo
+          - /
+        description: "Select `/echo` for the production instance (served at `lightning.ai/echo`). Otherwise, select `/`."
+      modelSize:
+        type: choice
+        required: true
+        default: tiny
+        options:
+          - tiny
+          - base
+          - small
+          - medium
+          - large
+        description: "Whisper model size."
+      loadbalancerAuthToken:
+        type: string
+        required: true
+        description: "Token used to authenticate against the `/v1/scale` API endpoint."
 jobs:
   build:
     runs-on: ubuntu-20.04
     timeout-minutes: 35
     steps:
+      - name: Print inputs
+        run: echo "${{ toJSON(github.event.inputs) }}"
       - uses: actions/checkout@v3.1.0
       - uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.LIGHTNING_UI_SSH_KEY }}
+      - uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
       - name: Install frontend dependencies
         run: cd echo/ui && yarn install
       - name: Build frontend
         run: cd echo/ui && yarn build
         env:
-          REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED: "false"
-          REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED: "true"
-          REACT_APP_ECHO_SOURCE_TYPE_YOUTUBE_ENABLED: "true"
+          PUBLIC_URL: https://storage.googleapis.com/lightning-echo-prod/build
+          REACT_APP_ECHO_ROOT_PATH: ${{ inputs.rootPath }}
+          REACT_APP_ECHO_SHOW_BANNER: "true"
+          REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED: "${{ inputs.sourceTypeFileEnabled }}"
+          REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED: "${{ inputs.sourceTypeRecordingEnabled }}"
+          REACT_APP_ECHO_SOURCE_TYPE_YOUTUBE_ENABLED: "${{ inputs.sourceTypeYouTubeEnabled }}"
+          REACT_APP_ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS: 300
+          REACT_APP_ECHO_RECORDING_SOURCE_MAX_DURATION_SECONDS: 60
+          REACT_APP_ECHO_USER_ECHOES_LIMIT: 3
           REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS: 84600
           REACT_APP_ECHO_SENTRY_DSN: ${{ secrets.ECHO_SENTRY_DSN }}
-      - name: Upload frontend build
+      - name: Upload frontend build to GitHub
         uses: actions/upload-artifact@v1
         with:
           name: echo-frontend-build
           path: echo/ui/build
+      - name: Upload frontend build to GCS
+        uses: google-github-actions/upload-cloud-storage@v0
+        with:
+          path: echo/ui/build
+          destination: lightning-echo-prod
   deploy:
     runs-on: ubuntu-20.04
     needs: build
@@ -53,27 +113,31 @@ jobs:
         run: |
           lightning run app app.py \
             --cloud \
-            --name "echo-prod" \
+            --name "${{ inputs.appName }}" \
             --open-ui false \
             --env ECHO_MODE=production \
-            --env ECHO_MODEL_SIZE=base \
+            --env ECHO_MODEL_SIZE=${{ inputs.modelSize }} \
             --env ECHO_ENABLE_MULTI_TENANCY=true \
-            --env ECHO_RECOGNIZER_MIN_REPLICAS=1 \
+            --env ECHO_RECOGNIZER_MIN_REPLICAS=2 \
             --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120 \
-            --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=10 \
+            --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
             --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu \
-            --env ECHO_YOUTUBER_MIN_REPLICAS=1 \
+            --env ECHO_YOUTUBER_MIN_REPLICAS=2 \
             --env ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK=120 \
-            --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=10 \
+            --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
-            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu \
+            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu-small \
             --env ECHO_USER_ECHOES_LIMIT=3 \
-            --env ECHO_SOURCE_TYPE_FILE_ENABLED=false \
-            --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=true \
-            --env ECHO_SOURCE_TYPE_YOUTUBE_ENABLED=true \
+            --env ECHO_SOURCE_TYPE_FILE_ENABLED=${{ inputs.sourceTypeFileEnabled }} \
+            --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=${{ inputs.sourceTypeRecordingEnabled }} \
+            --env ECHO_SOURCE_TYPE_YOUTUBE_ENABLED=${{ inputs.sourceTypeYouTubeEnabled }} \
             --env ECHO_GARBAGE_COLLECTION_CRON_SCHEDULE="*/30 * * * *" \
             --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400 \
             --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
-            --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=900 \
+            --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=300 \
+            --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
+            --env ECHO_ROOT_PATH=${{ inputs.rootPath }} \
+            --env ECHO_LOADBALANCER_AUTH_TOKEN=${{ inputs.loadbalancerAuthToken }} \
+            --env ECHO_ANALYTICS_ENABLED=true \
         shell: bash

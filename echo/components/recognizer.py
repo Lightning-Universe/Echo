@@ -2,6 +2,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List
 
 import torch
 import whisper
@@ -14,6 +15,7 @@ from echo.media.mime import get_mimetype
 from echo.media.video import contains_audio
 from echo.models.echo import Echo, Segment
 from echo.monitoring.sentry import init_sentry
+from echo.utils.dependencies import RUST_INSTALL_SCRIPT
 
 DEFAULT_MODEL_SIZE = "base"
 DEFAULT_CLOUD_COMPUTE = "gpu"
@@ -26,7 +28,11 @@ logger = Logger(__name__)
 @dataclass
 class CustomBuildConfig(BuildConfig):
     def build_commands(self):
-        return ["sudo apt-get update", "sudo apt-get install -y ffmpeg libmagic1"]
+        return [
+            "sudo apt-get update",
+            "sudo apt-get install -y ffmpeg libmagic1",
+            RUST_INSTALL_SCRIPT,
+        ]
 
 
 class SpeechRecognizer(LightningWork):
@@ -77,14 +83,14 @@ class SpeechRecognizer(LightningWork):
         if self._model is None:
             self._model = whisper.load_model(self.model_size)
 
-        logger.info("Initializing database client")
-        echo_db_client = DatabaseClient(model=Echo, db_url=db_url)
-        segment_db_client = DatabaseClient(model=Segment, db_url=db_url)
-
         # NOTE: Dummy Echo is used to spin up the cloud machine on app startup so subsequent requests are faster
         if echo.id == DUMMY_ECHO_ID:
             logger.info("Skipping dummy Echo")
             return
+
+        logger.info("Initializing database client")
+        echo_db_client = DatabaseClient(model=Echo, db_url=db_url)
+        segment_db_client = DatabaseClient(model=Segment, db_url=db_url)
 
         logger.info(f"Recognizing speech from: {echo.id}")
 
@@ -102,8 +108,9 @@ class SpeechRecognizer(LightningWork):
         echo.text = result["text"]
         echo_db_client.put(echo)
 
+        segments: List[Segment] = []
         for segment in result["segments"]:
-            segment_db_client.post(
+            segments.append(
                 Segment(
                     id=f"{echo.id}-{segment['id']}",
                     echo_id=echo.id,
@@ -113,6 +120,8 @@ class SpeechRecognizer(LightningWork):
                     end=segment["end"],
                 )
             )
+
+        segment_db_client.create_segments_for_echo(segments)
 
         logger.info(f"Finished recognizing speech from: {echo.id}")
 

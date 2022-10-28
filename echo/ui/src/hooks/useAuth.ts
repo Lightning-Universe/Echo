@@ -12,7 +12,7 @@ type LoginResponse = {
 export default function useAuth() {
   const savedUserID = localStorage.getItem(userIDKey);
 
-  const login = useQuery<LoginResponse>("login", () => echoClient.appClientCommand.loginCommandLoginPost(), {
+  const login = useQuery<LoginResponse>("login", () => echoClient.appApi.handleLoginApiLoginGet(), {
     enabled: !savedUserID,
   });
 

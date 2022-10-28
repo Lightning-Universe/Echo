@@ -8,7 +8,6 @@ from lightning.app.api.http_methods import Delete, Get, Post
 from lightning.app.frontend import StaticWebFrontend
 from lightning.app.storage import Drive
 from lightning.app.utilities.app_helpers import Logger
-
 from echo.authn.session import DEFAULT_USER_ID
 from echo.commands.auth import Login
 from echo.commands.echo import CreateEcho, DeleteEcho, GetEcho, ListEchoes
@@ -20,6 +19,7 @@ from echo.components.recognizer import SpeechRecognizer
 from echo.components.youtuber import YouTuber
 from echo.constants import SHARED_STORAGE_DRIVE_ID
 from echo.media.video import is_valid_youtube_url, youtube_video_length
+from echo.meta import app_meta
 from echo.models.auth import LoginResponse
 from echo.models.echo import (
     DeleteEchoConfig,
@@ -29,11 +29,15 @@ from echo.models.echo import (
     ListEchoesConfig,
     ValidateEchoResponse,
 )
+from echo.models.loadbalancer import ScaleRequest
 from echo.models.segment import Segment
 from echo.monitoring.sentry import init_sentry
+from echo.utils.analytics import analytics
 
 logger = Logger(__name__)
 
+
+REST_API_TIMEOUT_SECONDS = 60 * 5
 
 RECOGNIZER_ATTRIBUTE_PREFIX = "recognizer_"
 
@@ -49,12 +53,15 @@ YOUTUBER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
 YOUTUBER_CLOUD_COMPUTE_DEFAULT = "cpu"
 
+DATABASE_CLOUD_COMPUTE_DEFAULT = "cpu"
+
 USER_ECHOES_LIMIT_DEFAULT = 100
 SOURCE_TYPE_FILE_ENABLED_DEFAULT = "true"
 SOURCE_TYPE_RECORDING_ENABLED_DEFAULT = "true"
 SOURCE_TYPE_YOUTUBE_ENABLED_DEFAULT = "true"
 
 VIDEO_SOURCE_MAX_DURATION_SECONDS_DEFAULT = 60 * 15
+MAX_DISPLAY_NAME_LENGTH = 32
 
 GARBAGE_COLLECTION_CRON_SCHEDULE_DEFAULT = None
 GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT = 60 * 60 * 24
@@ -62,6 +69,9 @@ GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT = 60 * 60 * 24
 # FIXME: Duplicating this from `recognizer.py` because `lightning run app` gives import error...
 DUMMY_ECHO_ID = "dummy"
 DUMMY_YOUTUBE_URL = "dummy"
+
+
+dummy_echo = Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text="")
 
 
 class WebFrontend(LightningFlow):
@@ -123,6 +133,8 @@ class EchoApp(LightningFlow):
         self.video_source_max_duration_seconds = int(
             os.environ.get("ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS", VIDEO_SOURCE_MAX_DURATION_SECONDS_DEFAULT)
         )
+        self.database_cloud_compute = os.environ.get("ECHO_DATABASE_CLOUD_COMPUTE", DATABASE_CLOUD_COMPUTE_DEFAULT)
+        self.loadbalancer_auth_token = os.environ.get("ECHO_LOADBALANCER_AUTH_TOKEN", None)
 
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
@@ -136,24 +148,24 @@ class EchoApp(LightningFlow):
         # Initialize child components
         self.web_frontend = WebFrontend()
         self.fileserver = FileServer(drive=self.drive, base_dir=base_dir)
-        self.database = Database(models=[Echo])
+        self.database = Database(models=[Echo], cloud_compute=self.database_cloud_compute)
         self.youtuber = LoadBalancer(
             name="youtuber",
-            min_replicas=self.youtuber_min_replicas,
             max_idle_seconds_per_work=self.youtuber_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.youtuber_max_pending_calls_per_work,
             create_work=lambda: YouTuber(
                 cloud_compute=self.youtuber_cloud_compute, drive=self.drive, base_dir=base_dir
             ),
+            dummy_run_kwargs={"youtube_url": DUMMY_YOUTUBE_URL, "echo_id": DUMMY_ECHO_ID},
         )
         self.recognizer = LoadBalancer(
             name="recognizer",
-            min_replicas=self.recognizer_min_replicas,
             max_idle_seconds_per_work=self.recognizer_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.recognizer_max_pending_calls_per_work,
             create_work=lambda: SpeechRecognizer(
                 cloud_compute=self.recognizer_cloud_compute, drive=self.drive, model_size=self.model_size
             ),
+            dummy_run_kwargs={"echo": dummy_echo, "db_url": None},
         )
 
     def run(self):
@@ -165,22 +177,11 @@ class EchoApp(LightningFlow):
             self._echo_db_client = DatabaseClient(model=Echo, db_url=self.database.db_url)
             self._segment_db_client = DatabaseClient(model=Segment, db_url=self.database.db_url)
 
-            # NOTE: Calling `self.recognizer.run()` with a dummy Echo so that the cloud machine is created
-            for _ in range(self.recognizer_min_replicas):
-                self.recognizer.run(
-                    Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text=""), db_url=self.database.url
-                )
-
-            if self.source_type_youtube_enabled:
-                # NOTE: Calling `self.youtuber.run()` with a dummy Echo so that the cloud machine is created
-                for _ in range(self.youtuber_min_replicas):
-                    self.youtuber.run(youtube_url=DUMMY_YOUTUBE_URL, echo_id=DUMMY_ECHO_ID)
-
         if self.schedule(self.recognizer_autoscaler_cron_schedule):
-            self.recognizer.ensure_min_replicas()
+            self.recognizer.ensure_min_replicas(min_replicas=self.recognizer_min_replicas)
 
-        if self.schedule(self.youtuber_autoscaler_cron_schedule):
-            self.youtuber.ensure_min_replicas()
+        if self.schedule(self.youtuber_autoscaler_cron_schedule) and self.source_type_youtube_enabled:
+            self.youtuber.ensure_min_replicas(min_replicas=self.youtuber_min_replicas)
 
         if self.garbage_collection_cron_schedule and self.schedule(self.garbage_collection_cron_schedule):
             self._perform_garbage_collection()
@@ -206,7 +207,7 @@ class EchoApp(LightningFlow):
             self.youtuber.run(youtube_url=echo.source_youtube_url, echo_id=echo.id)
 
         # Run speech recognition for the Echo
-        self.recognizer.run(echo, db_url=self.database.url)
+        self.recognizer.run(echo=echo, db_url=self.database.url)
 
         return echo
 
@@ -276,6 +277,11 @@ class EchoApp(LightningFlow):
             if not self.source_type_recording_enabled and not self.source_type_file_enabled:
                 return ValidateEchoResponse(valid=False, reason="Source type file/recording is disabled")
 
+        if len(echo.display_name) > MAX_DISPLAY_NAME_LENGTH:
+            return ValidateEchoResponse(
+                valid=False, reason=f"Display name must be less than {MAX_DISPLAY_NAME_LENGTH} characters"
+            )
+
         # Guard against exceeding per-user Echoes limit
         echoes = self._echo_db_client.list_echoes(echo.user_id)
         if len(echoes) >= self.user_echoes_limit:
@@ -294,14 +300,27 @@ class EchoApp(LightningFlow):
     def handle_login(self):
         return self.login()
 
+    def handle_scale(self, scale_request: ScaleRequest):
+        # Auth token prevents unauthorized scaling
+        if scale_request.auth_token != self.loadbalancer_auth_token:
+            return None
+
+        if scale_request.service == "recognizer":
+            self.recognizer_min_replicas = scale_request.min_replicas
+            self.recognizer.ensure_min_replicas(min_replicas=self.recognizer_min_replicas)
+        elif scale_request.service == "youtuber":
+            self.youtuber_min_replicas = scale_request.min_replicas
+            self.youtuber.ensure_min_replicas(min_replicas=self.youtuber_min_replicas)
+
     def configure_api(self):
         return [
-            Post("/api/echoes", method=self.handle_create_echo),
-            Get("/api/echoes", method=self.handle_list_echoes),
-            Get("/api/echoes/{echo_id}", method=self.handle_get_echo),
-            Delete("/api/echoes/{echo_id}", method=self.handle_delete_echo),
-            Post("/api/validate", method=self.handle_validate_echo),
-            Get("/api/login", method=self.handle_login),
+            Post("/api/echoes", method=self.handle_create_echo, timeout=REST_API_TIMEOUT_SECONDS),
+            Get("/api/echoes", method=self.handle_list_echoes, timeout=REST_API_TIMEOUT_SECONDS),
+            Get("/api/echoes/{echo_id}", method=self.handle_get_echo, timeout=REST_API_TIMEOUT_SECONDS),
+            Delete("/api/echoes/{echo_id}", method=self.handle_delete_echo, timeout=REST_API_TIMEOUT_SECONDS),
+            Post("/api/validate", method=self.handle_validate_echo, timeout=REST_API_TIMEOUT_SECONDS),
+            Get("/api/login", method=self.handle_login, timeout=REST_API_TIMEOUT_SECONDS),
+            Post("/api/scale", method=self.handle_scale, timeout=REST_API_TIMEOUT_SECONDS),
         ]
 
     def configure_commands(self):
@@ -321,4 +340,18 @@ class EchoApp(LightningFlow):
         return [{"name": "home", "content": content}]
 
 
-app = LightningApp(EchoApp())
+analytics_enabled = os.environ.get("ECHO_ANALYTICS_ENABLED", "false").lower() == "true"
+root_path = os.environ.get("ECHO_ROOT_PATH", "/")
+
+app = LightningApp(
+    EchoApp(),
+    root_path=root_path if root_path != "/" else "",
+    info=AppInfo(
+        title="Transcription. Simple and open-source.",
+        favicon="https://storage.googleapis.com/grid-static/echo/echo-logo-no-text.svg",
+        # flake8: noqa E501
+        description="Echo uses near-human speech recognition to transcribe video and audio files - powered by Lightning and OpenAI's Whisper.",
+        image="https://lightningaidev.wpengine.com/wp-content/uploads/2022/10/Echo-MD2.png",
+        meta_tags=[*app_meta, *(analytics if analytics_enabled else [])],
+    ),
+)

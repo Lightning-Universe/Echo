@@ -31,8 +31,14 @@ export function getUrl() {
   let url = window.location !== window.parent.location ? document.referrer : document.location.href;
   url = url.replace(/\/$/, "").replace("/view/home", "");
 
+  if (process.env.REACT_APP_ECHO_ROOT_PATH !== "/") {
+    url = url + process.env.REACT_APP_ECHO_ROOT_PATH;
+  }
+
   return url;
 }
 
 export const userEchoesLimit = Number(process.env.REACT_APP_ECHO_USER_ECHOES_LIMIT);
 export const videoMaxDurationSeconds = Number(process.env.REACT_APP_ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS);
+export const recordingMaxDurationSeconds =
+  Number(process.env.REACT_APP_ECHO_RECORDING_SOURCE_MAX_DURATION_SECONDS) ?? 60;

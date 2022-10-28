@@ -31,7 +31,7 @@ export default function AudioPreview({ sourceFileURL, playFrom, onCurrentTimeCha
 
   return (
     <Stack height={"100%"} width={"100%"} padding={2}>
-      <audio style={{ width: "100%" }} src={sourceFileURL} ref={audioPlayer} controls />
+      <audio data-cy={"video-preview"} style={{ width: "100%" }} src={sourceFileURL} ref={audioPlayer} controls />
     </Stack>
   );
 }

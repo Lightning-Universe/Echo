@@ -1,6 +1,7 @@
 import { ChangeEvent, useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 
+import { StopCircle } from "@mui/icons-material";
 import AudioFileIcon from "@mui/icons-material/AudioFile";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -25,8 +26,10 @@ import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
 
 import useCreateEcho from "hooks/useCreateEcho";
+import { useRecordEcho } from "hooks/useRecordEcho";
 import useValidateEcho from "hooks/useValidateEcho";
-import { EchoSourceType, SupportedMediaType, enabledEchoSourceTypes } from "utils";
+import { EchoSourceType, SupportedMediaType, enabledEchoSourceTypes, recordingMaxDurationSeconds } from "utils";
+import { secondsToTime } from "utils/time";
 
 import AudioWaveform from "./AudioWaveform";
 
@@ -54,12 +57,14 @@ export default function RecordEcho({
   const [sourceBlobURL, setSourceBlobURL] = useState<string>();
   const [sourceMediaType, setSourceMediaType] = useState<SupportedMediaType>();
   const sourceFileInput = useRef<HTMLInputElement>(null);
+  const recordingTimeElapsed = useRef(0);
 
   const theme = useTheme();
   const onMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const createEchoMutation = useCreateEcho();
   const validateEchoMutation = useValidateEcho();
+  const { setIsRecording } = useRecordEcho();
 
   const {
     status: recordingStatus,
@@ -74,9 +79,23 @@ export default function RecordEcho({
     mediaRecorderOptions: {
       mimeType: SupportedMediaType.audioWAV,
     },
+    onStart: () => {
+      setIsRecording(true);
+
+      const interval = setInterval(() => {
+        if (recordingTimeElapsed.current >= recordingMaxDurationSeconds) {
+          stopRecording();
+          clearInterval(interval);
+        } else {
+          recordingTimeElapsed.current += 1;
+        }
+      }, 1000);
+    },
     onStop: (blobUrl, blob) => {
+      setIsRecording(false);
       setSourceBlob(blob);
       setSourceBlobURL(blobUrl);
+      recordingTimeElapsed.current = 0;
     },
   });
 
@@ -200,6 +219,7 @@ export default function RecordEcho({
     setSourceBlob(undefined);
     setSourceBlobURL(undefined);
     onSelectSourceType(undefined);
+    recordingTimeElapsed.current = 0;
     onCancel();
 
     if (mediaBlobUrl) {
@@ -212,6 +232,14 @@ export default function RecordEcho({
     !createEchoMutation.isLoading && sourceType === EchoSourceType.recording && sourceBlob === undefined;
   const showPlaybackControls =
     !createEchoMutation.isLoading && (sourceType === EchoSourceType.youtube || sourceBlob !== undefined);
+
+  if (disabled) {
+    return (
+      <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} width={"100%"}>
+        <Alert severity="warning">{disabledReason}</Alert>
+      </Stack>
+    );
+  }
 
   if (showSourceSelect) {
     return (
@@ -226,36 +254,32 @@ export default function RecordEcho({
             <SpeedDialAction
               data-cy={"create-echo-microphone"}
               icon={<KeyboardVoiceIcon />}
-              onClick={disabled ? () => null : selectRecording}
-              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
-              tooltipTitle={disabled ? disabledReason : "Record Audio"}
+              onClick={selectRecording}
+              tooltipTitle={"Record Audio"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.youtube) && (
             <SpeedDialAction
               data-cy={"create-echo-youtube"}
               icon={<YouTubeIcon />}
-              onClick={disabled ? () => null : selectYouTubeURL}
-              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
-              tooltipTitle={disabled ? disabledReason : "YouTube URL"}
+              onClick={selectYouTubeURL}
+              tooltipTitle={"YouTube URL"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.file) && (
             <SpeedDialAction
               data-cy={"create-echo-audio-upload"}
               icon={<AudioFileIcon />}
-              onClick={disabled ? () => null : selectSourceFile}
-              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
-              tooltipTitle={disabled ? disabledReason : "Choose Audio File"}
+              onClick={selectSourceFile}
+              tooltipTitle={"Choose Audio File"}
             />
           )}
           {enabledEchoSourceTypes.get(EchoSourceType.file) && (
             <SpeedDialAction
               data-cy={"create-echo-video-upload"}
               icon={<VideoFileIcon />}
-              onClick={disabled ? () => null : selectSourceFile}
-              // FIXME(alecmerdler): Tooltips aren't visible on mobile, which causes confusion...
-              tooltipTitle={disabled ? disabledReason : "Choose Video File"}
+              onClick={selectSourceFile}
+              tooltipTitle={"Choose Video File"}
             />
           )}
           {/* Hidden source file input */}
@@ -292,8 +316,15 @@ export default function RecordEcho({
               data-cy={"start-recording"}
               disabled={sourceBlob !== undefined}
               color={"primary"}
+              variant={recordingStatus === "recording" ? "extended" : "circular"}
               onClick={() => (recordingStatus === "recording" ? stopRecording() : startRecording())}>
-              <KeyboardVoiceIcon htmlColor="#FFFFFF" />
+              {recordingStatus === "recording" && (
+                <Stack spacing={1} direction={"row"}>
+                  <StopCircle htmlColor="#FFFFFF" />
+                  <Timer maxTime={recordingMaxDurationSeconds} />
+                </Stack>
+              )}
+              {recordingStatus === "idle" && <KeyboardVoiceIcon htmlColor="#FFFFFF" />}
             </Fab>
           </Zoom>
         </Stack>
@@ -355,4 +386,28 @@ export default function RecordEcho({
   }
 
   return null;
+}
+
+type TimerProps = {
+  maxTime: number;
+};
+
+function Timer({ maxTime }: TimerProps) {
+  const [timeLeft, setTimeLeft] = useState(maxTime);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft(timeLeft => timeLeft - 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  return (
+    <Typography variant={"body1"} color={"#FFF"}>
+      {secondsToTime(timeLeft)}
+    </Typography>
+  );
 }
