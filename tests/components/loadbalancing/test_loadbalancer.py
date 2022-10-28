@@ -1,6 +1,6 @@
 import pytest
 from lightning import LightningApp, LightningFlow, LightningWork
-from lightning_app.runners import MultiProcessRuntime
+from lightning.app.runners import MultiProcessRuntime
 
 from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.utils.status import pending_calls

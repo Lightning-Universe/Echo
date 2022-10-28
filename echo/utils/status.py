@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from lightning import LightningWork
-from lightning_app.utilities.enum import CacheCallsKeys, WorkStageStatus
+from lightning.app.utilities.enum import CacheCallsKeys, WorkStageStatus
 
 
 def calls(work: LightningWork):

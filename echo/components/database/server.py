@@ -7,8 +7,8 @@ from typing import List, Optional, Type
 import uvicorn
 from fastapi import FastAPI
 from lightning import BuildConfig, CloudCompute, LightningWork
-from lightning_app.storage import Path
-from lightning_app.utilities.app_helpers import Logger
+from lightning.app.storage import Path
+from lightning.app.utilities.app_helpers import Logger
 from sqlmodel import Session, SQLModel, select
 
 from echo.models.echo import Echo

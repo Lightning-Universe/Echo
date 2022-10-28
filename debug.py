@@ -1,4 +1,4 @@
-from lightning_app.runners import MultiProcessRuntime
+from lightning.app.runners import MultiProcessRuntime
 
 from app import app
 

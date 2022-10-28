@@ -7,8 +7,8 @@ from typing import List
 import torch
 import whisper
 from lightning import BuildConfig, CloudCompute, LightningWork
-from lightning_app.storage import Drive
-from lightning_app.utilities.app_helpers import Logger
+from lightning.app.storage import Drive
+from lightning.app.utilities.app_helpers import Logger
 
 from echo.components.database.client import DatabaseClient
 from echo.media.mime import get_mimetype
