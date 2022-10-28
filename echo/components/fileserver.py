@@ -9,8 +9,8 @@ from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from lightning import BuildConfig, LightningWork
-from lightning_app.storage import Drive
-from lightning_app.utilities.app_helpers import Logger
+from lightning.app.storage import Drive
+from lightning.app.utilities.app_helpers import Logger
 
 from echo.media.mime import UNSUPPORTED_MEDIA_TYPES, get_mimetype
 from echo.monitoring.sentry import init_sentry
