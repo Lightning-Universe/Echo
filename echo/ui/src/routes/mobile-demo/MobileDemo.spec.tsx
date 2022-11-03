@@ -9,7 +9,7 @@ import MobileDemo from "./MobileDemo";
 describe("MobileDemo", () => {
   let echoesList: Echo[];
 
-  const createEchoMenu = `[data-cy="create-echo-speed-dial"]`;
+  const createEchoMenu = `[data-cy="create-echo-source-select"]`;
   const createEchoMicrophone = `[data-cy="create-echo-microphone"]`;
   const stopRecording = `[data-cy="stop-recording"]`;
   const discardSource = `[data-cy="discard-source"]`;

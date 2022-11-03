@@ -70,7 +70,7 @@ export default function EchoDetail({ echoID, goBack }: Props) {
     );
   }
 
-  if (!echo || !echo.segments || echo.segments.length === 0) {
+  if (!echo || !echo.echo.completedTranscriptionAt) {
     return (
       <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2} height={"100%"}>
         <CircularProgress />
@@ -131,8 +131,12 @@ export default function EchoDetail({ echoID, goBack }: Props) {
           </Stack>
         </Stack>
         <Stack flexGrow={1} sx={{ overflowY: "scroll" }} maxHeight={"35vh"}>
-          {echo?.segments && echo.segments.length > 0 && currentSegment >= 0 && (
+          {echo?.segments && echo.segments.length > 0 && currentSegment >= 0 ? (
             <Subtitles segments={echo.segments} currentSegment={currentSegment} onSelectTimestamp={setPlayMediaFrom} />
+          ) : (
+            <Stack justifyContent={"center"} alignItems={"center"} paddingTop={2}>
+              <Typography variant={"body2"}>No speech detected in content.</Typography>
+            </Stack>
           )}
         </Stack>
       </Stack>

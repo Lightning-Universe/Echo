@@ -6,6 +6,7 @@ import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import {
   CircularProgress,
   IconButton,
+  Link,
   List,
   ListItem,
   ListItemIcon,
@@ -16,6 +17,10 @@ import {
 
 import useDeleteEcho from "hooks/useDeleteEcho";
 import useListEchoes from "hooks/useListEchoes";
+
+const emptyMsg = "Your Echoes will appear here.";
+const emptyMsgSecondary = "Echoes are transcriptions of audio/video recordings powered by AI.";
+const echoGalleryURL = "https://lightning.ai/app/HvUwbEG90H-Echo";
 
 type Props = {
   onSelectEchoID: (id?: string) => void;
@@ -38,7 +43,9 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
 
   const maxAgeSeconds = process.env.REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS;
   const garbageCollectionWarning = !!maxAgeSeconds
-    ? `Echoes older than ${(Number(maxAgeSeconds) / 3600).toFixed(0)} hours will be automatically deleted.`
+    ? `If you don't see your Echoes, it is because they are automatically deleted after ${(
+        Number(maxAgeSeconds) / 3600
+      ).toFixed(0)} hours.`
     : "";
 
   return (
@@ -49,10 +56,29 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
         </Stack>
       )}
       {echoes?.length === 0 && (
-        <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2} height={"100%"}>
+        <Stack
+          direction={"column"}
+          justifyContent={"center"}
+          alignItems={"center"}
+          padding={2}
+          spacing={2}
+          height={"100%"}>
           <GraphicEqIcon />
-          <Typography variant={"body1"}>You don't have any Echoes yet</Typography>
-          <Typography variant={"caption"}>{garbageCollectionWarning}</Typography>
+          <Typography variant={"body1"} textAlign={"center"}>
+            {emptyMsg}
+          </Typography>
+          <Typography variant={"caption"} textAlign={"center"}>
+            {emptyMsgSecondary}
+          </Typography>
+          <Typography variant={"caption"} textAlign={"center"}>
+            {garbageCollectionWarning}
+            <br />
+            {garbageCollectionWarning !== "" && (
+              <Link target={"_blank"} href={echoGalleryURL}>
+                Clone & Run to unlock more
+              </Link>
+            )}
+          </Typography>
         </Stack>
       )}
       {[...completedEchoes, ...pendingEchoes].map(echo => (
@@ -69,7 +95,11 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
             </IconButton>
           }>
           <ListItemIcon>
-            {!echo.text ? <CircularProgress size={"1em"} /> : <CheckCircleIcon color={"primary"} />}
+            {!echo.completedTranscriptionAt ? (
+              <CircularProgress size={"1em"} />
+            ) : (
+              <CheckCircleIcon color={"primary"} />
+            )}
           </ListItemIcon>
           <ListItemText
             primary={echo.displayName}

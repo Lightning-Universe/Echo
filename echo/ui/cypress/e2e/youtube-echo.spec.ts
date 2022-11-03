@@ -1,6 +1,7 @@
 import "cypress-iframe";
 
 describe("creating an Echo from a YouTube URL", () => {
+  const createEchoSourceSelect = `[data-cy="create-echo-source-select"]`;
   const createEchoYouTube = `[data-cy="create-echo-youtube"]`;
   const createEchoButton = `[data-cy="create-echo-confirm"]`;
   const discardSourceButton = `[data-cy="discard-source"]`;
@@ -29,7 +30,8 @@ describe("creating an Echo from a YouTube URL", () => {
     });
 
     it("navigates to Echo create view when YouTube option is selected", () => {
-      cy.iframe().find(createEchoYouTube).click({ force: true });
+      cy.iframe().find(createEchoSourceSelect).click();
+      cy.iframe().find(createEchoYouTube).click();
 
       cy.iframe().contains("Create Echo").should("be.visible");
       cy.iframe().find(createEchoButton).should("be.visible");
@@ -80,7 +82,8 @@ describe("creating an Echo from a YouTube URL", () => {
     });
 
     it("displays the created Echo in the list view", () => {
-      cy.iframe().find(createEchoYouTube).click({ force: true });
+      cy.iframe().find(createEchoSourceSelect).click();
+      cy.iframe().find(createEchoYouTube).click();
       cy.iframe().find(createEchoNameInput).clear().type("Test Echo");
       cy.iframe().find(createEchoYouTubeURLInput).clear().type(youtubeURLValid);
       cy.iframe().find(createEchoButton).click();

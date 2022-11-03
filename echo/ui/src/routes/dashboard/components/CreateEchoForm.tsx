@@ -5,7 +5,9 @@ import { Stack } from "@mui/material";
 import { TextField } from "lightning-ui/src/design-system/components";
 import { EchoSourceType, videoMaxDurationSeconds } from "utils";
 
-const displayNamePlaceholder = `Richard Feynman Speaks the Truth`;
+const microphoneDisplayNamePlaceholder = "My Voice";
+const youtubeDisplayNamePlaceholder = "Richard Feynman Speaks the Truth";
+const fileDisplayNamePlaceholder = "My File";
 const youtubeVideoPlaceholder = "https://www.youtube.com/watch?v=B-eh2SD54fM";
 
 type Props = {
@@ -15,17 +17,31 @@ type Props = {
 };
 
 export default function CreateEchoForm({ sourceType, youtubeURLUpdated, displayNameUpdated }: Props) {
-  const [displayName, setDisplayName] = useState(displayNamePlaceholder);
+  const [displayName, setDisplayName] = useState("");
   const [sourceYouTubeURL, setSourceYouTubeURL] = useState(youtubeVideoPlaceholder);
 
   const displayNameInput = useRef<HTMLInputElement>(null);
   const youtubeURLInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (displayNameInput.current) {
+      displayNameInput.current.focus();
+    }
+
+    if (sourceType === EchoSourceType.recording) {
+      setDisplayName(microphoneDisplayNamePlaceholder);
+    } else if (sourceType === EchoSourceType.youtube) {
+      setDisplayName(youtubeDisplayNamePlaceholder);
+    } else if (sourceType === EchoSourceType.file) {
+      setDisplayName(fileDisplayNamePlaceholder);
+    }
+  }, [sourceType]);
+
+  useEffect(() => {
     // Clear placeholders on input click
     if (displayNameInput.current) {
       displayNameInput.current.addEventListener("click", () => {
-        setDisplayName(currentValue => (currentValue === displayNamePlaceholder ? "" : currentValue));
+        setDisplayName(currentValue => (currentValue === youtubeDisplayNamePlaceholder ? "" : currentValue));
       });
     }
 
@@ -49,7 +65,7 @@ export default function CreateEchoForm({ sourceType, youtubeURLUpdated, displayN
       <TextField
         label={"Name"}
         data-cy={"create-echo-name"}
-        placeholder={displayNamePlaceholder}
+        placeholder={youtubeDisplayNamePlaceholder}
         helperText={"Give your Echo a name based on the content."}
         value={displayName}
         onChange={value => setDisplayName(value ?? "")}

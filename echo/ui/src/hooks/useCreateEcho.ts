@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "react-query";
 import { echoClient } from "services/echoClient";
 
+import { Echo } from "generated";
 import { SupportedMediaType } from "utils";
 
 import useAuth from "./useAuth";
@@ -21,8 +22,8 @@ export default function useCreateEcho() {
 
   const fileserverURL = lightningState?.works["fileserver"]["vars"]["_url"];
 
-  return useMutation(
-    async ({ echoID, sourceFile, mediaType, displayName, sourceYouTubeURL }: CreateEchoArgs) => {
+  return useMutation<Echo, unknown, CreateEchoArgs>(
+    async ({ echoID, sourceFile, mediaType, displayName, sourceYouTubeURL }) => {
       if (sourceFile !== undefined) {
         // Upload source file to fileserver
         const body = new FormData();

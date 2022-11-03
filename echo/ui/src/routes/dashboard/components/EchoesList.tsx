@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
-import { Box, CircularProgress, IconButton, Radio, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, IconButton, Link, Stack, Typography } from "@mui/material";
 
 import RecordEcho from "components/RecordEcho";
 import useDeleteEcho from "hooks/useDeleteEcho";
@@ -12,7 +12,11 @@ import { EchoSourceType, userEchoesLimit } from "utils";
 
 import CreateEchoForm from "./CreateEchoForm";
 
-const header = ["", "Name", "Type", "Created At", "Completed At", "Actions"];
+const header = ["Name", "Type", "Created At", "Completed At", "Actions"];
+
+const emptyMsg = "Your Echoes will appear here.";
+const emptyMsgSecondary = "Echoes are transcriptions of audio/video recordings powered by AI.";
+const echoGalleryURL = "https://lightning.ai/app/HvUwbEG90H-Echo";
 
 type Props = {
   onSelectEchoID: (id?: string) => void;
@@ -32,7 +36,9 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
 
   const maxAgeSeconds = process.env.REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS;
   const garbageCollectionWarning = !!maxAgeSeconds
-    ? `Echoes older than ${(Number(maxAgeSeconds) / 3600).toFixed(0)} hours will be automatically deleted.`
+    ? `If you don't see your Echoes, it is because they are automatically deleted after ${(
+        Number(maxAgeSeconds) / 3600
+      ).toFixed(0)} hours.`
     : "";
 
   const selectEcho = useCallback(
@@ -59,7 +65,7 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
       onToggleCreatingEcho(false);
       setCreateEchoWithSourceType(undefined);
       setSourceYouTubeURL(undefined);
-      onSelectEchoID(undefined);
+      onSelectEchoID(echoID);
     },
     [onSelectEchoID, onToggleCreatingEcho],
   );
@@ -75,24 +81,33 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
   const rows = useMemo(
     () =>
       (echoes ?? []).map(echo => [
-        <Radio
-          checked={selectedEchoID === echo.id}
-          onChange={() => selectEcho(echo.id)}
-          value={echo}
-          data-cy={`select-echo-${echo.id}`}
-          size={"small"}
-          sx={{ padding: 0 }}
-        />,
-        <Typography variant={"body2"}>{echo.displayName ?? echo.id}</Typography>,
-        <Typography variant={"body2"}>{echo.mediaType}</Typography>,
-        <Typography variant={"body2"}>{echo.createdAt ? new Date(echo.createdAt).toLocaleString() : "-"}</Typography>,
-        <Typography variant={"body2"}>
+        selectedEchoID === echo.id ? (
+          <Typography variant={"body2"} color={"primary"}>
+            {echo.displayName ?? echo.id}
+          </Typography>
+        ) : (
+          <Link
+            sx={{ ":hover": { cursor: "pointer" } }}
+            data-cy={`select-echo-${echo.id}`}
+            color={"inherit"}
+            onClick={() => selectEcho(echo.id)}>
+            <Typography variant={"body2"}>{echo.displayName ?? echo.id}</Typography>
+          </Link>
+        ),
+        <Typography variant={"body2"} color={selectedEchoID === echo.id ? "primary" : "inherit"}>
+          {echo.mediaType}
+        </Typography>,
+        <Typography variant={"body2"} color={selectedEchoID === echo.id ? "primary" : "inherit"}>
+          {echo.createdAt ? new Date(echo.createdAt).toLocaleString() : "-"}
+        </Typography>,
+        <Typography variant={"body2"} color={selectedEchoID === echo.id ? "primary" : "inherit"}>
           {echo.completedTranscriptionAt ? new Date(echo.completedTranscriptionAt).toLocaleString() : "-"}
         </Typography>,
         <Stack direction={"row"}>
           <IconButton
             aria-label="Delete"
             disabled={!echo.completedTranscriptionAt}
+            color={selectedEchoID === echo.id ? "primary" : "inherit"}
             onClick={() => onDeleteEcho(echo.id)}>
             <DeleteIcon fontSize={"small"} />
           </IconButton>
@@ -113,16 +128,22 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
     !echoes || echoes.length === 0 ? (
       <Stack direction={"column"} alignItems={"center"} justifyContent={"center"} spacing={2} height={"100%"}>
         <GraphicEqIcon fontSize="large" />
-        <Typography variant={"body2"}>You don't have any Echoes</Typography>
+        <Typography variant={"body2"}>{emptyMsg}</Typography>
+        <Typography variant={"caption"}>{emptyMsgSecondary}</Typography>
         <Typography variant={"caption"}>{garbageCollectionWarning}</Typography>
+        {garbageCollectionWarning !== "" && (
+          <Link target={"_blank"} href={echoGalleryURL}>
+            <Typography variant={"caption"}>Clone & Run to unlock more</Typography>
+          </Link>
+        )}
       </Stack>
     ) : (
-      <Table header={header} rows={rows} />
+      <Table rowHover header={header} rows={rows} />
     );
 
   return (
     <Stack direction={"column"} justifyContent={"space-between"} height={"100%"}>
-      <Typography variant={"h6"}>{createEchoWithSourceType !== undefined ? "Create Echo" : "Your Echoes"}</Typography>
+      {createEchoWithSourceType !== undefined && <Typography variant={"h6"}>{"Create Echo"}</Typography>}
       <Box height={"75%"} sx={{ overflowY: "scroll" }}>
         {createEchoWithSourceType !== undefined ? (
           <CreateEchoForm
