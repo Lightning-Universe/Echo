@@ -484,7 +484,7 @@ data/
 lightning_logs/
 wandb/
 .idea/
-.vscode/
+.vscode/settings.json
 .python-version
 github/
 .shared/

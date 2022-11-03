@@ -98,8 +98,7 @@ class FileServer(LightningWork):
                 content = file.file.read(self.chunk_size)
 
         if get_mimetype(filepath) in UNSUPPORTED_MEDIA_TYPES:
-            # TODO(alecmerdler): Figure out how to use `ffmpeg-python` rather than shelling out...
-            # TODO(alecmerdler): Handle exceptions from `ffmpeg`
+            # TODO: Handle exceptions from `ffmpeg`
             subprocess.call(f"ffmpeg -i {filepath} -vn -acodec libmp3lame -y {filepath}.mp3", shell=True)
 
             assert get_mimetype(f"{filepath}.mp3") == "audio/mpeg"
