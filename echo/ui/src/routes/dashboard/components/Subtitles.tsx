@@ -24,7 +24,7 @@ export default function Subtitles({ segments, currentSegment, onSelectTimestamp 
   }, [currentSegment]);
 
   return (
-    <Stack direction={"column"} spacing={1}>
+    <Stack direction={"column"} spacing={1} marginBottom={6}>
       {segments.map((segment, index) => (
         <Stack
           id={subtitleIDFor(index)}

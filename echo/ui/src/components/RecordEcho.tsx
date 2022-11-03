@@ -1,37 +1,42 @@
-import { ChangeEvent, useCallback, useEffect, useRef } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 
-import { StopCircle } from "@mui/icons-material";
-import AudioFileIcon from "@mui/icons-material/AudioFile";
+import { Send } from "@mui/icons-material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
+import StopCircle from "@mui/icons-material/StopCircle";
 import VideoFileIcon from "@mui/icons-material/VideoFile";
 import YouTubeIcon from "@mui/icons-material/YouTube";
+import { LoadingButton } from "@mui/lab";
 import {
   Alert,
+  Divider,
   Fab,
-  LinearProgress,
-  SpeedDial,
-  SpeedDialAction,
+  Link,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Stack,
   Typography,
   Zoom,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import SpeedDialIcon from "@mui/material/SpeedDialIcon";
 import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
 
 import useCreateEcho from "hooks/useCreateEcho";
 import { useRecordEcho } from "hooks/useRecordEcho";
 import useValidateEcho from "hooks/useValidateEcho";
+import { Button } from "lightning-ui/src/design-system/components";
 import { EchoSourceType, SupportedMediaType, enabledEchoSourceTypes, recordingMaxDurationSeconds } from "utils";
 import { secondsToTime } from "utils/time";
 
 import AudioWaveform from "./AudioWaveform";
+
+const echoGalleryURL = "https://lightning.ai/app/HvUwbEG90H-Echo";
 
 type Props = {
   echoDisplayName?: string;
@@ -57,6 +62,7 @@ export default function RecordEcho({
   const [sourceBlobURL, setSourceBlobURL] = useState<string>();
   const [sourceMediaType, setSourceMediaType] = useState<SupportedMediaType>();
   const sourceFileInput = useRef<HTMLInputElement>(null);
+  const [sourceSelectAnchor, setSourceSelectAnchor] = useState<HTMLElement | null>(null);
   const recordingTimeElapsed = useRef(0);
 
   const theme = useTheme();
@@ -135,7 +141,7 @@ export default function RecordEcho({
             });
           }
 
-          return onCreateEcho(echoID);
+          break;
         case EchoSourceType.recording:
         case EchoSourceType.file:
           if (sourceBlob) {
@@ -148,7 +154,7 @@ export default function RecordEcho({
 
             clearBlobUrl();
 
-            return onCreateEcho(echoID);
+            break;
           }
       }
     }
@@ -157,7 +163,6 @@ export default function RecordEcho({
     clearBlobUrl,
     createEchoMutation,
     sourceMediaType,
-    onCreateEcho,
     echoDisplayName,
     sourceType,
     sourceYouTubeURL,
@@ -166,8 +171,6 @@ export default function RecordEcho({
 
   useEffect(() => {
     if (createEchoMutation.isSuccess) {
-      createEchoMutation.reset();
-
       setSourceType(undefined);
       setSourceMediaType(undefined);
       setSourceBlob(undefined);
@@ -176,26 +179,42 @@ export default function RecordEcho({
       if (mediaBlobUrl) {
         clearBlobUrl();
       }
+
+      onCreateEcho(createEchoMutation.data.id);
+
+      createEchoMutation.reset();
     }
-  }, [createEchoMutation, clearBlobUrl, mediaBlobUrl]);
+  }, [createEchoMutation, clearBlobUrl, mediaBlobUrl, onCreateEcho]);
+
+  const onClickSourceSelect = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    setSourceSelectAnchor(event.currentTarget);
+  }, []);
+
+  const onCloseSourceSelect = useCallback(() => {
+    setSourceSelectAnchor(null);
+  }, []);
 
   const selectRecording = useCallback(() => {
+    onCloseSourceSelect();
     setSourceType(EchoSourceType.recording);
     setSourceMediaType(SupportedMediaType.audioWAV);
     onSelectSourceType(EchoSourceType.recording);
-  }, [onSelectSourceType]);
+  }, [onSelectSourceType, onCloseSourceSelect]);
 
   const selectYouTubeURL = useCallback(() => {
+    onCloseSourceSelect();
     setSourceType(EchoSourceType.youtube);
     setSourceMediaType(SupportedMediaType.videoMP4);
     onSelectSourceType(EchoSourceType.youtube);
-  }, [onSelectSourceType]);
+  }, [onSelectSourceType, onCloseSourceSelect]);
 
   const selectSourceFile = useCallback(() => {
+    onCloseSourceSelect();
+
     if (sourceFileInput.current) {
       sourceFileInput.current.click();
     }
-  }, []);
+  }, [onCloseSourceSelect]);
 
   const sourceFileSelected = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -232,6 +251,7 @@ export default function RecordEcho({
     !createEchoMutation.isLoading && sourceType === EchoSourceType.recording && sourceBlob === undefined;
   const showPlaybackControls =
     !createEchoMutation.isLoading && (sourceType === EchoSourceType.youtube || sourceBlob !== undefined);
+  const showCreateButton = sourceType === EchoSourceType.youtube || sourceBlob !== undefined;
 
   if (disabled) {
     return (
@@ -241,56 +261,88 @@ export default function RecordEcho({
     );
   }
 
+  const menuItemRecording = (
+    <MenuItem
+      disabled={!enabledEchoSourceTypes.get(EchoSourceType.recording)}
+      onClick={selectRecording}
+      data-cy={"create-echo-microphone"}>
+      <ListItemIcon>
+        <KeyboardVoiceIcon fontSize="small" />
+      </ListItemIcon>
+      <ListItemText>
+        <Typography variant={"body2"}>From device microphone</Typography>
+      </ListItemText>
+    </MenuItem>
+  );
+
+  const menuItemYouTube = (
+    <MenuItem
+      disabled={!enabledEchoSourceTypes.get(EchoSourceType.youtube)}
+      onClick={selectYouTubeURL}
+      data-cy={"create-echo-youtube"}>
+      <ListItemIcon>
+        <YouTubeIcon fontSize="small" />
+      </ListItemIcon>
+      <ListItemText>
+        <Typography variant={"body2"}>From YouTube link</Typography>
+      </ListItemText>
+    </MenuItem>
+  );
+
+  const menuItemFile = (
+    <MenuItem
+      disabled={!enabledEchoSourceTypes.get(EchoSourceType.file)}
+      onClick={selectSourceFile}
+      data-cy={"create-echo-file-upload"}>
+      <ListItemIcon>
+        <VideoFileIcon fontSize={"small"} />
+      </ListItemIcon>
+      <ListItemText>
+        <Typography variant={"body2"}>From file upload</Typography>
+      </ListItemText>
+    </MenuItem>
+  );
+
+  const someSourceTypesDisabled = Array.from(enabledEchoSourceTypes).some(([, enabled]) => !enabled);
+
   if (showSourceSelect) {
     return (
       <Stack direction={"row"} justifyContent={"flex-end"} width={"100%"}>
-        <SpeedDial
-          data-cy={"create-echo-speed-dial"}
-          ariaLabel="Create Echo"
-          direction={"left"}
-          hidden={recordingStatus !== "idle"}
-          icon={<SpeedDialIcon sx={{ color: "#FFFFFF" }} openIcon={<GraphicEqIcon htmlColor="#FFFFFF" />} />}>
-          {enabledEchoSourceTypes.get(EchoSourceType.recording) && (
-            <SpeedDialAction
-              data-cy={"create-echo-microphone"}
-              icon={<KeyboardVoiceIcon />}
-              onClick={selectRecording}
-              tooltipTitle={"Record Audio"}
-            />
+        <Button text={"Create Echo"} onClick={onClickSourceSelect} data-cy={"create-echo-source-select"} />
+        <Menu
+          anchorEl={sourceSelectAnchor}
+          onClose={onCloseSourceSelect}
+          open={Boolean(sourceSelectAnchor)}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "center",
+          }}
+          transformOrigin={{
+            vertical: "bottom",
+            horizontal: "center",
+          }}>
+          {enabledEchoSourceTypes.get(EchoSourceType.recording) && menuItemRecording}
+          {enabledEchoSourceTypes.get(EchoSourceType.youtube) && menuItemYouTube}
+          {enabledEchoSourceTypes.get(EchoSourceType.file) && menuItemFile}
+          {someSourceTypesDisabled && (
+            <Divider>
+              <Link target={"_blank"} href={echoGalleryURL}>
+                <Typography variant={"body2"}>Clone & Run to unlock more</Typography>
+              </Link>
+            </Divider>
           )}
-          {enabledEchoSourceTypes.get(EchoSourceType.youtube) && (
-            <SpeedDialAction
-              data-cy={"create-echo-youtube"}
-              icon={<YouTubeIcon />}
-              onClick={selectYouTubeURL}
-              tooltipTitle={"YouTube URL"}
-            />
-          )}
-          {enabledEchoSourceTypes.get(EchoSourceType.file) && (
-            <SpeedDialAction
-              data-cy={"create-echo-audio-upload"}
-              icon={<AudioFileIcon />}
-              onClick={selectSourceFile}
-              tooltipTitle={"Choose Audio File"}
-            />
-          )}
-          {enabledEchoSourceTypes.get(EchoSourceType.file) && (
-            <SpeedDialAction
-              data-cy={"create-echo-video-upload"}
-              icon={<VideoFileIcon />}
-              onClick={selectSourceFile}
-              tooltipTitle={"Choose Video File"}
-            />
-          )}
-          {/* Hidden source file input */}
-          <input
-            ref={sourceFileInput}
-            hidden
-            type="file"
-            accept={Object.values(SupportedMediaType).join(",")}
-            onChange={sourceFileSelected}
-          />
-        </SpeedDial>
+          {!enabledEchoSourceTypes.get(EchoSourceType.recording) && menuItemRecording}
+          {!enabledEchoSourceTypes.get(EchoSourceType.youtube) && menuItemYouTube}
+          {!enabledEchoSourceTypes.get(EchoSourceType.file) && menuItemFile}
+        </Menu>
+        {/* Hidden source file input */}
+        <input
+          ref={sourceFileInput}
+          hidden
+          type="file"
+          accept={Object.values(SupportedMediaType).join(",")}
+          onChange={sourceFileSelected}
+        />
       </Stack>
     );
   }
@@ -332,15 +384,6 @@ export default function RecordEcho({
     );
   }
 
-  if (createEchoMutation.isLoading) {
-    return (
-      <Stack direction={"row"} width={"100%"} alignItems={"center"} spacing={4}>
-        <LinearProgress sx={{ width: "50%" }} />
-        <Typography variant={"body1"}>Uploading Echo</Typography>
-      </Stack>
-    );
-  }
-
   const audioPlayback = (
     <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
       <audio
@@ -353,39 +396,42 @@ export default function RecordEcho({
     </Zoom>
   );
 
-  if (showPlaybackControls) {
-    return (
-      <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} width="100%" spacing={2}>
-        {onMobile && sourceType !== EchoSourceType.youtube && audioPlayback}
-        {validateEchoMutation.isSuccess && !validateEchoMutation.data.valid && (
-          <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} spacing={2} width={"100%"}>
-            <Alert severity="error">Error creating Echo: {validateEchoMutation.data?.reason}</Alert>
-          </Stack>
-        )}
-        <Stack direction={"row"} alignItems={"center"} justifyContent={"center"} width={"100%"} spacing={2}>
-          {!onMobile && sourceType !== EchoSourceType.youtube && audioPlayback}
-          <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
-            <Fab data-cy={"discard-source"} color={"error"} onClick={discardSource}>
-              <DeleteIcon htmlColor="#FFFFFF" />
-            </Fab>
-          </Zoom>
-          <Zoom in={showPlaybackControls} style={{ transitionDelay: showPlaybackControls ? "100ms" : "0ms" }}>
-            <Fab
-              data-cy={"create-echo-confirm"}
-              color={"primary"}
-              onClick={createEcho}
-              variant={"extended"}
-              sx={{ color: "#FFFFFF" }}
-              disabled={!echoDisplayName || (sourceType === EchoSourceType.youtube && sourceYouTubeURL === undefined)}>
-              Create
-            </Fab>
-          </Zoom>
+  return (
+    <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} width="100%" spacing={2}>
+      {onMobile && sourceType !== EchoSourceType.youtube && audioPlayback}
+      {validateEchoMutation.isSuccess && !validateEchoMutation.data.valid && (
+        <Stack direction={"row"} justifyContent={"center"} alignItems={"center"} spacing={2} width={"100%"}>
+          <Alert severity="error">Error creating Echo: {validateEchoMutation.data?.reason}</Alert>
         </Stack>
+      )}
+      <Stack direction={"row"} alignItems={"center"} justifyContent={"center"} width={"100%"} spacing={2}>
+        {!onMobile && sourceType !== EchoSourceType.youtube && audioPlayback}
+        {showPlaybackControls && (
+          <Button
+            data-cy={"discard-source"}
+            color={"error"}
+            icon={<DeleteIcon htmlColor="#FFFFFF" />}
+            variant={"contained"}
+            text={"Discard"}
+            onClick={discardSource}
+          />
+        )}
+        {showCreateButton && (
+          <LoadingButton
+            loading={createEchoMutation.isLoading}
+            loadingPosition={"start"}
+            data-cy={"create-echo-confirm"}
+            color={"primary"}
+            startIcon={<Send />}
+            onClick={createEcho}
+            variant={"contained"}
+            sx={{ color: "#FFFFFF" }}>
+            Create
+          </LoadingButton>
+        )}
       </Stack>
-    );
-  }
-
-  return null;
+    </Stack>
+  );
 }
 
 type TimerProps = {

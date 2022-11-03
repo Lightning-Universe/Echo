@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { BuildYourAppBanner } from "components/BuildYourAppBanner";
 import RecordEcho from "components/RecordEcho";
@@ -41,12 +41,9 @@ export default function MobileDemo() {
         ) : selectedEchoID ? (
           <EchoDetail echoID={selectedEchoID} goBack={() => setSelectedEchoID(undefined)} />
         ) : (
-          <>
-            <Typography variant={"h6"}>Your Echoes</Typography>
-            <Stack height={"75%"} sx={{ overflowY: "scroll" }}>
-              <EchoesListMobile onSelectEchoID={setSelectedEchoID} />
-            </Stack>
-          </>
+          <Stack height={"75%"} sx={{ overflowY: "scroll" }}>
+            <EchoesListMobile onSelectEchoID={setSelectedEchoID} />
+          </Stack>
         )}
         {!selectedEchoID && (
           <Stack direction={"row"} marginBottom={4} paddingX={2} width={"100%"}>
