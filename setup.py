@@ -42,6 +42,4 @@ setup(
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.7",
     setup_requires=["wheel"],
-    # FIXME(alecmerdler): Breaks with `whisper` installing from git...
-    # install_requires=setup_tools._load_requirements(_PATH_ROOT),
 )

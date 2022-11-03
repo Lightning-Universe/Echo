@@ -71,8 +71,7 @@ class SpeechRecognizer(LightningWork):
             raise ValueError(f"Source does not contain an audio stream: {source_file_path}")
 
         extracted_audio_file_path = f"{echo_id}-extracted.mp3"
-        # TODO(alecmerdler): Figure out how to use `ffmpeg-python` rather than shelling out...
-        # TODO(alecmerdler): Handle exceptions from `ffmpeg`
+        # TODO: Handle exceptions from `ffmpeg`
         subprocess.call(f"ffmpeg -i {source_file_path} -vn -acodec libmp3lame {extracted_audio_file_path}", shell=True)
 
         return extracted_audio_file_path
@@ -103,7 +102,6 @@ class SpeechRecognizer(LightningWork):
         # Run the speech recognition model and save the result
         result = self.recognize(audio_file_path)
 
-        # FIXME(alecmerdler): It would be better separation of concerns to not use the DB client in this component...
         echo.completed_transcription_at = datetime.now()
         echo.text = result["text"]
         echo_db_client.put(echo)

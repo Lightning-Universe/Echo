@@ -25,7 +25,6 @@ describe("MobileDemo", () => {
         .resolves(echoesList);
     });
 
-    // TODO(alecmerdler): Support desktop viewports
     cy.viewport("iphone-x");
 
     Cypress.on("uncaught:exception", (err, runnable) => {
