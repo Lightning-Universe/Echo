@@ -3,12 +3,14 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List
 
+from fastapi import HTTPException
 from lightning import LightningApp, LightningFlow
 from lightning.app.api.http_methods import Delete, Get, Post
 from lightning.app.frontend import StaticWebFrontend
 from lightning.app.storage import Drive
 from lightning.app.utilities.app_helpers import Logger
 from lightning.app.utilities.frontend import AppInfo
+
 from echo.authn.session import DEFAULT_USER_ID
 from echo.commands.auth import Login
 from echo.commands.echo import CreateEcho, DeleteEcho, GetEcho, ListEchoes
@@ -221,12 +223,15 @@ class EchoApp(LightningFlow):
 
         return echoes
 
-    def get_echo(self, config: GetEchoConfig) -> GetEchoResponse:
+    def get_echo(self, config: GetEchoConfig):
         if self._echo_db_client is None:
             logger.warn("Database client not initialized!")
             return None
 
         echo = self._echo_db_client.get_echo(config.echo_id)
+        if echo is None:
+            return None
+
         segments = None
         if config.include_segments:
             segments = self._segment_db_client.list_segments_for_echo(config.echo_id)
@@ -255,21 +260,7 @@ class EchoApp(LightningFlow):
 
         return LoginResponse(user_id=new_user_id)
 
-    def handle_create_echo(self, echo: Echo):
-        # FIXME: Framework does not support raising `HTTPException(status_code=400)` without crashing the entire Flow
-        return self.create_echo(echo)
-
-    def handle_list_echoes(self, user_id: str):
-        return self.list_echoes(ListEchoesConfig(user_id=user_id))
-
-    def handle_get_echo(self, echo_id: str, include_segments: bool):
-        # FIXME: Framework does not support raising `HTTPException(status_code=404)` without crashing the entire Flow
-        return self.get_echo(GetEchoConfig(echo_id=echo_id, include_segments=include_segments))
-
-    def handle_delete_echo(self, echo_id: str):
-        return self.delete_echo(DeleteEchoConfig(echo_id=echo_id))
-
-    def handle_validate_echo(self, echo: Echo) -> ValidateEchoResponse:
+    def validate_echo(self, echo: Echo) -> ValidateEchoResponse:
         # Guard against disabled source types
         if echo.source_youtube_url is not None:
             if not self.source_type_youtube_enabled:
@@ -277,6 +268,10 @@ class EchoApp(LightningFlow):
         if echo.source_youtube_url is None:
             if not self.source_type_recording_enabled and not self.source_type_file_enabled:
                 return ValidateEchoResponse(valid=False, reason="Source type file/recording is disabled")
+
+        # Guard against invalid display name
+        if echo.display_name is None or len(echo.display_name) == 0:
+            return ValidateEchoResponse(valid=False, reason="Display name is required")
 
         if len(echo.display_name) > MAX_DISPLAY_NAME_LENGTH:
             return ValidateEchoResponse(
@@ -297,6 +292,29 @@ class EchoApp(LightningFlow):
                 return ValidateEchoResponse(valid=False, reason="YouTube video exceeds maximum duration allowed")
 
         return ValidateEchoResponse(valid=True, reason="All fields valid")
+
+    def handle_create_echo(self, echo: Echo) -> Echo:
+        validation = self.validate_echo(echo)
+        if not validation.valid:
+            raise HTTPException(status_code=400, detail=validation.reason)
+
+        return self.create_echo(echo)
+
+    def handle_list_echoes(self, user_id: str) -> List[Echo]:
+        return self.list_echoes(ListEchoesConfig(user_id=user_id))
+
+    def handle_get_echo(self, echo_id: str, include_segments: bool) -> GetEchoResponse:
+        response = self.get_echo(GetEchoConfig(echo_id=echo_id, include_segments=include_segments))
+        if response is None:
+            raise HTTPException(status_code=404, detail="Echo not found")
+
+        return response
+
+    def handle_delete_echo(self, echo_id: str):
+        return self.delete_echo(DeleteEchoConfig(echo_id=echo_id))
+
+    def handle_validate_echo(self, echo: Echo) -> ValidateEchoResponse:
+        return self.validate_echo(echo)
 
     def handle_login(self):
         return self.login()
