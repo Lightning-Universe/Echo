@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List
 
+import requests
 from fastapi import HTTPException
 from lightning import LightningApp, LightningFlow
 from lightning.app.api.http_methods import Delete, Get, Post
@@ -49,6 +50,8 @@ RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
 RECOGNIZER_CLOUD_COMPUTE_DEFAULT = "gpu"
+
+FILESERVER_CLOUD_COMPUTE_DEFAULT = "cpu-small"
 
 YOUTUBER_MIN_REPLICAS_DEFAULT = 1
 YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
@@ -106,6 +109,10 @@ class EchoApp(LightningFlow):
         self.recognizer_cloud_compute = os.environ.get(
             "ECHO_RECOGNIZER_CLOUD_COMPUTE", RECOGNIZER_CLOUD_COMPUTE_DEFAULT
         )
+        self.fileserver_cloud_compute = os.environ.get(
+            "ECHO_FILESERVER_CLOUD_COMPUTE", FILESERVER_CLOUD_COMPUTE_DEFAULT
+        )
+        self._fileserver_auth_token = os.environ.get("ECHO_FILESERVER_AUTH_TOKEN", None)
         self.youtuber_min_replicas = int(os.environ.get("ECHO_YOUTUBER_MIN_REPLICAS", YOUTUBER_MIN_REPLICAS_DEFAULT))
         self.youtuber_max_idle_seconds_per_work = int(
             os.environ.get("ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK", YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT)
@@ -137,7 +144,7 @@ class EchoApp(LightningFlow):
             os.environ.get("ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS", VIDEO_SOURCE_MAX_DURATION_SECONDS_DEFAULT)
         )
         self.database_cloud_compute = os.environ.get("ECHO_DATABASE_CLOUD_COMPUTE", DATABASE_CLOUD_COMPUTE_DEFAULT)
-        self.loadbalancer_auth_token = os.environ.get("ECHO_LOADBALANCER_AUTH_TOKEN", None)
+        self._loadbalancer_auth_token = os.environ.get("ECHO_LOADBALANCER_AUTH_TOKEN", None)
 
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
@@ -150,16 +157,19 @@ class EchoApp(LightningFlow):
 
         # Initialize child components
         self.web_frontend = WebFrontend()
-        self.fileserver = FileServer(drive=self.drive, base_dir=base_dir)
+        self.fileserver = FileServer(
+            drive=self.drive,
+            base_dir=base_dir,
+            cloud_compute=self.fileserver_cloud_compute,
+            auth_token=self._fileserver_auth_token,
+        )
         self.database = Database(models=[Echo], cloud_compute=self.database_cloud_compute)
         self.youtuber = LoadBalancer(
             name="youtuber",
             max_idle_seconds_per_work=self.youtuber_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.youtuber_max_pending_calls_per_work,
-            create_work=lambda: YouTuber(
-                cloud_compute=self.youtuber_cloud_compute, drive=self.drive, base_dir=base_dir
-            ),
-            dummy_run_kwargs={"youtube_url": DUMMY_YOUTUBE_URL, "echo_id": DUMMY_ECHO_ID},
+            create_work=lambda: YouTuber(cloud_compute=self.youtuber_cloud_compute, base_dir=base_dir),
+            dummy_run_kwargs={"youtube_url": DUMMY_YOUTUBE_URL, "echo_id": DUMMY_ECHO_ID, "fileserver_url": None},
         )
         self.recognizer = LoadBalancer(
             name="recognizer",
@@ -207,7 +217,7 @@ class EchoApp(LightningFlow):
 
         # If source is YouTube, trigger async download of the video to the shared Drive
         if echo.source_youtube_url is not None:
-            self.youtuber.run(youtube_url=echo.source_youtube_url, echo_id=echo.id)
+            self.youtuber.run(youtube_url=echo.source_youtube_url, echo_id=echo.id, fileserver_url=self.fileserver.url)
 
         # Run speech recognition for the Echo
         self.recognizer.run(echo=echo, db_url=self.database.url)
@@ -246,7 +256,11 @@ class EchoApp(LightningFlow):
         try:
             self._segment_db_client.delete_segments_for_echo(config.echo_id)
             self._echo_db_client.delete_echo(config.echo_id)
-            self.fileserver.delete_file(config.echo_id)
+
+            requests.post(
+                f"{self.fileserver.url}/delete/{config.echo_id}",
+                params={"auth_token": self._fileserver_auth_token if self._fileserver_auth_token else ""},
+            )
         except Exception as e:
             logger.error(e)
 
@@ -321,7 +335,7 @@ class EchoApp(LightningFlow):
 
     def handle_scale(self, scale_request: ScaleRequest):
         # Auth token prevents unauthorized scaling
-        if scale_request.auth_token != self.loadbalancer_auth_token:
+        if scale_request.auth_token != self._loadbalancer_auth_token:
             return None
 
         if scale_request.service == "recognizer":

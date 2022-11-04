@@ -19,7 +19,7 @@
 </div>
 </div>
 
----
+______________________________________________________________________
 
 # Lightning Echo
 
@@ -42,6 +42,8 @@ Use Echo to generate quick captions of video and audio content. Powered by OpenA
 | `ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK` | integer                                                                                   | 10               | Autoscaler will create a new recognizer Work if any existing recognizer Work has this many pending items to process.                                                                     |
 | `ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE`   | [cron](https://crontab.guru/#*_*_*_*_*)                                                   | `*/5 * * * *`    | How often the autoscaler will check to see if recognizer Works need to be scaled up/down                                                                                                 |
 | `ECHO_RECOGNIZER_CLOUD_COMPUTE`              | [Cloud Compute](https://lightning.ai/lightning-docs/core_api/lightning_work/compute.html) | `gpu`            | The instance type each recognizer Work will use when running in the cloud.                                                                                                               |
+| `ECHO_FILESERVER_CLOUD_COMPUTE`              | [Cloud Compute](https://lightning.ai/lightning-docs/core_api/lightning_work/compute.html) | `cpu-small`      | The instance type the fileserver Work will use when running in the cloud.                                                                                                                |
+| `ECHO_FILESERVER_AUTH_TOKEN`                 | string                                                                                    | `None`           | Pre-shared key that prevents anyone other than the Flow from deleting files from the fileserver.                                                                                         |
 | `ECHO_YOUTUBER_MIN_REPLICAS`                 | integer                                                                                   | 1                | Minimum number of downloader Works to keep running at all times, even if they are idle.                                                                                                  |
 | `ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK`    | integer                                                                                   | 120              | Autoscaler will shut down any spare downloader Works that haven't processed anything after this duration.                                                                                |
 | `ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK`   | integer                                                                                   | 10               | Autoscaler will create a new downloader Work if any existing downloader Work has this many pending items to process.                                                                     |
