@@ -2,6 +2,16 @@ name: Deploy to lightning.ai
 on:
   workflow_dispatch:
     inputs:
+      recognizerMinReplicas:
+        type: string
+        default: "2"
+        required: true
+        description: "Minimum number of speech recognizer Works to keep running."
+      youtuberMinReplicas:
+        type: string
+        default: "2"
+        required: true
+        description: "Minimum number of YouTube downloader Works to keep running."
       sourceTypeFileEnabled:
         type: boolean
         required: true
@@ -45,6 +55,10 @@ on:
         type: string
         required: true
         description: "Token used to authenticate against the `/v1/scale` API endpoint."
+      fileserverAuthToken:
+        type: string
+        required: true
+        description: "Token used to authenticate against the fileserver `/delete/{echoID}` endpoint."
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -119,12 +133,14 @@ jobs:
             --env ECHO_MODE=production \
             --env ECHO_MODEL_SIZE=${{ inputs.modelSize }} \
             --env ECHO_ENABLE_MULTI_TENANCY=true \
-            --env ECHO_RECOGNIZER_MIN_REPLICAS=2 \
+            --env ECHO_RECOGNIZER_MIN_REPLICAS=${{ inputs.recognizerMinReplicas }} \
             --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120 \
             --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
             --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu \
-            --env ECHO_YOUTUBER_MIN_REPLICAS=2 \
+            --env ECHO_FILESERVER_CLOUD_COMPUTE=cpu \
+            --env ECHO_FILESERVER_AUTH_TOKEN=${{ inputs.fileserverAuthToken }} \
+            --env ECHO_YOUTUBER_MIN_REPLICAS=${{ inputs.youtuberMinReplicas }} \
             --env ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK=120 \
             --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
@@ -137,7 +153,7 @@ jobs:
             --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400 \
             --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
             --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=300 \
-            --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
+            --env ECHO_DATABASE_CLOUD_COMPUTE=cpu-small \
             --env ECHO_ROOT_PATH=${{ inputs.rootPath }} \
             --env ECHO_LOADBALANCER_AUTH_TOKEN=${{ inputs.loadbalancerAuthToken }} \
             --env ECHO_ANALYTICS_ENABLED=true \
