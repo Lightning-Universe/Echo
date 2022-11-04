@@ -19,7 +19,7 @@
 </div>
 </div>
 
----
+______________________________________________________________________
 
 # Lightning Echo
 
@@ -27,10 +27,12 @@ Use Echo to generate quick captions of video and audio content. Powered by OpenA
 
 ## Running Echo
 
+The easiest way to see Echo in action is to visit the hosted demo version at https://lightning.ai/echo. Note that this has a limited feature set, but you can unlock the full version by visiting the [Lightning App Gallery](https://lightning.ai/app/HvUwbEG90H-Echo) and clicking "Clone & Run" to run your own instance of the app.
+
 ### Configuration
 
 <details>
-  <summary>All configuration is done using environment variables, which are documented below with their default values.</summary>
+  <summary>All configuration is done using [environment variables](https://lightning.ai/docs/stable/glossary/environment_variables.html#environment-variables), which are documented below with their default values.</summary>
 
 | Name                                         | Type                                                                                      | Default Value    | Description                                                                                                                                                                              |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
