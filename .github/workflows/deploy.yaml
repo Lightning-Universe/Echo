@@ -127,6 +127,7 @@ jobs:
         run: |
           lightning run app app.py \
             --cloud \
+            --no-cache \
             --cluster-id ${{ secrets.LIGHTNING_CLUSTER_ID }} \
             --name "${{ inputs.appName }}" \
             --open-ui false \
