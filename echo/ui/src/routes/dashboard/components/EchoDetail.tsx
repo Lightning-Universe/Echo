@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import DownloadIcon from "@mui/icons-material/Download";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import { Breadcrumbs, CircularProgress, Link, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { echoGalleryURL } from "links";
 
 import useDownloadEchoSubtitles from "hooks/useDownloadEchoSubtitles";
 import useDownloadEchoText from "hooks/useDownloadEchoText";
@@ -74,7 +75,12 @@ export default function EchoDetail({ echoID, goBack }: Props) {
     return (
       <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} spacing={2} height={"100%"}>
         <CircularProgress />
-        <Typography variant={"body2"}>Echo is processing, please wait</Typography>
+        <Typography variant={"body2"} textAlign={"center"}>
+          Echo is processing, this can take up to a minute or two.
+          <Link target={"_blank"} href={echoGalleryURL}>
+            <Typography variant={"body2"}>Click here for faster processing speeds</Typography>
+          </Link>
+        </Typography>
         {onMobile && (
           <Button variant={"text"} color={"primary"} onClick={() => goBack()}>
             Go Back

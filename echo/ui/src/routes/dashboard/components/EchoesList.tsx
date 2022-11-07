@@ -16,7 +16,6 @@ const header = ["Name", "Type", "Created At", "Completed At", "Actions"];
 
 const emptyMsg = "Your Echoes will appear here.";
 const emptyMsgSecondary = "Echoes are transcriptions of audio/video recordings powered by AI.";
-const echoGalleryURL = "https://lightning.ai/app/HvUwbEG90H-Echo";
 
 type Props = {
   onSelectEchoID: (id?: string) => void;
@@ -131,11 +130,6 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
         <Typography variant={"body2"}>{emptyMsg}</Typography>
         <Typography variant={"caption"}>{emptyMsgSecondary}</Typography>
         <Typography variant={"caption"}>{garbageCollectionWarning}</Typography>
-        {garbageCollectionWarning !== "" && (
-          <Link target={"_blank"} href={echoGalleryURL}>
-            <Typography variant={"caption"}>Clone & Run to unlock more</Typography>
-          </Link>
-        )}
       </Stack>
     ) : (
       <Table rowHover header={header} rows={rows} />

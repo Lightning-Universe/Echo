@@ -1,4 +1,4 @@
-import { Box, Link, Stack, Typography } from "@mui/material";
+import { Link, Stack, Typography } from "@mui/material";
 
 export const BuildYourAppBanner = () => {
   return (
@@ -13,10 +13,7 @@ export const BuildYourAppBanner = () => {
         }}
         padding={1}>
         <Typography color={"#FFFFFF"} fontSize={"16px"} fontWeight={400}>
-          ⚡️ Learn how to build apps like this!&nbsp;
-          <Box component={"span"} fontSize={"16px"} fontWeight={600} fontFamily={"UCity"} lineHeight={"unset"}>
-            Get started
-          </Box>
+          ⚡️ Learn how this app was built!
         </Typography>
       </Stack>
     </Link>
