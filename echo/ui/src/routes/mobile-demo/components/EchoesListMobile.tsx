@@ -6,7 +6,6 @@ import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import {
   CircularProgress,
   IconButton,
-  Link,
   List,
   ListItem,
   ListItemIcon,
@@ -20,7 +19,6 @@ import useListEchoes from "hooks/useListEchoes";
 
 const emptyMsg = "Your Echoes will appear here.";
 const emptyMsgSecondary = "Echoes are transcriptions of audio/video recordings powered by AI.";
-const echoGalleryURL = "https://lightning.ai/app/HvUwbEG90H-Echo";
 
 type Props = {
   onSelectEchoID: (id?: string) => void;
@@ -72,12 +70,6 @@ export default function EchoesListMobile({ onSelectEchoID }: Props) {
           </Typography>
           <Typography variant={"caption"} textAlign={"center"}>
             {garbageCollectionWarning}
-            <br />
-            {garbageCollectionWarning !== "" && (
-              <Link target={"_blank"} href={echoGalleryURL}>
-                Clone & Run to unlock more
-              </Link>
-            )}
           </Typography>
         </Stack>
       )}

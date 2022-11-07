@@ -24,6 +24,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { echoGalleryURL } from "links";
 import { useReactMediaRecorder } from "react-media-recorder";
 import { v4 as uuidv4 } from "uuid";
 
@@ -35,8 +36,6 @@ import { EchoSourceType, SupportedMediaType, enabledEchoSourceTypes, recordingMa
 import { secondsToTime } from "utils/time";
 
 import AudioWaveform from "./AudioWaveform";
-
-const echoGalleryURL = "https://lightning.ai/app/HvUwbEG90H-Echo";
 
 type Props = {
   echoDisplayName?: string;
@@ -327,7 +326,7 @@ export default function RecordEcho({
           {someSourceTypesDisabled && (
             <Divider>
               <Link target={"_blank"} href={echoGalleryURL}>
-                <Typography variant={"body2"}>Clone & Run to unlock more</Typography>
+                <Typography variant={"body2"}>Unlock more</Typography>
               </Link>
             </Divider>
           )}
