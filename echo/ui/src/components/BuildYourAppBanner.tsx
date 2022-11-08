@@ -1,8 +1,10 @@
 import { Link, Stack, Typography } from "@mui/material";
 
+const blogPost = "https://lightning.ai/pages/community/tutorial/deploy-openai-whisper/";
+
 export const BuildYourAppBanner = () => {
   return (
-    <Link href={"https://lightning.ai/lightning-docs"} target={"_blank"}>
+    <Link href={blogPost} target={"_blank"}>
       <Stack
         direction={"row"}
         justifyContent={"center"}
