@@ -15,11 +15,11 @@ app_meta = [
 <meta name="twitter:description" content="Echo uses near-human speech recognition to transcribe video and audio files - powered by Lightning and OpenAI's Whisper.">
 <meta name="twitter:site" content="@LightningAI">
 <meta name="twitter:creator" content="@LightningAI">
-<meta name="twitter:image:src" content="https://lightningaidev.wpengine.com/wp-content/uploads/2022/10/Echo-MD.png">
+<meta name="twitter:image:src" content="https://storage.googleapis.com/lightning-echo-prod/echo-preview.png">
 <!-- Open Graph general (Facebook, Pinterest & Google+) -->
 <meta name="og:title" content="Transcription. Simple and open-source.">
 <meta name="og:description" content="Echo uses near-human speech recognition to transcribe video and audio files - powered by Lightning and OpenAI's Whisper.">
-<meta name="og:image" content="https://lightningaidev.wpengine.com/wp-content/uploads/2022/10/Echo-MD2.png">
+<meta name="og:image" content="https://storage.googleapis.com/lightning-echo-prod/echo-preview.png">
 <meta name="og:url" content="https://lightning.ai/echo">
 <meta name="og:site_name" content="Echo">
 <meta name="og:type" content="website">

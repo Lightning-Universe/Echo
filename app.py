@@ -381,10 +381,10 @@ app = LightningApp(
     root_path=root_path if root_path != "/" else "",
     info=AppInfo(
         title="Transcription. Simple and open-source.",
-        favicon="https://storage.googleapis.com/grid-static/echo/echo-logo-no-text.svg",
+        favicon="https://storage.googleapis.com/lightning-echo-prod/favicon.svg",
         # flake8: noqa E501
         description="Echo uses near-human speech recognition to transcribe video and audio files - powered by Lightning and OpenAI's Whisper.",
-        image="https://lightningaidev.wpengine.com/wp-content/uploads/2022/10/Echo-MD2.png",
+        image="https://storage.googleapis.com/lightning-echo-prod/echo-preview.png",
         meta_tags=[*app_meta, *(analytics if analytics_enabled else [])],
     ),
 )

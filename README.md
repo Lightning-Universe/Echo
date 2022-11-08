@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://user-images.githubusercontent.com/11700385/193478702-76070aa3-1eec-415b-ab06-110b6c1c1459.svg" width="400px">
+    <img src="https://storage.googleapis.com/lightning-echo-prod/echo-logo-text.svg" width="400px">
     <p>Transcription and captioning — faster, easier, and open source.</p>
 
 <div align="center">
@@ -7,6 +7,7 @@
 <p align="center" style="color:grey">Powered by <a href="https://openai.com/blog/whisper">OpenAI Whisper</a></p>
 
 <p align="center">
+  <a href="https://lightning.ai/pages/community/tutorial/deploy-openai-whisper/">Announcment</a> •
   <a href="#development">Development</a> •
   <a href="https://www.lightning.ai/">Lightning AI</a> •
   <a href="https://lightning.ai/apps">Lightning Apps Gallery</a>
@@ -19,7 +20,7 @@
 </div>
 </div>
 
-______________________________________________________________________
+---
 
 # Lightning Echo
 
