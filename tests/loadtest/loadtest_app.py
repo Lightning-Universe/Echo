@@ -12,13 +12,13 @@ USER_ECHOES_LIMIT = 3
 
 # NOTE: All videos are <5 minutes long
 videos = [
-    ("Build an Intelligent App In Weeks, Not Months | Lightning AI", "https://www.youtube.com/watch?v=CWfmJlkfST4"),
-    ("Watch NVIDIA's AI Teach This Human To Run! 🏃‍♂️", "https://www.youtube.com/watch?v=wqvAconYgK0"),
-    ("Lightning AI: Build end-to-end ML systems with plain python", "https://www.youtube.com/watch?v=vFwHl7W5ooE"),
+    ("Build an Intelligent App", "https://www.youtube.com/watch?v=CWfmJlkfST4"),
+    ("Watch NVIDIA's AI", "https://www.youtube.com/watch?v=wqvAconYgK0"),
+    ("Lightning AI", "https://www.youtube.com/watch?v=vFwHl7W5ooE"),
     ("Adobe's New AI: Next Level Cat Videos! 🐈", "https://www.youtube.com/watch?v=qtOkktTNs-k"),
-    ("New AI Makes You Play Table Tennis…In a Virtual World! 🏓", "https://www.youtube.com/watch?v=mFnGBz_rPfU"),
-    ("Microsoft's AI Understands Humans…But It Had Never Seen One! 👩‍💼", "https://www.youtube.com/watch?v=wXaVokqhHDk"),
-    ("L15.3 Different Types of Sequence Modeling Tasks", "https://www.youtube.com/watch?v=Ed8GTvkzkZE"),
+    ("New AI Makes You Play Table Tennis", "https://www.youtube.com/watch?v=mFnGBz_rPfU"),
+    ("Microsoft's AI Understands Humans", "https://www.youtube.com/watch?v=wXaVokqhHDk"),
+    ("L15.3", "https://www.youtube.com/watch?v=Ed8GTvkzkZE"),
     ("L10.3 Early Stopping", "https://www.youtube.com/watch?v=YA1OdkiHJBY"),
     ("L2.0 A Brief History", "https://www.youtube.com/watch?v=Ezig00nypvU"),
     ("L1.0 Intro to Deep Learning", "https://www.youtube.com/watch?v=1nqCZqDYPp0"),

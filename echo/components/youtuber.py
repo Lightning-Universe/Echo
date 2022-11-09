@@ -1,6 +1,5 @@
 import pathlib
 import tempfile
-from dataclasses import dataclass
 
 import requests
 from lightning import BuildConfig, CloudCompute, LightningWork
@@ -8,7 +7,6 @@ from lightning.app.utilities.app_helpers import Logger
 from pytube import YouTube
 
 from echo.monitoring.sentry import init_sentry
-from echo.utils.dependencies import RUST_INSTALL_SCRIPT
 
 logger = Logger(__name__)
 
@@ -18,12 +16,6 @@ DUMMY_YOUTUBE_URL = "dummy"
 DEFAULT_CLOUD_COMPUTE = "cpu"
 
 
-@dataclass
-class CustomBuildConfig(BuildConfig):
-    def build_commands(self):
-        return ["sudo apt-get update", RUST_INSTALL_SCRIPT]
-
-
 class YouTuber(LightningWork):
     """Handles downloading and extracting videos from YouTube."""
 
@@ -31,7 +23,7 @@ class YouTuber(LightningWork):
         super().__init__(
             parallel=True,
             cloud_compute=CloudCompute(cloud_compute),
-            cloud_build_config=CustomBuildConfig(requirements=["pytube"]),
+            cloud_build_config=BuildConfig(requirements=["pytube"]),
         )
 
         init_sentry()

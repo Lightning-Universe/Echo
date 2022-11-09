@@ -14,7 +14,6 @@ from lightning.app.utilities.app_helpers import Logger
 
 from echo.media.mime import UNSUPPORTED_MEDIA_TYPES, get_mimetype
 from echo.monitoring.sentry import init_sentry
-from echo.utils.dependencies import RUST_INSTALL_SCRIPT
 
 logger = Logger(__name__)
 
@@ -29,7 +28,6 @@ class CustomBuildConfig(BuildConfig):
         return [
             "sudo apt-get update",
             "sudo apt-get install -y libmagic1 ffmpeg",
-            RUST_INSTALL_SCRIPT,
         ]
 
 

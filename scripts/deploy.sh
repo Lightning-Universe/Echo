@@ -5,8 +5,9 @@ lightning run app \
   --open-ui=false \
   --no-cache \
   --env ECHO_MODEL_SIZE=base \
+  --env ECHO_WHISPER_CPP_HOME=/content/whisper.cpp \
   --env ECHO_ENABLE_MULTI_TENANCY=true \
-  --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu \
+  --env ECHO_RECOGNIZER_CLOUD_COMPUTE=cpu-small \
   --env ECHO_RECOGNIZER_MIN_REPLICAS=1 \
   --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=600 \
   --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=100 \
