@@ -139,7 +139,7 @@ jobs:
             --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120 \
             --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
-            --env ECHO_RECOGNIZER_CLOUD_COMPUTE=gpu \
+            --env ECHO_RECOGNIZER_CLOUD_COMPUTE=cpu-small \
             --env ECHO_FILESERVER_CLOUD_COMPUTE=cpu \
             --env ECHO_FILESERVER_AUTH_TOKEN=${{ inputs.fileserverAuthToken }} \
             --env ECHO_YOUTUBER_MIN_REPLICAS=${{ inputs.youtuberMinReplicas }} \
