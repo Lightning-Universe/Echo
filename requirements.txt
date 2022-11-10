@@ -1,4 +1,6 @@
-lightning==1.8.0.post1
+# FIXME(alecmerdler): Using unreleased version of `lightning` to fix startup bug...
+git+https://github.com/Lightning-AI/lightning.git@fix_race_condition
+
 sqlmodel==0.0.8
 pydantic==1.10.2
 uvicorn==0.18.3
