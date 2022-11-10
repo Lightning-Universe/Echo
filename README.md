@@ -20,7 +20,7 @@
 </div>
 </div>
 
----
+______________________________________________________________________
 
 # Lightning Echo
 
@@ -70,6 +70,8 @@ Use Echo to generate quick captions of video and audio content. Powered by OpenA
 ### Prerequisites
 
 - Python 3.8+
+- `git`
+- `make`
 - `ffmpeg`
 - `libmagic`
 - `yarn` (for frontend development)
@@ -94,21 +96,30 @@ source ./venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. Install frontend dependencies:
+4. Install Whisper (C++ implementation)
+
+```
+cd $HOME
+git clone https://github.com/ggerganov/whisper.cpp.git
+cd whisper.cpp
+make base
+```
+
+5. Install frontend dependencies:
 
 ```
 cd echo/ui
 yarn install
 ```
 
-5. Build frontend:
+6. Build frontend:
 
 ```
 cd echo/ui
 yarn build
 ```
 
-6. Run the app locally using `lightning` CLI:
+7. Run the app locally using `lightning` CLI:
 
 ```
 # Run from project root

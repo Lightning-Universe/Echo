@@ -1,6 +1,5 @@
 import os
 import pathlib
-from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Type
 
@@ -16,7 +15,6 @@ from echo.models.general import GeneralModel
 from echo.models.segment import Segment
 from echo.models.utils import get_primary_key
 from echo.monitoring.sentry import init_sentry
-from echo.utils.dependencies import RUST_INSTALL_SCRIPT
 
 logger = Logger(__name__)
 
@@ -117,12 +115,6 @@ def create_engine(db_file_name: str, models: List[Type[SQLModel]], echo: bool):
         logger.debug(e)
 
 
-@dataclass
-class CustomBuildConfig(BuildConfig):
-    def build_commands(self):
-        return ["sudo apt-get update", RUST_INSTALL_SCRIPT]
-
-
 class Database(LightningWork):
     def __init__(
         self,
@@ -134,7 +126,7 @@ class Database(LightningWork):
         super().__init__(
             parallel=True,
             cloud_compute=CloudCompute(cloud_compute),
-            cloud_build_config=CustomBuildConfig(requirements=["sqlmodel"]),
+            cloud_build_config=BuildConfig(requirements=["sqlmodel"]),
         )
 
         init_sentry()
