@@ -4,7 +4,7 @@
 
 <div align="center">
 
-<p align="center" style="color:grey">Powered by <a href="https://openai.com/blog/whisper">OpenAI Whisper</a></p>
+<p align="center" style="color:grey">Powered by <a href="https://openai.com/blog/whisper">OpenAI Whisper</a> (<a href="https://github.com/ggerganov/whisper.cpp">C++ implementation</a>)</p>
 
 <p align="center">
   <a href="https://lightning.ai/pages/community/tutorial/deploy-openai-whisper/">Announcment</a> •
@@ -13,6 +13,7 @@
   <a href="https://lightning.ai/apps">Lightning Apps Gallery</a>
 </p>
 
+[![Python Tests](https://github.com/Lightning-AI/LAI-Echo-App/actions/workflows/python-tests.yaml/badge.svg)](https://github.com/Lightning-AI/LAI-Echo-App/actions/workflows/python-tests.yaml)
 [![ReadTheDocs](https://readthedocs.org/projects/pytorch-lightning/badge/?version=stable)](https://lightning.ai/lightning-docs/)
 [![Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://www.pytorchlightning.ai/community)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Lightning-AI/LAI-Echo-App/blob/main/LICENSE)
