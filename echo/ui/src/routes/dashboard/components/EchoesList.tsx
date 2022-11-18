@@ -138,7 +138,15 @@ export default function EchoesList({ onSelectEchoID, onToggleCreatingEcho, selec
   return (
     <Stack direction={"column"} justifyContent={"space-between"} height={"100%"}>
       {createEchoWithSourceType !== undefined && <Typography variant={"h6"}>{"Create Echo"}</Typography>}
-      <Box height={"75%"} sx={{ overflowY: "scroll" }}>
+      <Box
+        height={"75%"}
+        sx={{
+          "overflowY": "scroll",
+          "scrollbarWidth": "none",
+          "::-webkit-scrollbar": {
+            display: "none",
+          },
+        }}>
         {createEchoWithSourceType !== undefined ? (
           <CreateEchoForm
             sourceType={createEchoWithSourceType}
