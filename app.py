@@ -378,6 +378,7 @@ root_path = os.environ.get("ECHO_ROOT_PATH", "/")
 
 app = LightningApp(
     EchoApp(),
+    log_level=os.environ.get("ECHO_LOG_LEVEL", "INFO"),
     root_path=root_path if root_path != "/" else "",
     info=AppInfo(
         title="Transcription. Simple and open-source.",

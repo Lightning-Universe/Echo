@@ -1,3 +1,4 @@
+pre-commit==2.20.0
 coverage==6.3.3
 codecov==2.1.12
 pytest==7.1.2

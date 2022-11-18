@@ -5,7 +5,7 @@
       "name": "Run App",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/debug.py",
+      "program": "${workspaceFolder}/app.py",
       "console": "integratedTerminal",
       "justMyCode": false,
       "envFile": "${workspaceFolder}/.env.local"
