@@ -31,8 +31,8 @@ class CustomBuildConfig(BuildConfig):
         return [
             "sudo apt-get update",
             "sudo apt-get install -y ffmpeg libmagic1",
-            "git clone https://github.com/ggerganov/whisper.cpp.git",
-            f"cd whisper.cpp && make {self.model_size}",
+            "cd $HOME && git clone https://github.com/ggerganov/whisper.cpp.git",
+            f"cd $HOME/whisper.cpp && make {self.model_size}",
         ]
 
 
