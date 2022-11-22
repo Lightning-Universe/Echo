@@ -1,6 +1,7 @@
 import os
 import uuid
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import List
 
 import requests
@@ -37,6 +38,7 @@ from echo.models.loadbalancer import ScaleRequest
 from echo.models.segment import Segment
 from echo.monitoring.sentry import init_sentry
 from echo.utils.analytics import analytics
+from echo.utils.frontend import download_frontend_build
 
 logger = Logger(__name__)
 
@@ -81,8 +83,21 @@ dummy_echo = Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", t
 
 
 class WebFrontend(LightningFlow):
+    """Serves the React frontend build."""
+
+    def __init__(self):
+        super().__init__()
+
+        self._frontend_build_dir = Path(os.path.dirname(__file__), "echo", "ui", "build")
+
     def configure_layout(self):
-        return StaticWebFrontend(os.path.join(os.path.dirname(__file__), "echo", "ui", "build"))
+        if not self._frontend_build_dir.exists():
+            logger.info("Downloading frontend build")
+
+            self._frontend_build_dir.mkdir()
+            download_frontend_build(self._frontend_build_dir.absolute())
+
+        return StaticWebFrontend(str(self._frontend_build_dir))
 
 
 class EchoApp(LightningFlow):
