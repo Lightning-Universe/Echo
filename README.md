@@ -1,5 +1,8 @@
 <div align="center">
-    <img src="https://storage.googleapis.com/lightning-echo-prod/echo-logo-text.svg" width="400px">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./assets/echo-logo-dark-mode.png">
+      <img alt="Echo logo" src="./assets/echo-logo.svg" width="400px">
+    </picture>
     <p>Transcription and captioning — faster, easier, and open source.</p>
 
 <div align="center">
