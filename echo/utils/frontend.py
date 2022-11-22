@@ -3,8 +3,6 @@ from urllib.request import urlretrieve
 
 urls = [
     "https://storage.googleapis.com/lightning-echo-prod/build/asset-manifest.json",
-    "https://storage.googleapis.com/lightning-echo-prod/build/echo-logo-text.svg",
-    "https://storage.googleapis.com/lightning-echo-prod/build/echo-preview.png",
     "https://storage.googleapis.com/lightning-echo-prod/build/favicon.svg",
     "https://storage.googleapis.com/lightning-echo-prod/build/index.html",
     "https://storage.googleapis.com/lightning-echo-prod/build/manifest.json",
