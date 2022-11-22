@@ -32,14 +32,6 @@ on:
         required: true
         default: echo-prod
         description: "Change to deploy a new instance instead of updating the production instance."
-      rootPath:
-        type: choice
-        required: true
-        default: /echo
-        options:
-          - /echo
-          - /
-        description: "Select `/echo` for the production instance (served at `lightning.ai/echo`). Otherwise, select `/`."
       modelSize:
         type: choice
         required: true
@@ -79,7 +71,7 @@ jobs:
         run: cd echo/ui && yarn build
         env:
           PUBLIC_URL: https://storage.googleapis.com/lightning-echo-prod/build
-          REACT_APP_ECHO_ROOT_PATH: ${{ inputs.rootPath }}
+          REACT_APP_ECHO_ROOT_PATH: /echo
           REACT_APP_ECHO_SHOW_BANNER: "true"
           REACT_APP_ECHO_SOURCE_TYPE_FILE_ENABLED: "${{ inputs.sourceTypeFileEnabled }}"
           REACT_APP_ECHO_SOURCE_TYPE_RECORDING_ENABLED: "${{ inputs.sourceTypeRecordingEnabled }}"
@@ -156,7 +148,8 @@ jobs:
             --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
             --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=300 \
             --env ECHO_DATABASE_CLOUD_COMPUTE=cpu-small \
-            --env ECHO_ROOT_PATH=${{ inputs.rootPath }} \
+            --env ECHO_ROOT_PATH=/echo \
             --env ECHO_LOADBALANCER_AUTH_TOKEN=${{ inputs.loadbalancerAuthToken }} \
             --env ECHO_ANALYTICS_ENABLED=true \
+            --env ECHO_FRONTEND_BUCKET_URL=https://storage.googleapis.com/lightning-echo-prod \
         shell: bash
