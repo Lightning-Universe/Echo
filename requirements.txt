@@ -1,4 +1,4 @@
-lightning==1.8.4
+lightning==1.8.0.post1
 sqlmodel==0.0.8
 pydantic==1.10.2
 uvicorn==0.18.3
@@ -11,3 +11,4 @@ python-magic==0.4.27
 pysrt==1.1.2
 ffmpeg-python==0.2.0
 youtube_dl==2021.12.17
+pyparsing>=3.0.0
