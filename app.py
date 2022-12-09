@@ -1,6 +1,7 @@
 import os
 import uuid
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import List
 
 import requests
@@ -17,6 +18,7 @@ from echo.commands.auth import Login
 from echo.commands.echo import CreateEcho, DeleteEcho, GetEcho, ListEchoes
 from echo.components.database.client import DatabaseClient
 from echo.components.database.server import Database
+from echo.components.downloader import Downloader
 from echo.components.fileserver import FileServer
 from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.components.recognizer import SpeechRecognizer
@@ -37,6 +39,7 @@ from echo.models.loadbalancer import ScaleRequest
 from echo.models.segment import Segment
 from echo.monitoring.sentry import init_sentry
 from echo.utils.analytics import analytics
+from echo.utils.frontend import download_frontend_build
 
 logger = Logger(__name__)
 
@@ -81,8 +84,21 @@ dummy_echo = Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", t
 
 
 class WebFrontend(LightningFlow):
+    """Serves the React frontend build."""
+
+    def __init__(self):
+        super().__init__()
+
+        self._frontend_build_dir = Path(os.path.dirname(__file__), "echo", "ui", "build")
+
     def configure_layout(self):
-        return StaticWebFrontend(os.path.join(os.path.dirname(__file__), "echo", "ui", "build"))
+        if not self._frontend_build_dir.exists():
+            logger.info("Downloading frontend build")
+
+            self._frontend_build_dir.mkdir()
+            download_frontend_build(self._frontend_build_dir.absolute())
+
+        return StaticWebFrontend(str(self._frontend_build_dir))
 
 
 class EchoApp(LightningFlow):
@@ -168,8 +184,8 @@ class EchoApp(LightningFlow):
             name="youtuber",
             max_idle_seconds_per_work=self.youtuber_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.youtuber_max_pending_calls_per_work,
-            create_work=lambda: YouTuber(cloud_compute=self.youtuber_cloud_compute, base_dir=base_dir),
-            dummy_run_kwargs={"youtube_url": DUMMY_YOUTUBE_URL, "echo_id": DUMMY_ECHO_ID, "fileserver_url": None},
+            create_work=lambda: Downloader(cloud_compute=self.youtuber_cloud_compute, base_dir=base_dir),
+            dummy_run_kwargs={"source_url": DUMMY_YOUTUBE_URL, "echo_id": DUMMY_ECHO_ID, "fileserver_url": None},
         )
         self.recognizer = LoadBalancer(
             name="recognizer",
@@ -217,7 +233,7 @@ class EchoApp(LightningFlow):
 
         # If source is YouTube, trigger async download of the video to the shared Drive
         if echo.source_youtube_url is not None:
-            self.youtuber.run(youtube_url=echo.source_youtube_url, echo_id=echo.id, fileserver_url=self.fileserver.url)
+            self.youtuber.run(source_url=echo.source_youtube_url, echo_id=echo.id, fileserver_url=self.fileserver.url)
 
         # Run speech recognition for the Echo
         self.recognizer.run(echo=echo, db_url=self.database.url)
