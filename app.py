@@ -18,7 +18,6 @@ from echo.commands.auth import Login
 from echo.commands.echo import CreateEcho, DeleteEcho, GetEcho, ListEchoes
 from echo.components.database.client import DatabaseClient
 from echo.components.database.server import Database
-from echo.components.downloader import Downloader
 from echo.components.fileserver import FileServer
 from echo.components.loadbalancing.loadbalancer import LoadBalancer
 from echo.components.recognizer import SpeechRecognizer
@@ -184,8 +183,8 @@ class EchoApp(LightningFlow):
             name="youtuber",
             max_idle_seconds_per_work=self.youtuber_max_idle_seconds_per_work,
             max_pending_calls_per_work=self.youtuber_max_pending_calls_per_work,
-            create_work=lambda: Downloader(cloud_compute=self.youtuber_cloud_compute, base_dir=base_dir),
-            dummy_run_kwargs={"source_url": DUMMY_YOUTUBE_URL, "echo_id": DUMMY_ECHO_ID, "fileserver_url": None},
+            create_work=lambda: YouTuber(cloud_compute=self.youtuber_cloud_compute, base_dir=base_dir),
+            dummy_run_kwargs={"youtube_url": DUMMY_YOUTUBE_URL, "echo_id": DUMMY_ECHO_ID, "fileserver_url": None},
         )
         self.recognizer = LoadBalancer(
             name="recognizer",
@@ -233,7 +232,7 @@ class EchoApp(LightningFlow):
 
         # If source is YouTube, trigger async download of the video to the shared Drive
         if echo.source_youtube_url is not None:
-            self.youtuber.run(source_url=echo.source_youtube_url, echo_id=echo.id, fileserver_url=self.fileserver.url)
+            self.youtuber.run(youtube_url=echo.source_youtube_url, echo_id=echo.id, fileserver_url=self.fileserver.url)
 
         # Run speech recognition for the Echo
         self.recognizer.run(echo=echo, db_url=self.database.url)
