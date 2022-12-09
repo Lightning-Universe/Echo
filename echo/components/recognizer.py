@@ -47,6 +47,7 @@ class SpeechRecognizer(LightningWork):
             parallel=True,
             cloud_compute=CloudCompute(cloud_compute),
             cloud_build_config=CustomBuildConfig(requirements=[], model_size=model_size),
+            raise_exception=False,
         )
 
         init_sentry()
