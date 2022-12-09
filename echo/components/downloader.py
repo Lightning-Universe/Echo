@@ -25,6 +25,7 @@ class Downloader(LightningWork):
             parallel=True,
             cloud_compute=CloudCompute(cloud_compute),
             cloud_build_config=BuildConfig(requirements=["youtube_dl"]),
+            raise_exception=False,
         )
 
         init_sentry()
