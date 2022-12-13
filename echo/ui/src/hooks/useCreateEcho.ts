@@ -21,6 +21,7 @@ export default function useCreateEcho() {
   const { userId } = useAuth();
 
   const fileserverURL = lightningState?.works["fileserver"]["vars"]["_url"];
+  const checkoutURL = lightningState?.flows["stripe"]["vars"]["create_checkout_session_url"];
 
   return useMutation<Echo, unknown, CreateEchoArgs>(
     async ({ echoID, sourceFile, mediaType, displayName, sourceYouTubeURL }) => {
@@ -44,8 +45,12 @@ export default function useCreateEcho() {
       });
     },
     {
-      onSuccess: () => {
+      onSuccess: echo => {
         queryClient.invalidateQueries("listEchoes");
+
+        if (process.env.REACT_APP_STRIPE_ENABLED === "true") {
+          window.open(`${checkoutURL}?id=${echo.id}`, "_blank");
+        }
       },
     },
   );
