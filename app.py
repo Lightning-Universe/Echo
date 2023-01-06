@@ -196,6 +196,8 @@ class EchoApp(LightningFlow):
             dummy_run_kwargs={"echo": dummy_echo, "db_url": None},
         )
 
+        self.hide_footer = True
+
     def run(self):
         # Run child components
         self.database.run()

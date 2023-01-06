@@ -5,8 +5,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { LightningStateContextProvider } from "hooks/useLightningState";
 import { RecordEchoContextProvider } from "hooks/useRecordEcho";
 import { theme } from "lightning-ui/src/design-system/theme";
-import Dashboard from "routes/dashboard/Dasboard";
-import MobileDemo from "routes/mobile-demo/MobileDemo";
+import Conversation from "routes/conversation/Conversation";
 
 const queryClient = new QueryClient();
 
@@ -70,7 +69,7 @@ function App() {
             <BrowserRouter>
               <Routes>
                 {/* NOTE: Framework does not support client-side routing yet, app is served under `/view/home` */}
-                <Route path={"*"} element={onMobile ? <MobileDemo /> : <Dashboard />} />
+                <Route path={"*"} element={<Conversation />} />
               </Routes>
             </BrowserRouter>
           </RecordEchoContextProvider>
