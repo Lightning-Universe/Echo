@@ -104,6 +104,7 @@ jobs:
         run: |
           pip --version
           pip install -r requirements.txt --quiet
+          pip install -r tests/requirements.txt --quiet
           pip list
         shell: bash
       - name: Retrieve frontend build
