@@ -58,11 +58,11 @@ jobs:
     steps:
       - name: Print inputs
         run: echo "${{ toJSON(github.event.inputs) }}"
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v3.3.0
       - uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.LIGHTNING_UI_SSH_KEY }}
-      - uses: google-github-actions/auth@v0
+      - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
       - name: Install frontend dependencies
@@ -82,12 +82,12 @@ jobs:
           REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS: 84600
           REACT_APP_ECHO_SENTRY_DSN: ${{ secrets.ECHO_SENTRY_DSN }}
       - name: Upload frontend build to GitHub
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: echo-frontend-build
           path: echo/ui/build
       - name: Upload frontend build to GCS
-        uses: google-github-actions/upload-cloud-storage@v0
+        uses: google-github-actions/upload-cloud-storage@v1
         with:
           path: echo/ui/build
           destination: lightning-echo-prod
@@ -95,7 +95,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: build
     steps:
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v3.3.0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -108,7 +108,7 @@ jobs:
           pip list
         shell: bash
       - name: Retrieve frontend build
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: echo-frontend-build
           path: echo/ui/build
