@@ -44,7 +44,7 @@ jobs:
         shell: bash
       - name: Run Tests
         run: |
-          coverage run --source echo -m py.test echo tests -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
+          coverage run --source echo -m pytest echo tests -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
       - name: Statistics
         if: success()
         run: |
