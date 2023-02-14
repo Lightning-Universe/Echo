@@ -133,7 +133,7 @@ class FileServer(LightningWork):
             "size": full_size,
             "drive_path": echo_id,
         }
-        with open(self._get_filepath(meta_file), "wt") as f:
+        with open(self._get_filepath(meta_file), "w") as f:
             json.dump(meta, f)
 
         self.drive.put(self._get_drive_filepath(meta_file))
