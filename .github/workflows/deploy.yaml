@@ -108,7 +108,7 @@ jobs:
           pip list
         shell: bash
       - name: Retrieve frontend build
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: echo-frontend-build
           path: echo/ui/build
