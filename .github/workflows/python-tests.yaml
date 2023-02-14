@@ -4,6 +4,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
   pytest:
     runs-on: ${{ matrix.os }}
@@ -14,17 +15,21 @@ jobs:
         python-version: ["3.10"]
     timeout-minutes: 35
     steps:
+
       - uses: actions/checkout@v3.3.0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
         run: |
           pip --version
           pip install -U -q -r requirements.txt -r tests/requirements.txt -f https://download.pytorch.org/whl/cpu/torch_stable.html
           pip list
+
       - name: Run Tests
-        run: coverage run --source echo -m py.test echo tests -v
+        run: coverage run --source echo -m pytest echo tests -v
+
       - name: Statistics
         run: coverage report
