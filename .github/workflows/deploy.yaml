@@ -62,7 +62,7 @@ jobs:
       - uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.LIGHTNING_UI_SSH_KEY }}
-      - uses: google-github-actions/auth@v0
+      - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
       - name: Install frontend dependencies
