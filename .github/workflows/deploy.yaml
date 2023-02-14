@@ -82,7 +82,7 @@ jobs:
           REACT_APP_ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS: 84600
           REACT_APP_ECHO_SENTRY_DSN: ${{ secrets.ECHO_SENTRY_DSN }}
       - name: Upload frontend build to GitHub
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: echo-frontend-build
           path: echo/ui/build
