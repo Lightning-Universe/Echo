@@ -5,7 +5,7 @@ uvicorn==0.18.3
 fastapi==0.85.0
 python-multipart==0.0.5
 humps==0.2.2
-pytube==12.1.0
+pytube==12.1.2
 sentry-sdk==1.9.10
 python-magic==0.4.27
 pysrt==1.1.2
