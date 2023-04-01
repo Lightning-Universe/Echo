@@ -2,7 +2,7 @@ lightning==1.9.3
 sqlmodel==0.0.8
 pydantic==1.10.4
 uvicorn==0.18.3
-fastapi==0.85.0
+fastapi==0.95.0
 python-multipart==0.0.5
 humps==0.2.2
 pytube==12.1.2
