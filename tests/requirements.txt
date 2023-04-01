@@ -1,4 +1,4 @@
-coverage==7.2.1
+coverage==7.2.2
 codecov==2.1.12
 pytest==7.2.1
 check-manifest==0.49
