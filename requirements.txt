@@ -1,4 +1,4 @@
-lightning==2.0.1
+lightning==2.0.2
 sqlmodel==0.0.8
 pydantic==1.10.4
 uvicorn==0.18.3
