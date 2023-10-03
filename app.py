@@ -7,7 +7,6 @@ from typing import List
 
 import requests
 from fastapi import HTTPException
-from fastapi.responses import RedirectResponse
 from lightning import LightningApp, LightningFlow
 from lightning.app.api.http_methods import Delete, Get, Post
 from lightning.app.frontend import StaticWebFrontend
@@ -51,7 +50,7 @@ REST_API_TIMEOUT_SECONDS = 60 * 5
 RECOGNIZER_ATTRIBUTE_PREFIX = "recognizer_"
 
 PRICE_PER_MINUTE_DEFAULT = 1.00
-STRIPE_PRODUCT_NAME = f"Audio/video transcription ($1.00 per minute)"
+STRIPE_PRODUCT_NAME = "Audio/video transcription ($1.00 per minute)"
 STRIPE_PRODUCT_DESCRIPTION = "Transcribe audio and video files"
 STRIPE_PRODUCT_IMAGES = []
 
