@@ -53,7 +53,7 @@ on:
         description: "Token used to authenticate against the fileserver `/delete/{echoID}` endpoint."
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 35
     steps:
       - name: Print inputs
@@ -92,7 +92,7 @@ jobs:
           path: echo/ui/build
           destination: lightning-echo-prod
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: build
     steps:
       - uses: actions/checkout@v3.5.3
