@@ -1,12 +1,12 @@
-git+https://github.com/Lightning-AI/lightning.git@add_support_for_request
+lightning==2.0.2
 sqlmodel==0.0.8
 pydantic==1.10.4
-uvicorn==0.18.3
+uvicorn==0.22.0
 fastapi==0.88.0
-python-multipart==0.0.5
+python-multipart==0.0.6
 humps==0.2.2
-pytube==12.1.0
-sentry-sdk==1.9.10
+pytube==15.0.0
+sentry-sdk==1.21.1
 python-magic==0.4.27
 pysrt==1.1.2
 ffmpeg-python==0.2.0

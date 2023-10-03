@@ -53,12 +53,12 @@ on:
         description: "Token used to authenticate against the fileserver `/delete/{echoID}` endpoint."
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 35
     steps:
       - name: Print inputs
         run: echo "${{ toJSON(github.event.inputs) }}"
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v3.5.3
       - uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.LIGHTNING_UI_SSH_KEY }}
@@ -92,10 +92,10 @@ jobs:
           path: echo/ui/build
           destination: lightning-echo-prod
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: build
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v3.5.3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -132,14 +132,14 @@ jobs:
             --env ECHO_RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK=120 \
             --env ECHO_RECOGNIZER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
-            --env ECHO_RECOGNIZER_CLOUD_COMPUTE=cpu-small \
+            --env ECHO_RECOGNIZER_CLOUD_COMPUTE=cpu \
             --env ECHO_FILESERVER_CLOUD_COMPUTE=cpu \
             --env ECHO_FILESERVER_AUTH_TOKEN=${{ inputs.fileserverAuthToken }} \
             --env ECHO_YOUTUBER_MIN_REPLICAS=${{ inputs.youtuberMinReplicas }} \
             --env ECHO_YOUTUBER_MAX_IDLE_SECONDS_PER_WORK=120 \
             --env ECHO_YOUTUBER_MAX_PENDING_CALLS_PER_WORK=50 \
             --env ECHO_YOUTUBER_AUTOSCALER_CRON_SCHEDULE_DEFAULT="*/5 * * * *" \
-            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu-small \
+            --env ECHO_YOUTUBER_CLOUD_COMPUTE=cpu \
             --env ECHO_USER_ECHOES_LIMIT=3 \
             --env ECHO_SOURCE_TYPE_FILE_ENABLED=${{ inputs.sourceTypeFileEnabled }} \
             --env ECHO_SOURCE_TYPE_RECORDING_ENABLED=${{ inputs.sourceTypeRecordingEnabled }} \
@@ -148,7 +148,7 @@ jobs:
             --env ECHO_GARBAGE_COLLECTION_MAX_AGE_SECONDS=86400 \
             --env ECHO_SENTRY_DSN=${{ secrets.ECHO_SENTRY_DSN }} \
             --env ECHO_VIDEO_SOURCE_MAX_DURATION_SECONDS=300 \
-            --env ECHO_DATABASE_CLOUD_COMPUTE=cpu-small \
+            --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
             --env ECHO_ROOT_PATH=/echo \
             --env ECHO_LOADBALANCER_AUTH_TOKEN=${{ inputs.loadbalancerAuthToken }} \
             --env ECHO_ANALYTICS_ENABLED=true \

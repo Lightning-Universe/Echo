@@ -59,9 +59,9 @@ RECOGNIZER_MIN_REPLICAS_DEFAULT = 1
 RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
 RECOGNIZER_MAX_PENDING_CALLS_PER_WORK_DEFAULT = 10
 RECOGNIZER_AUTOSCALER_CRON_SCHEDULE_DEFAULT = "*/5 * * * *"
-RECOGNIZER_CLOUD_COMPUTE_DEFAULT = "gpu"
+RECOGNIZER_CLOUD_COMPUTE_DEFAULT = "cpu"
 
-FILESERVER_CLOUD_COMPUTE_DEFAULT = "cpu-small"
+FILESERVER_CLOUD_COMPUTE_DEFAULT = "cpu"
 
 YOUTUBER_MIN_REPLICAS_DEFAULT = 1
 YOUTUBER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
@@ -474,7 +474,8 @@ app = LightningApp(
         title="Transcription. Simple and open-source.",
         favicon="https://storage.googleapis.com/lightning-echo-prod/favicon.svg",
         # flake8: noqa E501
-        description="Echo uses near-human speech recognition to transcribe video and audio files - powered by Lightning and OpenAI's Whisper.",
+        description="Echo uses near-human speech recognition to transcribe video"
+        " and audio files - powered by Lightning and OpenAI's Whisper.",
         image="https://storage.googleapis.com/lightning-echo-prod/echo-preview.png",
         meta_tags=[*app_meta, *(analytics if analytics_enabled else [])],
     ),
