@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Paper, Stack } from "@mui/material";
+import { useLocation } from "react-router-dom";
 
 import { BuildYourAppBanner } from "components/BuildYourAppBanner";
 
@@ -11,6 +12,17 @@ import NavBar from "./components/NavBar";
 export default function Dashboard() {
   const [selectedEchoID, setSelectedEchoID] = useState<string>();
   const [creatingEcho, setCreatingEcho] = useState(false);
+
+  const { search } = useLocation();
+
+  // Close the browser tab if redirected back from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+
+    if (params.get("success") === "true") {
+      window.close();
+    }
+  }, [search]);
 
   const showBanner = process.env.REACT_APP_ECHO_SHOW_BANNER === "true";
 

@@ -1,3 +1,4 @@
+import math
 import os
 import uuid
 from datetime import datetime, timedelta
@@ -20,6 +21,7 @@ from echo.components.database.client import DatabaseClient
 from echo.components.database.server import Database
 from echo.components.fileserver import FileServer
 from echo.components.loadbalancing.loadbalancer import LoadBalancer
+from echo.components.payment.stripe import Order, Stripe
 from echo.components.recognizer import SpeechRecognizer
 from echo.components.youtuber import YouTuber
 from echo.constants import SHARED_STORAGE_DRIVE_ID
@@ -46,6 +48,11 @@ logger = Logger(__name__)
 REST_API_TIMEOUT_SECONDS = 60 * 5
 
 RECOGNIZER_ATTRIBUTE_PREFIX = "recognizer_"
+
+PRICE_PER_MINUTE_DEFAULT = 1.00
+STRIPE_PRODUCT_NAME = "Audio/video transcription ($1.00 per minute)"
+STRIPE_PRODUCT_DESCRIPTION = "Transcribe audio and video files"
+STRIPE_PRODUCT_IMAGES = []
 
 RECOGNIZER_MIN_REPLICAS_DEFAULT = 1
 RECOGNIZER_MAX_IDLE_SECONDS_PER_WORK_DEFAULT = 120
@@ -77,7 +84,6 @@ GARBAGE_COLLECTION_MAX_AGE_SECONDS_DEFAULT = 60 * 60 * 24
 # FIXME: Duplicating this from `recognizer.py` because `lightning run app` gives import error...
 DUMMY_ECHO_ID = "dummy"
 DUMMY_YOUTUBE_URL = "dummy"
-
 
 dummy_echo = Echo(id=DUMMY_ECHO_ID, media_type="audio/mp3", audio_url="dummy", text="")
 
@@ -161,6 +167,8 @@ class EchoApp(LightningFlow):
         self.database_cloud_compute = os.environ.get("ECHO_DATABASE_CLOUD_COMPUTE", DATABASE_CLOUD_COMPUTE_DEFAULT)
         self._loadbalancer_auth_token = os.environ.get("ECHO_LOADBALANCER_AUTH_TOKEN", None)
 
+        self.price_per_minute = int(os.environ.get("ECHO_PRICE_PER_MINUTE", PRICE_PER_MINUTE_DEFAULT))
+
         # Need to wait for database to be ready before initializing clients
         self._echo_db_client = None
         self._segment_db_client = None
@@ -196,10 +204,27 @@ class EchoApp(LightningFlow):
             dummy_run_kwargs={"echo": dummy_echo, "db_url": None},
         )
 
+        self.stripe_enabled = os.environ.get("ECHO_STRIPE_API_KEY", None) is not None
+        if self.stripe_enabled:
+            logger.info("Enabling Stripe payment processing")
+
+            self.stripe = Stripe(
+                api_key=os.environ.get("ECHO_STRIPE_API_KEY", None),
+                product_name=STRIPE_PRODUCT_NAME,
+                product_description=STRIPE_PRODUCT_DESCRIPTION,
+                product_images=STRIPE_PRODUCT_IMAGES,
+                determine_price=self.determine_price,
+                determine_quantity=self.determine_quantity,
+                on_checkout_completed=self.on_checkout_completed,
+            )
+
     def run(self):
         # Run child components
         self.database.run()
         self.fileserver.run()
+
+        if self.stripe_enabled:
+            self.stripe.run()
 
         if self.database.alive() and self._echo_db_client is None:
             self._echo_db_client = DatabaseClient(model=Echo, db_url=self.database.db_url)
@@ -233,9 +258,6 @@ class EchoApp(LightningFlow):
         # If source is YouTube, trigger async download of the video to the shared Drive
         if echo.source_youtube_url is not None:
             self.youtuber.run(youtube_url=echo.source_youtube_url, echo_id=echo.id, fileserver_url=self.fileserver.url)
-
-        # Run speech recognition for the Echo
-        self.recognizer.run(echo=echo, db_url=self.database.url)
 
         return echo
 
@@ -289,6 +311,52 @@ class EchoApp(LightningFlow):
 
         return LoginResponse(user_id=new_user_id)
 
+    def determine_price(self, echo_id: str) -> int:
+        if self._echo_db_client is None:
+            logger.warn("Database client not initialized!")
+            return None
+
+        echo = self._echo_db_client.get_echo(echo_id)
+        if echo is None:
+            return None
+
+        if echo.source_youtube_url is not None:
+            video_length = youtube_video_length(echo.source_youtube_url)
+
+            return math.ceil(video_length / 60) * self.price_per_minute * 100
+
+        # FIXME(alecmerdler): Determine real audio file length for price...
+        return 100
+
+    def determine_quantity(self, echo_id: str) -> int:
+        if self._echo_db_client is None:
+            logger.warn("Database client not initialized!")
+            return None
+
+        echo = self._echo_db_client.get_echo(echo_id)
+        if echo is None:
+            return None
+
+        if echo.source_youtube_url is not None:
+            video_length = youtube_video_length(echo.source_youtube_url)
+
+            return math.ceil(video_length / 60)
+
+        # FIXME(alecmerdler): Determine real audio file length for price...
+        return 100
+
+    def on_checkout_completed(self, order: Order):
+        if self._echo_db_client is None:
+            logger.warn("Database client not initialized!")
+            return None
+
+        echo = self._echo_db_client.get_echo(order.id)
+        if echo is None:
+            return None
+
+        # Trigger recognizer to process the file once the user has paid
+        self.recognizer.run(echo=echo, db_url=self.database.db_url)
+
     def validate_echo(self, echo: Echo) -> ValidateEchoResponse:
         # Guard against disabled source types
         if echo.source_youtube_url is not None:
@@ -327,7 +395,13 @@ class EchoApp(LightningFlow):
         if not validation.valid:
             raise HTTPException(status_code=400, detail=validation.reason)
 
-        return self.create_echo(echo)
+        echo = self.create_echo(echo)
+
+        # If payment processing is disabled, start processing the Echo immediately
+        if not self.stripe_enabled:
+            self.recognizer.run(echo=echo, db_url=self.database.url)
+
+        return echo
 
     def handle_list_echoes(self, user_id: str) -> List[Echo]:
         return self.list_echoes(ListEchoesConfig(user_id=user_id))
@@ -369,6 +443,7 @@ class EchoApp(LightningFlow):
             Post("/api/validate", method=self.handle_validate_echo, timeout=REST_API_TIMEOUT_SECONDS),
             Get("/api/login", method=self.handle_login, timeout=REST_API_TIMEOUT_SECONDS),
             Post("/api/scale", method=self.handle_scale, timeout=REST_API_TIMEOUT_SECONDS),
+            *self.stripe.configure_api(),
         ]
 
     def configure_commands(self):

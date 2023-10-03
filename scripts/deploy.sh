@@ -29,4 +29,5 @@ lightning run app \
   --env ECHO_DATABASE_CLOUD_COMPUTE=cpu \
   --env ECHO_LOADBALANCER_AUTH_TOKEN=abc123 \
   --env ECHO_ANALYTICS_ENABLED=false \
+  --secret ECHO_STRIPE_API_KEY=echo-stripe-api-key \
   app.py
