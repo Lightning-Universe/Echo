@@ -1,6 +1,6 @@
 lightning==2.0.2
 sqlmodel==0.0.8
-pydantic==1.10.4
+pydantic==2.4.2
 uvicorn==0.22.0
 fastapi==0.85.0
 python-multipart==0.0.5
